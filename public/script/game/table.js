@@ -1,16 +1,42 @@
 class Table {
-    constructor() {
+    constructor(screen, camera) {
         this.canvas = document.getElementById('canvasTable');
-        this.setupTable();
+
+        this.setup(screen, camera);
+
+        this.canvas.style.position = 'absolute';
+        this.canvas.style.border = '1px solid blue';
+        this.canvasContext = this.canvas.getContext('2d');
     };
 
-    setupTable() {
-        this.canvas.style.width = window.dimension.viewportTableWidth + 'px';
-        this.canvas.style.height = window.dimension.viewportTableHeight + 'px';
-        this.canvas.style.position = 'absolute';
-        this.canvas.style.left = ((window.dimension.viewportUIWidth - window.dimension.viewportTableWidth) / 2) + 'px';
-        this.canvas.style.top = ((window.dimension.viewportUIHeight - window.dimension.viewportTableHeight) / 2) + 'px';
+    setupCanvas(screen, camera) {
+        this.canvas.width = camera.viewportWidth;
+        this.canvas.height = camera.viewportHeight;
+        this.canvas.style.width = camera.viewportWidth + 'px';
+        this.canvas.style.height = camera.viewportHeight + 'px';
+        this.canvas.style.left = ((screen.width + - camera.viewportWidth) / 2) + 'px';
+        this.canvas.style.top = ((screen.height - camera.viewportHeight) / 2) + 'px';
+    };
 
-        this.canvas.style.backgroundColor = 'red';
+    setupTable(camera) {
+        this.width = camera.viewportWidth * camera.cameraZoomLevel;
+        this.height = camera.viewportHeight * camera.cameraZoomLevel;
+    };
+
+    setup(screen, camera) {
+        this.setupCanvas(screen, camera);
+        this.setupTable(camera);
+    };
+
+    drawSurface(camera) {
+        let x = camera.viewportWidthHalf - (camera.cameraLocationX * this.width);
+        let y = camera.viewportHeightHalf - (camera.cameraLocationY * this.height);
+
+        this.canvasContext.clearRect(0, 0, camera.viewportWidth, camera.viewportHeight);
+
+        this.canvasContext.beginPath();
+        this.canvasContext.fillStyle = 'green';
+        this.canvasContext.rect(x, y, this.width, this.height);
+        this.canvasContext.fill();
     };
 };
