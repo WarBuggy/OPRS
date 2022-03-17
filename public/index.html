@@ -19,9 +19,9 @@
     <link rel="icon" href="res/img/favicon.ico" type="image/x-icon">
     <title>One Page Rule Simulator</title>
     <!-- CSS -->
+    <link rel="stylesheet" type="text/css" href="css/common.css?v=0.1" />
+    <link rel="stylesheet" type="text/css" href="css/index.css?v=0.1" />
     <!--
-    <link rel="stylesheet" type="text/css" href="css/general.css?ver=0.1" />
-    <link rel="stylesheet" type="text/css" href="css/menu-top.css?ver=0.1" />
     <link rel="stylesheet" type="text/css" href="css/home.css?ver=0.1" />
     <link rel="stylesheet" type="text/css" href="css/footer.css?ver=0.1" />
     -->
@@ -33,16 +33,18 @@
     <script src="res/content.js?version=1.0"></script>
     -->
     <!-- COMMON SCRIPT -->
-    <!--
-    <script src="script/common.js?version=1.0"></script>
-    -->
     <!-- SCRIPT -->
-    <!--
-    <script src="script/index.js?version=0.1"></script>
-    -->
+    <script src="script/game/dimension.js?v=0.1"></script>
+    <script src="script/game/table.js?v=0.1"></script>
+    <script src="script/game/camera.js"></script>
+    <script src="script/index.js?v=0.1"></script>
 </head>
 
 <body>
+
+    <div id="divMain">
+        <canvas id="canvasTable"></canvas>
+    </div>
 </body>
 
 </html>
