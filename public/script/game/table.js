@@ -1,21 +1,12 @@
 class Table {
+    static RATIO_FRAME_TO_VIEWPORT_MIN = 0.01;
+
     constructor(screen, camera) {
-        this.canvas = document.getElementById('canvasTable');
-
         this.setup(screen, camera);
-
-        this.canvas.style.position = 'absolute';
-        this.canvas.style.border = '1px solid blue';
-        this.canvasContext = this.canvas.getContext('2d');
     };
 
-    setupCanvas(screen, camera) {
-        this.canvas.width = camera.viewportWidth;
-        this.canvas.height = camera.viewportHeight;
-        this.canvas.style.width = camera.viewportWidth + 'px';
-        this.canvas.style.height = camera.viewportHeight + 'px';
-        this.canvas.style.left = ((screen.width + - camera.viewportWidth) / 2) + 'px';
-        this.canvas.style.top = ((screen.height - camera.viewportHeight) / 2) + 'px';
+    setupFrame(camera) {
+
     };
 
     setupTable(camera) {
@@ -24,7 +15,6 @@ class Table {
     };
 
     setup(screen, camera) {
-        this.setupCanvas(screen, camera);
         this.setupTable(camera);
     };
 
