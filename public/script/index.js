@@ -10,6 +10,7 @@ class GameManager {
     constructor() {
         this.screen = new Screen();
         this.camera = new Camera(this.screen);
+        this.grid = new Grid(this.screen, this.camera);
         //this.table = new Table(this.screen, this.camera);
 
         //this.table.drawSurface(this.camera);
@@ -22,6 +23,7 @@ class GameManager {
         //this.camera.checkCameraPosition(this.table);
 
         //this.table.drawSurface(this.camera);
+
     };
 };
 

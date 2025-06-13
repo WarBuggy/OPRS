@@ -11,17 +11,14 @@ class Camera {
     };
 
     constructor(screen) {
-        this.cameraLocationX = 0.5;
-        this.cameraLocationY = 0.5;
-        this.cameraZoomLevel = 1;
-
         this.canvas = document.getElementById('canvasTable');
-
-        this.setup(screen);
-
         this.canvas.style.position = 'absolute';
         this.canvas.style.border = '1px solid blue';
-        this.canvasContext = this.canvas.getContext('2d');
+        this.canvasCtx = this.canvas.getContext('2d');
+
+        this.zoom = new Zoom();
+
+        this.setup(screen);
     };
 
     setup(screen) {
@@ -40,25 +37,25 @@ class Camera {
         this.canvas.height = this.viewportHeight;
         this.canvas.style.width = this.viewportWidth + 'px';
         this.canvas.style.height = this.viewportHeight + 'px';
-        this.canvas.style.left = ((screen.width + - this.viewportWidth) / 2) + 'px';
+        this.canvas.style.left = ((screen.width - this.viewportWidth) / 2) + 'px';
         this.canvas.style.top = ((screen.height - this.viewportHeight) / 2) + 'px';
     };
 
-    checkCameraPosition(table) {
-        this.checkADimension(this.cameraLocationX, table.width, this.viewportWidthHalf);
-        this.checkADimension(this.cameraLocationY, table.height, this.viewportHeightHalf);
-    };
+    // checkCameraPosition(table) {
+    //     this.checkADimension(this.cameraLocationX, table.width, this.viewportWidthHalf);
+    //     this.checkADimension(this.cameraLocationY, table.height, this.viewportHeightHalf);
+    // };
 
-    checkADimension(cameraLocation, tableMaxLength, minLength) {
-        let firstLength = cameraLocation * tableMaxLength;
-        if (firstLength < minLength) {
-            cameraLocation = minLength / tableMaxLength;
-            return;
-        }
+    // checkADimension(cameraLocation, tableMaxLength, minLength) {
+    //     let firstLength = cameraLocation * tableMaxLength;
+    //     if (firstLength < minLength) {
+    //         cameraLocation = minLength / tableMaxLength;
+    //         return;
+    //     }
 
-        let secondLength = (1 - cameraLocation) * tableMaxLength;
-        if (secondLength < minLength) {
-            cameraLocation = (tableMaxLength - minLength) / tableMaxLength;
-        }
-    };
+    //     let secondLength = (1 - cameraLocation) * tableMaxLength;
+    //     if (secondLength < minLength) {
+    //         cameraLocation = (tableMaxLength - minLength) / tableMaxLength;
+    //     }
+    // };
 };
