@@ -50,4 +50,34 @@ class Hex {
         canvasCtx.fillText(this.r, this.rX, this.rY);
         canvasCtx.fillText(this.s, this.sX, this.sY);
     };
-}
+
+    static cubeRound(fracQ, fracR, fracS) {
+        let q = Math.round(fracQ);
+        let r = Math.round(fracR);
+        let s = Math.round(fracS);
+
+        let qDiff = Math.abs(q - fracQ)
+        let rDiff = Math.abs(r - fracR)
+        let sDiff = Math.abs(s - fracS)
+
+        if (qDiff > rDiff && qDiff > sDiff) {
+            q = -r - s;
+        } else if (rDiff > sDiff) {
+            r = -q - s
+        } else {
+            s = -q - r;
+        }
+        return { q, r, s };
+    };
+
+    static pixelToHexCoord(pointX, pointY) {
+        // invert the scaling
+        let x = (pointX - Grid.hexParam.halfWidth) / Grid.hexParam.radius;
+        let y = (pointY - Grid.hexParam.radius) / Grid.hexParam.radius;
+        // cartesian to hex
+        let q = (Math.sqrt(3) / 3 * x - 1.0 / 3 * y);
+        let r = 2.0 / 3 * y;
+        let s = 0 - (q + r);
+        return Hex.cubeRound(q, r, s);
+    };
+};
