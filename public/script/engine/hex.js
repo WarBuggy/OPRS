@@ -80,4 +80,8 @@ class Hex {
         let s = 0 - (q + r);
         return Hex.cubeRound(q, r, s);
     };
+
+    static createListKey(q, r, s) {
+        return `${q},${r},${s}`;
+    };
 };

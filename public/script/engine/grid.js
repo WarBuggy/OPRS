@@ -9,7 +9,7 @@ class Grid {
         halfHeight: 0,
         width: 0,
         height: 0,
-        list: [],
+        list: {},
     };
 
     constructor(screen, camera) {
@@ -18,7 +18,7 @@ class Grid {
 
     setup(screen, camera) {
         this.calculateHexParam(screen, camera);
-        Grid.hexParam.list = [];
+        Grid.hexParam.list = {};
 
         let ctx = camera.canvasCtx;
         ctx.clearRect(0, 0, this.viewportWidth, this.viewportHeight);
@@ -40,10 +40,13 @@ class Grid {
             while (x < camera.viewportWidth) {
                 let aHex = new Hex(x, y, q, r, s);
                 aHex.createPath(ctx);
+                let listKey = Hex.createListKey(q, r, s);
+                console.log(listKey);
+                Grid.hexParam.list[listKey] = aHex;
+
                 x = x + Grid.hexParam.width;
                 q = q + 1;
                 s = s - 1;
-                Grid.hexParam.list.push(aHex);
             }
             y = y + Grid.hexParam.radius + Grid.hexParam.halfHeight;
             r = r + 1;
@@ -53,8 +56,8 @@ class Grid {
         ctx.font = Grid.hexParam.coordFontSize + 'px Arial';
         ctx.fillStyle = 'green';
         ctx.textBaseline = 'middle';
-        for (let i = 0; i < Grid.hexParam.list.length; i++) {
-            let aHex = Grid.hexParam.list[i];
+        for (let key in Grid.hexParam.list) {
+            let aHex = Grid.hexParam.list[key];
             aHex.drawCoord(ctx);
         }
     };
