@@ -30,8 +30,8 @@ class Camera {
             this.viewportHeight = screen.bigDimension * Camera.LANDSCAPE_PARAM.RATIO_VIEWPORT_MAX__TO_SCREEN_MAX;
         }
 
-        this.viewportWidthHalf = this.viewportWidth / 2;
-        this.viewportHeightHalf = this.viewportHeight / 2;
+        this.viewportHalfWidth = this.viewportWidth / 2;
+        this.viewportHalfHeight = this.viewportHeight / 2;
 
         this.canvas.width = this.viewportWidth;
         this.canvas.height = this.viewportHeight;

@@ -3,7 +3,7 @@ class Zoom {
         one: {
             default: true,
             hexPerCanvasHeightInLandscape: 20,
-            hexPerCanvasWidthInPotrait: 50,
+            hexPerCanvasWidthInPotrait: 30,
         },
     };
 
