@@ -14,10 +14,6 @@ class EditorMap {
         });
     };
 
-    createNewMap(input) {
-
-    };
-
     setup() {
         this.miniMap.setup();
         this.parchment.setup();

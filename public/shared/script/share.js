@@ -96,4 +96,70 @@ class Shared {
             coordFontSize,
         };
     };
+
+    static setupHexList(input) {
+        const pixelPerInch = input.hexWidthPerInch * input.hexWidth;
+        const expectedMapWidthInPixel = input.mapWidthInInch * pixelPerInch;
+        const expectedMapHeightInPixel = input.mapHeightInInch * pixelPerInch;
+
+        let yCoord = input.side;
+        let q = 0;
+        let r = 0;
+        let s = 0;
+        let xCoord = input.hexHalfWidth;
+        const result = {
+            hexList: {},
+            mapParam: {},
+        };
+        let maxX = -Infinity;
+        let minQ = Infinity, maxQ = -Infinity;
+        let minS = Infinity, maxS = -Infinity;
+        while (yCoord + input.side <= expectedMapHeightInPixel) {
+            xCoord = input.hexHalfWidth;
+            if (r % 2 != 0) {
+                xCoord = input.hexWidth;
+            }
+            q = - Math.floor(r / 2);
+            s = - (q + r);
+            while (xCoord + input.hexHalfWidth <= expectedMapWidthInPixel) {
+                let aHex = new Hex({
+                    centerX: xCoord,
+                    centerY: yCoord,
+                    q, r, s,
+                    side: input.side,
+                    hexHalfWidth: input.hexHalfWidth,
+                });
+                let listKey = Hex.createListKey({ q, r, s, });
+                result.hexList[listKey] = aHex;
+
+                // Update maxX
+                const right = xCoord + input.hexHalfWidth;
+                maxX = Math.max(maxX, right);
+
+                // Update q and s bounds
+                minQ = Math.min(minQ, q);
+                maxQ = Math.max(maxQ, q);
+                minS = Math.min(minS, s);
+                maxS = Math.max(maxS, s);
+
+                xCoord = xCoord + input.hexWidth;
+                q = q + 1;
+                s = s - 1;
+            }
+            yCoord = yCoord + (input.side * 1.5);
+            r = r + 1;
+        }
+        result.mapParam = {
+            widthInInch: input.mapWidthInInch,
+            heightInInch: input.mapHeightInInch,
+            expectedWidth: expectedMapWidthInPixel,
+            expectedHeight: expectedMapHeightInPixel,
+            width: maxX,
+            height: yCoord - (input.side / 2),
+            minQ, maxQ,
+            minR: 0, maxR: r - 1,
+            minS, maxS,
+        };
+        return result;
+    };
 };
