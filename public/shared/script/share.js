@@ -43,12 +43,8 @@ class Shared {
         return texts;
     };
 
-    static getZoomLevelDataFromStorage(input) {
-        const modeData = Shared.zoomSettings[input.mode];
-        if (modeData == null) {
-            throw new Error(window.taggedString.invalidDisplayMode(input.mode));
-        }
-
+    static getPreCachedZoomLevelDataFromStorage(input) {
+        const modeData = Shared.getDisplayModeData({ mode: input.mode, });
         const defaultZoom = modeData.defaultZoomLevel;
         if (defaultZoom === undefined) {
             throw new Error(window.taggedString.noDefaultZoomLevelFound(input.mode));
@@ -67,11 +63,32 @@ class Shared {
         }
 
         const parsed = parseFloat(stored);
-        const data = modeData.levels[parsed];
-        if (data === undefined || data === null) {
-            throw new Error(window.taggedString.noZoomLevelDataFound(input.mode, parsed));
+        const preCachedData = Shared.getPreCachedZoomLevelData({
+            mode: input.mode,
+            modeData, parsed,
+            cachedData: input.cachedData
+        });
+        return preCachedData;
+    };
+
+    static getPreCachedZoomLevelData(input) {
+        const data = input.modeData.levels[input.parsed];
+        if (!data) {
+            throw new Error(window.taggedString.noZoomLevelDataFound(input.mode, input.parsed));
         }
-        return data;
+        const preCachedData = input.cachedData[input.mode]?.[input.parsed];
+        if (!preCachedData) {
+            throw new Error(window.taggedString.noPreCachedZoomLevelDataFound(input.mode, input.parsed));
+        }
+        return preCachedData;
+    };
+
+    static getDisplayModeData(input) {
+        const modeData = Shared.zoomSettings[input.mode];
+        if (!modeData) {
+            throw new Error(window.taggedString.invalidDisplayMode(input.mode));
+        }
+        return modeData;
     };
 
     static calculateHexParam(input) {
@@ -80,9 +97,11 @@ class Shared {
         }
         let side = 0;
         if (input.mode === 'landscape') {
-            side = input.decidingLength / (1.5 * (input.hexesPerDimension - 1) + 2);
+            let decidingLength = input.canvasHeight;
+            side = decidingLength / (1.5 * (input.hexesPerDimension - 1) + 2);
         } else {
-            side = input.decidingLength / (input.hexesPerDimension * Math.sqrt(3));
+            let decidingLength = input.canvasWidth;
+            side = decidingLength / (input.hexesPerDimension * Math.sqrt(3));
         }
         const width = side * Math.sqrt(3);
         const halfWidth = width / 2;
@@ -159,6 +178,72 @@ class Shared {
             minQ, maxQ,
             minR: 0, maxR: r - 1,
             minS, maxS,
+        };
+        return result;
+    };
+
+    static calculateCameraParam(input) {
+        const maxOffsetX = input.expectedMapWidth - input.mapWidth;
+        const maxOffsetY = input.expectedMapHeight - input.mapHeight;
+        const minOffsetX = input.canvasWidth - input.mapWidth - maxOffsetX;
+        const minOffsetY = input.canvasHeight - input.mapHeight - maxOffsetY;
+        let cameraOffsetX = maxOffsetX;
+        let cameraOffsetY = maxOffsetY;
+        let moveSpeed = input.hexWidth * 1.3;
+        return {
+            maxOffsetX, maxOffsetY,
+            minOffsetX, minOffsetY,
+            cameraOffsetX, cameraOffsetY,
+            moveSpeed,
+        };
+    };
+
+    static calculateParamsFromZoomData(input) {
+        const hexParam = Shared.calculateHexParam({
+            mode: input.mode,
+            hexesPerDimension: input.hexesPerDimension,
+            canvasWidth: input.canvasWidth,
+            canvasHeight: input.canvasHeight,
+        });
+        const metaData = Shared.setupHexList({
+            hexWidthPerInch: Parchment.userMapInput.hexWidthPerInch,
+            mapWidthInInch: Parchment.userMapInput.mapWidthInInch,
+            mapHeightInInch: Parchment.userMapInput.mapHeightInInch,
+            hexWidth: hexParam.width,
+            hexHalfWidth: hexParam.halfWidth,
+            side: hexParam.side,
+        });
+        const cameraParam = Shared.calculateCameraParam({
+            expectedMapWidth: metaData.mapParam.expectedWidth,
+            expectedMapHeight: metaData.mapParam.expectedHeight,
+            mapWidth: metaData.mapParam.width,
+            mapHeight: metaData.mapParam.height,
+            canvasWidth: input.canvasWidth,
+            canvasHeight: input.canvasHeight,
+            hexWidth: hexParam.width,
+        });
+        return {
+            hexParam,
+            mapParam: metaData.mapParam,
+            hexList: metaData.hexList,
+            cameraParam,
+        };
+    };
+
+    static preCalculateParamsFromZoomData(input) {
+        const result = {};
+        for (const [mode, modeData] of Object.entries(Shared.zoomSettings)) {
+            result[mode] = {};
+            const levelData = modeData.levels;
+            for (const [zoomLevel, zoomData] of Object.entries(levelData)) {
+                let params = Shared.calculateParamsFromZoomData({
+                    mode,
+                    hexesPerDimension: zoomData,
+                    canvasWidth: input.canvasWidth,
+                    canvasHeight: input.canvasHeight,
+                });
+                result[mode][zoomLevel] = params;
+            }
         };
         return result;
     };

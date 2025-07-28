@@ -23,10 +23,19 @@ class Parchment {
         hexList: {},
     };
 
+    static userMapInput = {
+        mapWidthInInch: 72,
+        mapHeightInInch: 48,
+        hexWidthPerInch: 1,
+    };
+
     constructor() {
+        this.cameraParam = {};
+        this.userInputParam = {};
         this.canvas = document.getElementById('canvasParchment');
         this.setup();
-        this.addNavigationEvents();
+        this.addPanEvents();
+        this.addZoomEvents();
         this.testDraw({
             hexList: Parchment.gridParam.hexList,
             mapParam: Parchment.mapParam,
@@ -36,39 +45,25 @@ class Parchment {
     };
 
     setup() {
-        const mode = 'landscape';
+
         const divParent = this.canvas.parentElement;
         this.canvas.width = divParent.offsetWidth;
         this.canvas.height = divParent.offsetHeight;
-        this.hexesPerDimension = Shared.getZoomLevelDataFromStorage(
-            {
-                // NOTE: there is no plan to support map editor in portrait mode
-                mode: mode,
-            });
-        Parchment.hexParam = Shared.calculateHexParam({
-            mode: mode,
-            hexesPerDimension: this.hexesPerDimension,
-            decidingLength: this.canvas.height,
-        });
-        const result = Shared.setupHexList({
-            hexWidthPerInch: 1,
-            hexWidth: Parchment.hexParam.width,
-            mapWidthInInch: 72,
-            mapHeightInInch: 48,
-            hexHalfWidth: Parchment.hexParam.halfWidth,
-            side: Parchment.hexParam.side,
-        });
-        Parchment.mapParam = result.mapParam;
-        Parchment.gridParam.hexList = result.hexList;
-        this.cameraParam = this.calculateCameraParam({
-            expectedMapWidth: Parchment.mapParam.expectedWidth,
-            expectedMapHeight: Parchment.mapParam.expectedHeight,
-            mapWidth: Parchment.mapParam.width,
-            mapHeight: Parchment.mapParam.height,
+        this.zoomCachedData = Shared.preCalculateParamsFromZoomData({
             canvasWidth: this.canvas.width,
             canvasHeight: this.canvas.height,
-            hexWidth: Parchment.hexParam.width,
         });
+        // NOTE: there is no plan to support map editor in portrait mode
+        const mode = 'landscape';
+        const preCachedZoomData = Shared.getPreCachedZoomLevelDataFromStorage(
+            {
+                mode,
+                cachedData: this.zoomCachedData,
+            });
+        Parchment.hexParam = preCachedZoomData.hexParam;
+        Parchment.mapParam = preCachedZoomData.mapParam;
+        Parchment.gridParam.hexList = preCachedZoomData.hexList;
+        this.cameraParam = preCachedZoomData.cameraParam;
     };
 
     testDraw(input) {
@@ -112,23 +107,7 @@ class Parchment {
         }
     };
 
-    calculateCameraParam(input) {
-        const maxOffsetX = input.expectedMapWidth - input.mapWidth;
-        const maxOffsetY = input.expectedMapHeight - input.mapHeight;
-        const minOffsetX = input.canvasWidth - input.mapWidth - maxOffsetX;
-        const minOffsetY = input.canvasHeight - input.mapHeight - maxOffsetY;
-        let cameraOffsetX = maxOffsetX;
-        let cameraOffsetY = maxOffsetY;
-        let moveSpeed = input.hexWidth * 1.3;
-        return {
-            maxOffsetX, maxOffsetY,
-            minOffsetX, minOffsetY,
-            cameraOffsetX, cameraOffsetY,
-            moveSpeed,
-        };
-    };
-
-    addNavigationEvents() {
+    addPanEvents() {
         const parent = this;
         document.addEventListener('keydown', (e) => {
             let dx = 0;
@@ -149,6 +128,59 @@ class Parchment {
                 cameraOffsetX: parent.cameraParam.cameraOffsetX,
                 cameraOffsetY: parent.cameraParam.cameraOffsetY,
             });
+        });
+    };
+
+    addZoomEvents() {
+        const mode = 'landscape';
+        const parent = this;
+        this.canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const zoomLevels = Object.keys(Shared.zoomSettings.landscape.levels)
+                .map(Number)
+                .sort((a, b) => a - b);
+
+            let currentZoom = parseFloat(localStorage.getItem(Shared.STORAGE_KEYS.ZOOM_LEVEL));
+
+            const direction = e.deltaY < 0 ? 1 : -1;  // wheel up = zoom in, down = zoom out
+            let currentIndex = zoomLevels.indexOf(currentZoom);
+
+            if (direction > 0 && currentIndex < zoomLevels.length - 1) {
+                currentIndex++;
+            } else if (direction < 0 && currentIndex > 0) {
+                currentIndex--;
+            }
+
+            // Get zoom-related data
+            const newZoom = zoomLevels[currentIndex];
+            const modeData = Shared.getDisplayModeData({ mode, });
+            const preCachedZoomData = Shared.getPreCachedZoomLevelData({
+                mode,
+                modeData,
+                parsed: newZoom,
+                cachedData: parent.zoomCachedData,
+            });
+            Parchment.hexParam = preCachedZoomData.hexParam;
+            Parchment.mapParam = preCachedZoomData.mapParam;
+            Parchment.gridParam.hexList = preCachedZoomData.hexList;
+            parent.cameraParam = preCachedZoomData.cameraParam;
+            localStorage.setItem(Shared.STORAGE_KEYS.ZOOM_LEVEL, newZoom);
+        }, { passive: false });
+    };
+
+    addMouseEvents() {
+        this.userInputParam.mousePos = { x: 0, y: 0 };
+        this.userInputParam.mouseMapPos = { x: 0, y: 0 };
+
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+
+            mousePos.x = e.clientX - rect.left;
+            mousePos.y = e.clientY - rect.top;
+
+            // Adjust for camera offset
+            mouseMapPos.x = mousePos.x - cameraOffsetX;
+            mouseMapPos.y = mousePos.y - cameraOffsetY;
         });
     };
 };

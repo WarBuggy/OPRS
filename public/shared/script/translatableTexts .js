@@ -7,5 +7,6 @@ window.translatableTexts = {
         fallBackToDefaultZoomLevel: `Falling back to default zoom level.`,
         noZoomLevelDataFound: `Mode {mode} does not have zoom level {zoomLevel}.`,
         invalidNumberOfHexes: `Invalid number of hexes: expected positive integer, got {value}.`,
+        noPreCachedZoomLevelDataFound: `Mode {mode} does not have pre-cached data for zoom level {zoomLevel}.`,
     },
 };
