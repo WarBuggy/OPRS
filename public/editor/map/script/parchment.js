@@ -35,12 +35,13 @@ class Parchment {
         this.canvas = document.getElementById('canvasParchment');
         this.setup();
         this.addPanEvents();
+        this.addMouseEvents();
         this.addZoomEvents();
         this.testDraw({
             hexList: Parchment.gridParam.hexList,
             mapParam: Parchment.mapParam,
-            cameraOffsetX: this.cameraParam.cameraOffsetX,
-            cameraOffsetY: this.cameraParam.cameraOffsetY,
+            cameraOffsetX: this.cameraParam.offsetX,
+            cameraOffsetY: this.cameraParam.offsetY,
         });
     };
 
@@ -110,23 +111,25 @@ class Parchment {
     addPanEvents() {
         const parent = this;
         document.addEventListener('keydown', (e) => {
-            let dx = 0;
-            let dy = 0;
             switch (e.key.toLowerCase()) {
-                case 'w': dy += parent.cameraParam.moveSpeed; break;
-                case 'a': dx += parent.cameraParam.moveSpeed; break;
-                case 's': dy -= parent.cameraParam.moveSpeed; break;
-                case 'd': dx -= parent.cameraParam.moveSpeed; break;
+                case 'w': parent.cameraParam.offsetY += parent.cameraParam.moveSpeed; break;
+                case 'a': parent.cameraParam.offsetX += parent.cameraParam.moveSpeed; break;
+                case 's': parent.cameraParam.offsetY -= parent.cameraParam.moveSpeed; break;
+                case 'd': parent.cameraParam.offsetX -= parent.cameraParam.moveSpeed; break;
             };
-            parent.cameraParam.cameraOffsetX = Math.max(parent.cameraParam.minOffsetX,
-                Math.min(parent.cameraParam.maxOffsetX, parent.cameraParam.cameraOffsetX + dx));
-            parent.cameraParam.cameraOffsetY = Math.max(parent.cameraParam.minOffsetY,
-                Math.min(parent.cameraParam.maxOffsetY, parent.cameraParam.cameraOffsetY + dy));
+            parent.cameraParam.offsetX = Math.max(parent.cameraParam.minOffsetX,
+                Math.min(parent.cameraParam.maxOffsetX, parent.cameraParam.offsetX));
+            parent.cameraParam.offsetY = Math.max(parent.cameraParam.minOffsetY,
+                Math.min(parent.cameraParam.maxOffsetY, parent.cameraParam.offsetY));
+            parent.updateMouseMapPosition({
+                userInputParam: parent.userInputParam,
+                cameraParam: parent.cameraParam,
+            });
             parent.testDraw({
                 hexList: Parchment.gridParam.hexList,
                 mapParam: Parchment.mapParam,
-                cameraOffsetX: parent.cameraParam.cameraOffsetX,
-                cameraOffsetY: parent.cameraParam.cameraOffsetY,
+                cameraOffsetX: parent.cameraParam.offsetX,
+                cameraOffsetY: parent.cameraParam.offsetY,
             });
         });
     };
@@ -136,6 +139,12 @@ class Parchment {
         const parent = this;
         this.canvas.addEventListener('wheel', (e) => {
             e.preventDefault();
+
+            // get before zoom data
+            const unpadMapPosBeforeX = parent.userInputParam.mousePos.x - parent.cameraParam.offsetX - Parchment.mapParam.padHorizontal;
+            const unpadMapPosBeforeY = parent.userInputParam.mousePos.y - parent.cameraParam.offsetY - Parchment.mapParam.padVertical;
+            const sideBefore = Parchment.hexParam.side;
+
             const zoomLevels = Object.keys(Shared.zoomSettings.landscape.levels)
                 .map(Number)
                 .sort((a, b) => a - b);
@@ -151,7 +160,7 @@ class Parchment {
                 currentIndex--;
             }
 
-            // Get zoom-related data
+            // Get zoom-related pre-cached data
             const newZoom = zoomLevels[currentIndex];
             const modeData = Shared.getDisplayModeData({ mode, });
             const preCachedZoomData = Shared.getPreCachedZoomLevelData({
@@ -165,22 +174,64 @@ class Parchment {
             Parchment.gridParam.hexList = preCachedZoomData.hexList;
             parent.cameraParam = preCachedZoomData.cameraParam;
             localStorage.setItem(Shared.STORAGE_KEYS.ZOOM_LEVEL, newZoom);
+
+            // Update after zoom
+            const scale = Parchment.hexParam.side / sideBefore;
+            const unpadMapPosAfterX = unpadMapPosBeforeX * scale;
+            const unpadMapPosAfterY = unpadMapPosBeforeY * scale;
+            const newOffsetX = parent.userInputParam.mousePos.x - unpadMapPosAfterX - Parchment.mapParam.padHorizontal;
+            const newOffsetY = parent.userInputParam.mousePos.y - unpadMapPosAfterY - Parchment.mapParam.padVertical;
+            // Make sure within bound
+            parent.cameraParam.offsetX = Math.max(parent.cameraParam.minOffsetX,
+                Math.min(parent.cameraParam.maxOffsetX, newOffsetX));
+            parent.cameraParam.offsetY = Math.max(parent.cameraParam.minOffsetY,
+                Math.min(parent.cameraParam.maxOffsetY, newOffsetY));
+            // Update mouse position on map
+            parent.updateMouseMapPosition({
+                userInputParam: parent.userInputParam,
+                cameraParam: parent.cameraParam,
+            });
+
+            parent.testDraw({
+                hexList: Parchment.gridParam.hexList,
+                mapParam: Parchment.mapParam,
+                cameraOffsetX: parent.cameraParam.offsetX,
+                cameraOffsetY: parent.cameraParam.offsetY,
+            });
         }, { passive: false });
     };
 
     addMouseEvents() {
         this.userInputParam.mousePos = { x: 0, y: 0 };
         this.userInputParam.mouseMapPos = { x: 0, y: 0 };
-
-        canvas.addEventListener('mousemove', (e) => {
-            const rect = canvas.getBoundingClientRect();
-
-            mousePos.x = e.clientX - rect.left;
-            mousePos.y = e.clientY - rect.top;
-
-            // Adjust for camera offset
-            mouseMapPos.x = mousePos.x - cameraOffsetX;
-            mouseMapPos.y = mousePos.y - cameraOffsetY;
+        const parent = this;
+        this.canvas.addEventListener('mousemove', (e) => {
+            const rect = parent.canvas.getBoundingClientRect();
+            parent.userInputParam.mousePos.x = e.clientX - rect.left;
+            parent.userInputParam.mousePos.y = e.clientY - rect.top;
+            parent.updateMouseMapPosition({
+                userInputParam: parent.userInputParam,
+                cameraParam: parent.cameraParam,
+            });
         });
+    };
+
+    updateMouseMapPosition(input) {
+        input.userInputParam.mouseMapPos.x = input.userInputParam.mousePos.x - input.cameraParam.offsetX;
+        input.userInputParam.mouseMapPos.y = input.userInputParam.mousePos.y - input.cameraParam.offsetY;
+        input.userInputParam.currentMouseOverHex = Hex.getHexFromCoord({
+            pointX: input.userInputParam.mouseMapPos.x,
+            pointY: input.userInputParam.mouseMapPos.y,
+            side: Parchment.hexParam.side,
+            hexHalfWidth: Parchment.hexParam.halfWidth,
+            hexList: Parchment.gridParam.hexList,
+        });
+        // console.debug(parent.userInputParam.mouseMapPos);
+        // console.debug(Parchment.mapParam.padHorizontal, Parchment.mapParam.padVertical);
+        // if (parent.userInputParam.currentMouseOverHex) {
+        //     console.debug(`offset X: ${parent.userInputParam.mouseMapPos.x}, offset Y: ${parent.userInputParam.mouseMapPos.y}, (${parent.userInputParam.currentMouseOverHex.q}, ${parent.userInputParam.currentMouseOverHex.r}, ${parent.userInputParam.currentMouseOverHex.s}), centerX: ${parent.userInputParam.currentMouseOverHex.centerX}, centerY: ${parent.userInputParam.currentMouseOverHex.centerY}`);
+        // } else {
+        //     console.debug(`No found in hex list`);
+        // }
     };
 };

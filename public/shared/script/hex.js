@@ -33,6 +33,12 @@ class Hex {
         this.rY = input.centerY;
         this.sX = input.centerX - input.hexHalfWidth * 0.4;
         this.sY = input.centerY + halfHeight * 0.9;
+
+        this.key = Hex.createListKey({
+            q: this.q,
+            r: this.r,
+            s: this.s,
+        })
     };
 
     createPath(input) {
@@ -78,10 +84,22 @@ class Hex {
         let q = (Math.sqrt(3) / 3 * x - 1.0 / 3 * y);
         let r = 2.0 / 3 * y;
         let s = 0 - (q + r);
-        return Hex.cubeRound(q, r, s);
+        return Hex.cubeRound({ fracQ: q, fracR: r, fracS: s, });
     };
 
     static createListKey(input) {
         return `${input.q},${input.r},${input.s}`;
+    };
+
+    static getHexFromCoord(input) {
+        let hexCoord = Hex.pixelToHexCoord({
+            pointX: input.pointX,
+            pointY: input.pointY,
+            side: input.side,
+            hexHalfWidth: input.hexHalfWidth,
+        });
+        let listKey = Hex.createListKey({ q: hexCoord.q, r: hexCoord.r, s: hexCoord.s, });
+        console.debug(listKey);
+        return input.hexList[listKey];
     };
 };

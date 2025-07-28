@@ -178,22 +178,35 @@ class Shared {
             minQ, maxQ,
             minR: 0, maxR: r - 1,
             minS, maxS,
+            padHorizontal: input.side * 2,
+            padVertical: input.side * 2,
         };
         return result;
     };
 
     static calculateCameraParam(input) {
-        const maxOffsetX = input.expectedMapWidth - input.mapWidth;
-        const maxOffsetY = input.expectedMapHeight - input.mapHeight;
-        const minOffsetX = input.canvasWidth - input.mapWidth - maxOffsetX;
-        const minOffsetY = input.canvasHeight - input.mapHeight - maxOffsetY;
-        let cameraOffsetX = maxOffsetX;
-        let cameraOffsetY = maxOffsetY;
+        // Bounds when adding offsets:
+        const maxOffsetX = input.padHorizontal;
+        const maxOffsetY = input.padVertical;
+
+        const minOffsetX = input.canvasWidth - input.mapWidth - input.padHorizontal;
+        const minOffsetY = input.canvasHeight - input.mapHeight - input.padVertical;
+
+        // Center camera: offsetX/Y = canvasCenter - mapCenter
+        const totalWidth = input.mapWidth + input.padHorizontal * 2;
+        const totalHeight = input.mapHeight + input.padVertical * 2;
+        let offsetX = (input.canvasWidth / 2) - (totalWidth / 2);
+        let offsetY = (input.canvasHeight / 2) - (totalHeight / 2);
+        // Clamp to bounds
+        offsetX = Math.min(maxOffsetX, Math.max(minOffsetX, offsetX));
+        offsetY = Math.min(maxOffsetY, Math.max(minOffsetY, offsetY));
+
         let moveSpeed = input.hexWidth * 1.3;
+
         return {
             maxOffsetX, maxOffsetY,
             minOffsetX, minOffsetY,
-            cameraOffsetX, cameraOffsetY,
+            offsetX, offsetY,
             moveSpeed,
         };
     };
@@ -214,8 +227,8 @@ class Shared {
             side: hexParam.side,
         });
         const cameraParam = Shared.calculateCameraParam({
-            expectedMapWidth: metaData.mapParam.expectedWidth,
-            expectedMapHeight: metaData.mapParam.expectedHeight,
+            padHorizontal: metaData.mapParam.padHorizontal,
+            padVertical: metaData.mapParam.padVertical,
             mapWidth: metaData.mapParam.width,
             mapHeight: metaData.mapParam.height,
             canvasWidth: input.canvasWidth,
