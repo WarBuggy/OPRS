@@ -7,15 +7,12 @@ class Parchment extends BaseMainSurface {
 
     constructor(input) {
         super(input);
+        this.addMousePosEvents();
         this.addPanEvents();
-        this.addMouseEvents();
+        this.addMouseDragEvents();
         this.addZoomEvents();
-        this.testDraw({
-            hexList: this.gridParam.hexList,
-            mapParam: this.mapParam,
-            cameraOffsetX: this.cameraParam.offsetX,
-            cameraOffsetY: this.cameraParam.offsetY,
-        });
+
+        requestAnimationFrame(this.loop);
     };
 
     declareZoomSettings() {
@@ -61,21 +58,26 @@ class Parchment extends BaseMainSurface {
         this.mapParam = preCachedZoomData.mapParam;
         this.gridParam = preCachedZoomData.gridParam;
         this.cameraParam = preCachedZoomData.cameraParam;
+
+        this.loop = this.loop.bind(this);
+        this._isLooping = true;
     };
 
-    testDraw(input) {
-        let ctx = this.canvas.getContext('2d');
-        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    animationLoop(timestamp, input) {
+        const parent = input.parent;
+        const cameraParam = parent.cameraParam;
+        let ctx = parent.canvas.getContext('2d');
+        ctx.clearRect(0, 0, parent.canvas.width, parent.canvas.height);
 
         // draw hexes
         ctx.strokeStyle = 'red';
         ctx.beginPath();
-        for (let key in input.hexList) {
-            let aHex = input.hexList[key];
+        for (let key in parent.gridParam.hexList) {
+            let aHex = parent.gridParam.hexList[key];
             aHex.createPath({
                 canvasCtx: ctx,
-                cameraOffsetX: input.cameraOffsetX,
-                cameraOffsetY: input.cameraOffsetY,
+                cameraOffsetX: cameraParam.offsetX,
+                cameraOffsetY: cameraParam.offsetY,
             });
         }
         ctx.stroke();
@@ -83,23 +85,23 @@ class Parchment extends BaseMainSurface {
         // draw map boundary
         ctx.strokeStyle = 'cyan';
         ctx.beginPath();
-        ctx.moveTo(input.cameraOffsetX, input.cameraOffsetY);
-        ctx.lineTo(input.mapParam.width + input.cameraOffsetX, input.cameraOffsetY);
-        ctx.lineTo(input.mapParam.width + input.cameraOffsetX, input.mapParam.height + input.cameraOffsetY);
-        ctx.lineTo(input.cameraOffsetX, input.mapParam.height + input.cameraOffsetY);
-        ctx.lineTo(input.cameraOffsetX, input.cameraOffsetY);
+        ctx.moveTo(cameraParam.offsetX, cameraParam.offsetY);
+        ctx.lineTo(parent.mapParam.width + cameraParam.offsetX, cameraParam.offsetY);
+        ctx.lineTo(parent.mapParam.width + cameraParam.offsetX, parent.mapParam.height + cameraParam.offsetY);
+        ctx.lineTo(cameraParam.offsetX, parent.mapParam.height + cameraParam.offsetY);
+        ctx.lineTo(cameraParam.offsetX, cameraParam.offsetY);
         ctx.stroke();
 
         // draw hex coords
-        ctx.font = this.hexParam.coordFontSize + 'px Arial';
+        ctx.font = parent.hexParam.coordFontSize + 'px Arial';
         ctx.fillStyle = 'green';
         ctx.textBaseline = 'middle';
-        for (let key in input.hexList) {
-            let aHex = input.hexList[key];
+        for (let key in parent.gridParam.hexList) {
+            let aHex = parent.gridParam.hexList[key];
             aHex.drawCoord({
                 canvasCtx: ctx,
-                cameraOffsetX: input.cameraOffsetX,
-                cameraOffsetY: input.cameraOffsetY,
+                cameraOffsetX: cameraParam.offsetX,
+                cameraOffsetY: cameraParam.offsetY,
             });
         }
     };
@@ -113,21 +115,14 @@ class Parchment extends BaseMainSurface {
                 case 's': parent.cameraParam.offsetY -= parent.cameraParam.moveSpeed; break;
                 case 'd': parent.cameraParam.offsetX -= parent.cameraParam.moveSpeed; break;
             };
-            parent.cameraParam.offsetX = Math.max(parent.cameraParam.minOffsetX,
-                Math.min(parent.cameraParam.maxOffsetX, parent.cameraParam.offsetX));
-            parent.cameraParam.offsetY = Math.max(parent.cameraParam.minOffsetY,
-                Math.min(parent.cameraParam.maxOffsetY, parent.cameraParam.offsetY));
+            parent.calculateCameraParam({
+                cameraParam: parent.cameraParam,
+            });
             parent.updateMouseMapPosition({
                 userInputParam: parent.userInputParam,
                 cameraParam: parent.cameraParam,
                 hexParam: parent.hexParam,
                 gridParam: parent.gridParam,
-            });
-            parent.testDraw({
-                hexList: parent.gridParam.hexList,
-                mapParam: parent.mapParam,
-                cameraOffsetX: parent.cameraParam.offsetX,
-                cameraOffsetY: parent.cameraParam.offsetY,
             });
         });
     };
@@ -179,11 +174,10 @@ class Parchment extends BaseMainSurface {
             const unpadMapPosAfterY = unpadMapPosBeforeY * scale;
             const newOffsetX = parent.userInputParam.mousePos.x - unpadMapPosAfterX - parent.mapParam.padHorizontal;
             const newOffsetY = parent.userInputParam.mousePos.y - unpadMapPosAfterY - parent.mapParam.padVertical;
-            // Make sure within bound
-            parent.cameraParam.offsetX = Math.max(parent.cameraParam.minOffsetX,
-                Math.min(parent.cameraParam.maxOffsetX, newOffsetX));
-            parent.cameraParam.offsetY = Math.max(parent.cameraParam.minOffsetY,
-                Math.min(parent.cameraParam.maxOffsetY, newOffsetY));
+            parent.clampCameraOffset({
+                cameraParam: parent.cameraParam,
+                valueX: newOffsetX, valueY: newOffsetY,
+            });
             // Update mouse position on map
             parent.updateMouseMapPosition({
                 userInputParam: parent.userInputParam,
@@ -191,17 +185,10 @@ class Parchment extends BaseMainSurface {
                 hexParam: parent.hexParam,
                 gridParam: parent.gridParam,
             });
-
-            parent.testDraw({
-                hexList: parent.gridParam.hexList,
-                mapParam: parent.mapParam,
-                cameraOffsetX: parent.cameraParam.offsetX,
-                cameraOffsetY: parent.cameraParam.offsetY,
-            });
         }, { passive: false });
     };
 
-    addMouseEvents() {
+    addMousePosEvents() {
         this.userInputParam.mousePos = { x: 0, y: 0 };
         this.userInputParam.mouseMapPos = { x: 0, y: 0 };
         const parent = this;
@@ -235,5 +222,120 @@ class Parchment extends BaseMainSurface {
         // } else {
         //     console.debug(`No found in hex list`);
         // }
+    };
+
+    addMouseDragEvents() {
+        this.userInputParam.isDragging = false;
+        this.userInputParam.lastDragPos = { x: 0, y: 0 };
+        this.userInputParam.dragStartPos = { x: 0, y: 0 };
+        this.userInputParam.dragThreshold = 5; // pixels to distinguish drag vs click
+
+        const parent = this;
+        const canvas = this.canvas;
+        canvas.addEventListener('mousedown', (e) => {
+            parent.userInputParam.isDragging = true;
+            parent.userInputParam.lastDragPos = {
+                x: parent.userInputParam.mousePos.x,
+                y: parent.userInputParam.mousePos.y,
+            };
+            parent.userInputParam.dragStartPos = {
+                x: parent.userInputParam.mousePos.x,
+                y: parent.userInputParam.mousePos.y,
+            };
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (parent.userInputParam.isDragging) {
+                const currentX = parent.userInputParam.mousePos.x;
+                const currentY = parent.userInputParam.mousePos.y;
+                const dx = currentX - parent.userInputParam.lastDragPos.x;
+                const dy = currentY - parent.userInputParam.lastDragPos.y;
+
+                // Calculate total drag distance from start to detect drag threshold
+                const distX = currentX - parent.userInputParam.dragStartPos.x;
+                const distY = currentY - parent.userInputParam.dragStartPos.y;
+                const distTotal = Math.sqrt(distX * distX + distY * distY);
+
+                if (distTotal >= parent.userInputParam.dragThreshold) {
+                    // Update camera offsets
+                    parent.cameraParam.offsetX += dx;
+                    parent.cameraParam.offsetY += dy;
+                    // Clamp offsets
+                    parent.clampCameraOffset({ cameraParam: parent.cameraParam, });
+                    parent.userInputParam.lastDragPos = { x: currentX, y: currentY };
+                }
+            }
+        });
+
+        // Mouseup on canvas ends drag
+        canvas.addEventListener('mouseup', () => {
+            parent.userInputParam.isDragging = false;
+        });
+
+        // Also listen globally for mouseup to handle mouseup outside canvas
+        window.addEventListener('mouseup', () => {
+            parent.userInputParam.isDragging = false;
+        });
+
+        // On mouse leaving canvas, if dragging, simulate mouseup at canvas edge
+        canvas.addEventListener('mouseleave', (e) => {
+            if (parent.userInputParam.isDragging) {
+                // Clamp last drag pos to canvas edge
+                let clampedX = parent.userInputParam.lastDragPos.x;
+                let clampedY = parent.userInputParam.lastDragPos.y;
+                clampedX = Math.min(Math.max(clampedX, 0), parent.canvas.width);
+                clampedY = Math.min(Math.max(clampedY, 0), parent.canvas.height);
+
+                parent.userInputParam.lastDragPos = { x: clampedX, y: clampedY };
+
+                // End dragging
+                parent.userInputParam.isDragging = false;
+            }
+        });
+    };
+
+    clampCameraOffset(input) {
+        const cameraParam = input.cameraParam;
+        if (!input.valueX) {
+            input.valueX = cameraParam.offsetX;
+        }
+        if (!input.valueY) {
+            input.valueY = cameraParam.offsetY;
+        }
+        cameraParam.offsetX = Math.max(cameraParam.minOffsetX,
+            Math.min(cameraParam.maxOffsetX, input.valueX));
+        cameraParam.offsetY = Math.max(cameraParam.minOffsetY,
+            Math.min(cameraParam.maxOffsetY, input.valueY));
+    };
+
+    pauseLoop() {
+        this._isLooping = false;
+        this._lastFrameTime = null;
+    };
+
+    resumeLoop() {
+        if (!this._isLooping) {
+            this._isLooping = true;
+            requestAnimationFrame(this.loop);
+        }
+    };
+
+    loop(timestamp) {
+        if (!this._isLooping) return;
+
+        const minFrameTime = 1000 / 30; // 30 FPS = ~33.33ms
+        if (!this._lastFrameTime) this._lastFrameTime = timestamp;
+
+        const elapsed = timestamp - this._lastFrameTime;
+
+        if (elapsed >= minFrameTime) {
+            this._lastFrameTime = timestamp;
+
+            this.animationLoop(timestamp, {
+                parent: this,
+            });
+        }
+
+        requestAnimationFrame(this.loop);
     };
 };
