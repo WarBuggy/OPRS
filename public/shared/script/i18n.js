@@ -44,7 +44,14 @@ window.addEventListener('DOMContentLoaded', () => {
         // TODO: Expose language controls
         //window.setLanguage = setLanguage;
         //window.getCurrentLanguage = () => currentLanguage;
-
+        // function getCurrentLanguage() {
+        //     let lang = localStorage.getItem(Shared.STORAGE_KEYS.LANGUAGE);
+        //     if (!lang) {
+        //         lang = 'en';
+        //         localStorage.setItem(Shared.STORAGE_KEYS.LANGUAGE, lang);
+        //     }
+        //     return lang;
+        // };
         // Initialize once
         initLanguage();
     })();

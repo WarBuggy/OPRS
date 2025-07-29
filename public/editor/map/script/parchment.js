@@ -1,69 +1,65 @@
-class Parchment {
-    static hexParam = {
-        side: 0,
-        width: 0,
-        halfWidth: 0,
-        height: 0,
-        coordFontSize: 0,
-    };
-
-    static mapParam = {
-        widthInInch: 0,
-        heightInInch: 0,
-        expectedWidth: 0,
-        expectedHeight: 0,
-        width: 0,
-        height: 0,
-        minQ: 0, maxQ: 0,
-        minR: 0, maxR: 0,
-        minS: 0, maxS: 0,
-    };
-
-    static gridParam = {
-        hexList: {},
-    };
-
+class Parchment extends WorkSurface {
     static userMapInput = {
         mapWidthInInch: 72,
         mapHeightInInch: 48,
         hexWidthPerInch: 1,
     };
 
-    constructor() {
-        this.cameraParam = {};
-        this.userInputParam = {};
-        this.canvas = document.getElementById('canvasParchment');
-        this.setup();
+    constructor(input) {
+        super(input);
         this.addPanEvents();
         this.addMouseEvents();
         this.addZoomEvents();
         this.testDraw({
-            hexList: Parchment.gridParam.hexList,
-            mapParam: Parchment.mapParam,
+            hexList: this.gridParam.hexList,
+            mapParam: this.mapParam,
             cameraOffsetX: this.cameraParam.offsetX,
             cameraOffsetY: this.cameraParam.offsetY,
         });
     };
 
-    setup() {
+    declareZoomSettings() {
+        this.zoomSettings = {
+            landscape: {
+                levels: {
+                    0.5: 6,
+                    1: 12,
+                    2: 24,
+                },
+                defaultZoomLevel: 1,
+            },
+            // portrait: {
+            //     levels: {
+            //         0.5: 8,
+            //         1: 16,
+            //         2: 32,
+            //     },
+            //     defaultZoomLevel: 1,
+            // }
+        };
+    };
 
+    setup() {
         const divParent = this.canvas.parentElement;
         this.canvas.width = divParent.offsetWidth;
         this.canvas.height = divParent.offsetHeight;
-        this.zoomCachedData = Shared.preCalculateParamsFromZoomData({
+        this.zoomCachedData = this.preCalculateParamsFromZoomData({
             canvasWidth: this.canvas.width,
             canvasHeight: this.canvas.height,
+            mapWidthInInch: Parchment.userMapInput.mapWidthInInch,
+            mapHeightInInch: Parchment.userMapInput.mapHeightInInch,
+            hexWidthPerInch: Parchment.userMapInput.hexWidthPerInch,
         });
         // NOTE: there is no plan to support map editor in portrait mode
         const mode = 'landscape';
-        const preCachedZoomData = Shared.getPreCachedZoomLevelDataFromStorage(
+        const preCachedZoomData = this.getPreCachedZoomLevelDataFromStorage(
             {
                 mode,
                 cachedData: this.zoomCachedData,
             });
-        Parchment.hexParam = preCachedZoomData.hexParam;
-        Parchment.mapParam = preCachedZoomData.mapParam;
-        Parchment.gridParam.hexList = preCachedZoomData.hexList;
+        this.hexParam = preCachedZoomData.hexParam;
+        this.mapParam = preCachedZoomData.mapParam;
+        this.gridParam = preCachedZoomData.gridParam;
         this.cameraParam = preCachedZoomData.cameraParam;
     };
 
@@ -95,7 +91,7 @@ class Parchment {
         ctx.stroke();
 
         // draw hex coords
-        ctx.font = Parchment.hexParam.coordFontSize + 'px Arial';
+        ctx.font = this.hexParam.coordFontSize + 'px Arial';
         ctx.fillStyle = 'green';
         ctx.textBaseline = 'middle';
         for (let key in input.hexList) {
@@ -124,10 +120,12 @@ class Parchment {
             parent.updateMouseMapPosition({
                 userInputParam: parent.userInputParam,
                 cameraParam: parent.cameraParam,
+                hexParam: parent.hexParam,
+                gridParam: parent.gridParam,
             });
             parent.testDraw({
-                hexList: Parchment.gridParam.hexList,
-                mapParam: Parchment.mapParam,
+                hexList: parent.gridParam.hexList,
+                mapParam: parent.mapParam,
                 cameraOffsetX: parent.cameraParam.offsetX,
                 cameraOffsetY: parent.cameraParam.offsetY,
             });
@@ -141,15 +139,15 @@ class Parchment {
             e.preventDefault();
 
             // get before zoom data
-            const unpadMapPosBeforeX = parent.userInputParam.mousePos.x - parent.cameraParam.offsetX - Parchment.mapParam.padHorizontal;
-            const unpadMapPosBeforeY = parent.userInputParam.mousePos.y - parent.cameraParam.offsetY - Parchment.mapParam.padVertical;
-            const sideBefore = Parchment.hexParam.side;
+            const unpadMapPosBeforeX = parent.userInputParam.mousePos.x - parent.cameraParam.offsetX - this.mapParam.padHorizontal;
+            const unpadMapPosBeforeY = parent.userInputParam.mousePos.y - parent.cameraParam.offsetY - this.mapParam.padVertical;
+            const sideBefore = this.hexParam.side;
 
-            const zoomLevels = Object.keys(Shared.zoomSettings.landscape.levels)
+            const zoomLevels = Object.keys(this.zoomSettings.landscape.levels)
                 .map(Number)
                 .sort((a, b) => a - b);
 
-            let currentZoom = parseFloat(localStorage.getItem(Shared.STORAGE_KEYS.ZOOM_LEVEL));
+            let currentZoom = parseFloat(localStorage.getItem(parent.STORAGE_KEYS.ZOOM_LEVEL));
 
             const direction = e.deltaY < 0 ? 1 : -1;  // wheel up = zoom in, down = zoom out
             let currentIndex = zoomLevels.indexOf(currentZoom);
@@ -162,25 +160,25 @@ class Parchment {
 
             // Get zoom-related pre-cached data
             const newZoom = zoomLevels[currentIndex];
-            const modeData = Shared.getDisplayModeData({ mode, });
-            const preCachedZoomData = Shared.getPreCachedZoomLevelData({
+            const modeData = parent.getDisplayModeData({ mode, });
+            const preCachedZoomData = parent.getPreCachedZoomLevelData({
                 mode,
                 modeData,
                 parsed: newZoom,
                 cachedData: parent.zoomCachedData,
             });
-            Parchment.hexParam = preCachedZoomData.hexParam;
-            Parchment.mapParam = preCachedZoomData.mapParam;
-            Parchment.gridParam.hexList = preCachedZoomData.hexList;
+            parent.hexParam = preCachedZoomData.hexParam;
+            parent.mapParam = preCachedZoomData.mapParam;
+            parent.gridParam = preCachedZoomData.gridParam;
             parent.cameraParam = preCachedZoomData.cameraParam;
-            localStorage.setItem(Shared.STORAGE_KEYS.ZOOM_LEVEL, newZoom);
+            localStorage.setItem(parent.STORAGE_KEYS.ZOOM_LEVEL, newZoom);
 
             // Update after zoom
-            const scale = Parchment.hexParam.side / sideBefore;
+            const scale = parent.hexParam.side / sideBefore;
             const unpadMapPosAfterX = unpadMapPosBeforeX * scale;
             const unpadMapPosAfterY = unpadMapPosBeforeY * scale;
-            const newOffsetX = parent.userInputParam.mousePos.x - unpadMapPosAfterX - Parchment.mapParam.padHorizontal;
-            const newOffsetY = parent.userInputParam.mousePos.y - unpadMapPosAfterY - Parchment.mapParam.padVertical;
+            const newOffsetX = parent.userInputParam.mousePos.x - unpadMapPosAfterX - parent.mapParam.padHorizontal;
+            const newOffsetY = parent.userInputParam.mousePos.y - unpadMapPosAfterY - parent.mapParam.padVertical;
             // Make sure within bound
             parent.cameraParam.offsetX = Math.max(parent.cameraParam.minOffsetX,
                 Math.min(parent.cameraParam.maxOffsetX, newOffsetX));
@@ -190,11 +188,13 @@ class Parchment {
             parent.updateMouseMapPosition({
                 userInputParam: parent.userInputParam,
                 cameraParam: parent.cameraParam,
+                hexParam: parent.hexParam,
+                gridParam: parent.gridParam,
             });
 
             parent.testDraw({
-                hexList: Parchment.gridParam.hexList,
-                mapParam: Parchment.mapParam,
+                hexList: parent.gridParam.hexList,
+                mapParam: parent.mapParam,
                 cameraOffsetX: parent.cameraParam.offsetX,
                 cameraOffsetY: parent.cameraParam.offsetY,
             });
@@ -212,6 +212,8 @@ class Parchment {
             parent.updateMouseMapPosition({
                 userInputParam: parent.userInputParam,
                 cameraParam: parent.cameraParam,
+                hexParam: parent.hexParam,
+                gridParam: parent.gridParam,
             });
         });
     };
@@ -222,9 +224,9 @@ class Parchment {
         input.userInputParam.currentMouseOverHex = Hex.getHexFromCoord({
             pointX: input.userInputParam.mouseMapPos.x,
             pointY: input.userInputParam.mouseMapPos.y,
-            side: Parchment.hexParam.side,
-            hexHalfWidth: Parchment.hexParam.halfWidth,
-            hexList: Parchment.gridParam.hexList,
+            side: input.hexParam.side,
+            hexHalfWidth: input.hexParam.halfWidth,
+            hexList: input.gridParam.hexList,
         });
         // console.debug(parent.userInputParam.mouseMapPos);
         // console.debug(Parchment.mapParam.padHorizontal, Parchment.mapParam.padVertical);
