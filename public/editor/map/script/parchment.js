@@ -1,4 +1,4 @@
-class Parchment extends WorkSurface {
+class Parchment extends BaseMainSurface {
     static userMapInput = {
         mapWidthInInch: 72,
         mapHeightInInch: 48,

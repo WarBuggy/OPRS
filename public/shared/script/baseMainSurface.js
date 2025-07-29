@@ -1,4 +1,4 @@
-class WorkSurface {
+class BaseMainSurface {
     constructor(input) {
         this.hexParam = {
             side: 0,
@@ -36,11 +36,11 @@ class WorkSurface {
         const modeData = this.getDisplayModeData({ mode: input.mode, });
         const defaultZoom = modeData.defaultZoomLevel;
         if (defaultZoom === undefined) {
-            throw new Error(window.taggedString.noDefaultZoomLevelFound(input.mode));
+            throw new Error(`[BaseMainSurface] ${window.taggedString.noDefaultZoomLevelFound(input.mode)}`);
         }
         const levels = Object.keys(modeData.levels).map(Number);
         if (!levels.includes(defaultZoom)) {
-            throw new Error(taggedString.noDefaultZoomLevelDataFound(input.mode));
+            throw new Error(`[BaseMainSurface] ${taggedString.noDefaultZoomLevelDataFound(input.mode)}`);
         }
 
         const stored = localStorage.getItem(this.STORAGE_KEYS.ZOOM_LEVEL);
@@ -63,11 +63,11 @@ class WorkSurface {
     getPreCachedZoomLevelData(input) {
         const data = input.modeData.levels[input.parsed];
         if (!data) {
-            throw new Error(window.taggedString.noZoomLevelDataFound(input.mode, input.parsed));
+            throw new Error(`[BaseMainSurface] ${window.taggedString.noZoomLevelDataFound(input.mode, input.parsed)}`);
         }
         const preCachedData = input.cachedData[input.mode]?.[input.parsed];
         if (!preCachedData) {
-            throw new Error(window.taggedString.noPreCachedZoomLevelDataFound(input.mode, input.parsed));
+            throw new Error(`[BaseMainSurface] ${window.taggedString.noPreCachedZoomLevelDataFound(input.mode, input.parsed)}`);
         }
         return preCachedData;
     };
@@ -75,14 +75,14 @@ class WorkSurface {
     getDisplayModeData(input) {
         const modeData = this.zoomSettings[input.mode];
         if (!modeData) {
-            throw new Error(window.taggedString.invalidDisplayMode(input.mode));
+            throw new Error(`[BaseMainSurface] ${window.taggedString.invalidDisplayMode(input.mode)}`);
         }
         return modeData;
     };
 
     calculateHexParam(input) {
         if (!Number.isInteger(input.hexesPerDimension) || input.hexesPerDimension < 1) {
-            throw new Error(window.taggedString.invalidNumberOfHexes());
+            throw new Error(`[BaseMainSurface] ${window.taggedString.invalidNumberOfHexes()}`);
         }
         let side = 0;
         if (input.mode === 'landscape') {
@@ -257,10 +257,10 @@ class WorkSurface {
     };
 
     declareZoomSettings() {
-        throw new Error("Zoom settings must be implemented in subclass!");
+        throw new Error("[BaseMainSurface] Zoom settings must be implemented in subclass!");
     };
 
     setup() {
-        throw new Error("Setup must be implemented in subclass!");
+        throw new Error("BaseMainSurface] Setup must be implemented in subclass!");
     };
 };
