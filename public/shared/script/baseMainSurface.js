@@ -14,20 +14,40 @@ class BaseMainSurface {
             expectedHeight: 0,
             width: 0,
             height: 0,
+            padHorizontal: 0,
+            padVertical: 0,
+        };
+        this.gridParam = {
+            hexList: {},
             minQ: 0, maxQ: 0,
             minR: 0, maxR: 0,
             minS: 0, maxS: 0,
         };
-        this.gridParam = {
-            hexList: {},
+        this.cameraParam = {
+            maxOffsetX: Infinity, maxOffsetY: Infinity,
+            minOffsetX: -Infinity, minOffsetY: -Infinity,
+            offsetX: null, offsetY: null,
+            moveSpeed: null,
         };
-        this.cameraParam = {};
-        this.userInputParam = {};
-
+        this.userInputParam = {
+            mousePos: { x: 0, y: 0 },
+            mouseMapPos: { x: 0, y: 0 },
+            currentMouseOverHex: null,
+            isDragging: false,
+            lastDragPos: { x: 0, y: 0 },
+            dragStartPos: { x: 0, y: 0 },
+            dragThreshold: 5,
+        };
         this.STORAGE_KEYS = {
             ZOOM_LEVEL: input.storageKeyZoomLevel,
         };
         this.canvas = document.getElementById(input.canvasId);
+        if (!this.canvas) throw new Error(`[BaseMainSurface] Parchment canvas not found`);
+        this.canvas.width = this.canvas.parentElement.offsetWidth;
+        this.canvas.height = this.canvas.parentElement.offsetHeight;
+        this._isLooping = true;
+        this._lastFrameTime = null;
+        this.emitter = input.emitter;
         this.declareZoomSettings();
         this.setup();
     };
@@ -254,6 +274,39 @@ class BaseMainSurface {
             }
         };
         return result;
+    };
+
+    clampCameraOffset(input) {
+        const cameraParam = input.cameraParam;
+        if (!input.valueX) {
+            input.valueX = cameraParam.offsetX;
+        }
+        if (!input.valueY) {
+            input.valueY = cameraParam.offsetY;
+        }
+        cameraParam.offsetX = Math.max(cameraParam.minOffsetX,
+            Math.min(cameraParam.maxOffsetX, input.valueX));
+        cameraParam.offsetY = Math.max(cameraParam.minOffsetY,
+            Math.min(cameraParam.maxOffsetY, input.valueY));
+    };
+
+    updateMouseMapPosition(input) {
+        input.userInputParam.mouseMapPos.x = input.userInputParam.mousePos.x - input.cameraParam.offsetX;
+        input.userInputParam.mouseMapPos.y = input.userInputParam.mousePos.y - input.cameraParam.offsetY;
+        input.userInputParam.currentMouseOverHex = Hex.getHexFromCoord({
+            pointX: input.userInputParam.mouseMapPos.x,
+            pointY: input.userInputParam.mouseMapPos.y,
+            side: input.hexParam.side,
+            hexHalfWidth: input.hexParam.halfWidth,
+            hexList: input.gridParam.hexList,
+        });
+        // console.debug(parent.userInputParam.mouseMapPos);
+        // console.debug(Parchment.mapParam.padHorizontal, Parchment.mapParam.padVertical);
+        // if (parent.userInputParam.currentMouseOverHex) {
+        //     console.debug(`offset X: ${parent.userInputParam.mouseMapPos.x}, offset Y: ${parent.userInputParam.mouseMapPos.y}, (${parent.userInputParam.currentMouseOverHex.q}, ${parent.userInputParam.currentMouseOverHex.r}, ${parent.userInputParam.currentMouseOverHex.s}), centerX: ${parent.userInputParam.currentMouseOverHex.centerX}, centerY: ${parent.userInputParam.currentMouseOverHex.centerY}`);
+        // } else {
+        //     console.debug(`No found in hex list`);
+        // }
     };
 
     declareZoomSettings() {

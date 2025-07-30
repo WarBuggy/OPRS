@@ -7,39 +7,17 @@ class Parchment extends BaseMainSurface {
 
     constructor(input) {
         super(input);
-        this.addMousePosEvents();
-        this.addPanEvents();
+        this.declareZoomSettings();
+        this.setup();
+        this.addKeyboardPanEvent();
+        this.addMouseMoveEvent();
+        this.addMouseWheelZoomEvent();
         this.addMouseDragEvents();
-        this.addZoomEvents();
-
-        requestAnimationFrame(this.loop);
-    };
-
-    declareZoomSettings() {
-        this.zoomSettings = {
-            landscape: {
-                levels: {
-                    0.5: 6,
-                    1: 12,
-                    2: 24,
-                },
-                defaultZoomLevel: 1,
-            },
-            // portrait: {
-            //     levels: {
-            //         0.5: 8,
-            //         1: 16,
-            //         2: 32,
-            //     },
-            //     defaultZoomLevel: 1,
-            // }
-        };
+        // Bind loop so manager can call it
+        this.loop = this.loop.bind(this);
     };
 
     setup() {
-        const divParent = this.canvas.parentElement;
-        this.canvas.width = divParent.offsetWidth;
-        this.canvas.height = divParent.offsetHeight;
         this.zoomCachedData = this.preCalculateParamsFromZoomData({
             canvasWidth: this.canvas.width,
             canvasHeight: this.canvas.height,
@@ -49,35 +27,29 @@ class Parchment extends BaseMainSurface {
         });
         // NOTE: there is no plan to support map editor in portrait mode
         const mode = 'landscape';
-        const preCachedZoomData = this.getPreCachedZoomLevelDataFromStorage(
-            {
-                mode,
-                cachedData: this.zoomCachedData,
-            });
+        const preCachedZoomData = this.getPreCachedZoomLevelDataFromStorage({
+            mode,
+            cachedData: this.zoomCachedData,
+        });
+
         this.hexParam = preCachedZoomData.hexParam;
         this.mapParam = preCachedZoomData.mapParam;
         this.gridParam = preCachedZoomData.gridParam;
         this.cameraParam = preCachedZoomData.cameraParam;
-
-        this.loop = this.loop.bind(this);
-        this._isLooping = true;
     };
 
-    animationLoop(timestamp, input) {
-        const parent = input.parent;
-        const cameraParam = parent.cameraParam;
-        let ctx = parent.canvas.getContext('2d');
-        ctx.clearRect(0, 0, parent.canvas.width, parent.canvas.height);
-
+    animationLoop(timestamp) {
+        const ctx = this.canvas.getContext('2d');
+        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         // draw hexes
         ctx.strokeStyle = 'red';
         ctx.beginPath();
-        for (let key in parent.gridParam.hexList) {
-            let aHex = parent.gridParam.hexList[key];
+        for (let key in this.gridParam.hexList) {
+            let aHex = this.gridParam.hexList[key];
             aHex.createPath({
                 canvasCtx: ctx,
-                cameraOffsetX: cameraParam.offsetX,
-                cameraOffsetY: cameraParam.offsetY,
+                cameraOffsetX: this.cameraParam.offsetX,
+                cameraOffsetY: this.cameraParam.offsetY,
             });
         }
         ctx.stroke();
@@ -85,28 +57,28 @@ class Parchment extends BaseMainSurface {
         // draw map boundary
         ctx.strokeStyle = 'cyan';
         ctx.beginPath();
-        ctx.moveTo(cameraParam.offsetX, cameraParam.offsetY);
-        ctx.lineTo(parent.mapParam.width + cameraParam.offsetX, cameraParam.offsetY);
-        ctx.lineTo(parent.mapParam.width + cameraParam.offsetX, parent.mapParam.height + cameraParam.offsetY);
-        ctx.lineTo(cameraParam.offsetX, parent.mapParam.height + cameraParam.offsetY);
-        ctx.lineTo(cameraParam.offsetX, cameraParam.offsetY);
+        ctx.moveTo(this.cameraParam.offsetX, this.cameraParam.offsetY);
+        ctx.lineTo(this.mapParam.width + this.cameraParam.offsetX, this.cameraParam.offsetY);
+        ctx.lineTo(this.mapParam.width + this.cameraParam.offsetX, this.mapParam.height + this.cameraParam.offsetY);
+        ctx.lineTo(this.cameraParam.offsetX, this.mapParam.height + this.cameraParam.offsetY);
+        ctx.lineTo(this.cameraParam.offsetX, this.cameraParam.offsetY);
         ctx.stroke();
 
         // draw hex coords
-        ctx.font = parent.hexParam.coordFontSize + 'px Arial';
+        ctx.font = this.hexParam.coordFontSize + 'px Arial';
         ctx.fillStyle = 'green';
         ctx.textBaseline = 'middle';
-        for (let key in parent.gridParam.hexList) {
-            let aHex = parent.gridParam.hexList[key];
+        for (let key in this.gridParam.hexList) {
+            let aHex = this.gridParam.hexList[key];
             aHex.drawCoord({
                 canvasCtx: ctx,
-                cameraOffsetX: cameraParam.offsetX,
-                cameraOffsetY: cameraParam.offsetY,
+                cameraOffsetX: this.cameraParam.offsetX,
+                cameraOffsetY: this.cameraParam.offsetY,
             });
-        }
+        };
     };
 
-    addPanEvents() {
+    addKeyboardPanEvent() {
         const parent = this;
         document.addEventListener('keydown', (e) => {
             switch (e.key.toLowerCase()) {
@@ -115,9 +87,27 @@ class Parchment extends BaseMainSurface {
                 case 's': parent.cameraParam.offsetY -= parent.cameraParam.moveSpeed; break;
                 case 'd': parent.cameraParam.offsetX -= parent.cameraParam.moveSpeed; break;
             };
-            parent.calculateCameraParam({
+            parent.clampCameraOffset({
                 cameraParam: parent.cameraParam,
             });
+            parent.updateMouseMapPosition({
+                userInputParam: parent.userInputParam,
+                cameraParam: parent.cameraParam,
+                hexParam: parent.hexParam,
+                gridParam: parent.gridParam,
+            });
+            parent.emitter.emit(Shared.EMITTER_SIGNAL.PARCHMENT_PANNED);
+        });
+    };
+
+    addMouseMoveEvent() {
+        this.userInputParam.mousePos = { x: 0, y: 0 };
+        this.userInputParam.mouseMapPos = { x: 0, y: 0 };
+        const parent = this;
+        this.canvas.addEventListener('mousemove', (e) => {
+            const rect = parent.canvas.getBoundingClientRect();
+            parent.userInputParam.mousePos.x = e.clientX - rect.left;
+            parent.userInputParam.mousePos.y = e.clientY - rect.top;
             parent.updateMouseMapPosition({
                 userInputParam: parent.userInputParam,
                 cameraParam: parent.cameraParam,
@@ -127,7 +117,7 @@ class Parchment extends BaseMainSurface {
         });
     };
 
-    addZoomEvents() {
+    addMouseWheelZoomEvent() {
         const mode = 'landscape';
         const parent = this;
         this.canvas.addEventListener('wheel', (e) => {
@@ -185,43 +175,9 @@ class Parchment extends BaseMainSurface {
                 hexParam: parent.hexParam,
                 gridParam: parent.gridParam,
             });
+
+            parent.emitter.emit(Shared.EMITTER_SIGNAL.PARCHMENT_ZOOMED);
         }, { passive: false });
-    };
-
-    addMousePosEvents() {
-        this.userInputParam.mousePos = { x: 0, y: 0 };
-        this.userInputParam.mouseMapPos = { x: 0, y: 0 };
-        const parent = this;
-        this.canvas.addEventListener('mousemove', (e) => {
-            const rect = parent.canvas.getBoundingClientRect();
-            parent.userInputParam.mousePos.x = e.clientX - rect.left;
-            parent.userInputParam.mousePos.y = e.clientY - rect.top;
-            parent.updateMouseMapPosition({
-                userInputParam: parent.userInputParam,
-                cameraParam: parent.cameraParam,
-                hexParam: parent.hexParam,
-                gridParam: parent.gridParam,
-            });
-        });
-    };
-
-    updateMouseMapPosition(input) {
-        input.userInputParam.mouseMapPos.x = input.userInputParam.mousePos.x - input.cameraParam.offsetX;
-        input.userInputParam.mouseMapPos.y = input.userInputParam.mousePos.y - input.cameraParam.offsetY;
-        input.userInputParam.currentMouseOverHex = Hex.getHexFromCoord({
-            pointX: input.userInputParam.mouseMapPos.x,
-            pointY: input.userInputParam.mouseMapPos.y,
-            side: input.hexParam.side,
-            hexHalfWidth: input.hexParam.halfWidth,
-            hexList: input.gridParam.hexList,
-        });
-        // console.debug(parent.userInputParam.mouseMapPos);
-        // console.debug(Parchment.mapParam.padHorizontal, Parchment.mapParam.padVertical);
-        // if (parent.userInputParam.currentMouseOverHex) {
-        //     console.debug(`offset X: ${parent.userInputParam.mouseMapPos.x}, offset Y: ${parent.userInputParam.mouseMapPos.y}, (${parent.userInputParam.currentMouseOverHex.q}, ${parent.userInputParam.currentMouseOverHex.r}, ${parent.userInputParam.currentMouseOverHex.s}), centerX: ${parent.userInputParam.currentMouseOverHex.centerX}, centerY: ${parent.userInputParam.currentMouseOverHex.centerY}`);
-        // } else {
-        //     console.debug(`No found in hex list`);
-        // }
     };
 
     addMouseDragEvents() {
@@ -263,6 +219,7 @@ class Parchment extends BaseMainSurface {
                     // Clamp offsets
                     parent.clampCameraOffset({ cameraParam: parent.cameraParam, });
                     parent.userInputParam.lastDragPos = { x: currentX, y: currentY };
+                    parent.emitter.emit(Shared.EMITTER_SIGNAL.PARCHMENT_PANNED);
                 }
             }
         });
@@ -285,27 +242,23 @@ class Parchment extends BaseMainSurface {
                 let clampedY = parent.userInputParam.lastDragPos.y;
                 clampedX = Math.min(Math.max(clampedX, 0), parent.canvas.width);
                 clampedY = Math.min(Math.max(clampedY, 0), parent.canvas.height);
-
                 parent.userInputParam.lastDragPos = { x: clampedX, y: clampedY };
-
                 // End dragging
                 parent.userInputParam.isDragging = false;
             }
         });
     };
 
-    clampCameraOffset(input) {
-        const cameraParam = input.cameraParam;
-        if (!input.valueX) {
-            input.valueX = cameraParam.offsetX;
-        }
-        if (!input.valueY) {
-            input.valueY = cameraParam.offsetY;
-        }
-        cameraParam.offsetX = Math.max(cameraParam.minOffsetX,
-            Math.min(cameraParam.maxOffsetX, input.valueX));
-        cameraParam.offsetY = Math.max(cameraParam.minOffsetY,
-            Math.min(cameraParam.maxOffsetY, input.valueY));
+    loop(timestamp) {
+        if (!this._isLooping) return;
+        const minFrameTime = 1000 / 30; // 30 FPS
+        if (!this._lastFrameTime) this._lastFrameTime = timestamp;
+        const elapsed = timestamp - this._lastFrameTime;
+        if (elapsed >= minFrameTime) {
+            this._lastFrameTime = timestamp;
+            this.animationLoop(timestamp);
+        };
+        requestAnimationFrame(this.loop);
     };
 
     pauseLoop() {
@@ -320,22 +273,24 @@ class Parchment extends BaseMainSurface {
         }
     };
 
-    loop(timestamp) {
-        if (!this._isLooping) return;
-
-        const minFrameTime = 1000 / 30; // 30 FPS = ~33.33ms
-        if (!this._lastFrameTime) this._lastFrameTime = timestamp;
-
-        const elapsed = timestamp - this._lastFrameTime;
-
-        if (elapsed >= minFrameTime) {
-            this._lastFrameTime = timestamp;
-
-            this.animationLoop(timestamp, {
-                parent: this,
-            });
-        }
-
-        requestAnimationFrame(this.loop);
+    declareZoomSettings() {
+        this.zoomSettings = {
+            landscape: {
+                levels: {
+                    0.5: 6,
+                    1: 12,
+                    2: 24,
+                },
+                defaultZoomLevel: 1,
+            },
+            // portrait: {
+            //     levels: {
+            //         0.5: 8,
+            //         1: 16,
+            //         2: 32,
+            //     },
+            //     defaultZoomLevel: 1,
+            // }
+        };
     };
 };

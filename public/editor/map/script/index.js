@@ -4,12 +4,16 @@ window.addEventListener('load', function () {
 
 class EditorMap {
     constructor() {
-        this.miniMap = new MiniMap();
-        this.parchment = new Parchment({
-            canvasId: 'canvasParchment',
-            storageKeyZoomLevel: Shared.STORAGE_KEYS.ZOOM_LEVEL_MAP_EDITOR,
+        this.managerMap = new ManagerMap({
+            parchment: {
+                canvasId: 'canvasParchment',
+                storageKeyZoomLevel: Shared.STORAGE_KEYS.ZOOM_LEVEL_MAP_EDITOR_PARCHMENT,
+            },
+            miniMap: {
+                canvasId: 'canvasMiniMap',
+                storageKeyZoomLevel: Shared.STORAGE_KEYS.ZOOM_LEVEL_MAP_EDITOR_MINI_MAP,
+            },
         });
-
         let parent = this;
 
         window.addEventListener('resize', function () {
@@ -18,7 +22,5 @@ class EditorMap {
     };
 
     setup() {
-        this.miniMap.setup();
-        this.parchment.setup();
     };
 };
