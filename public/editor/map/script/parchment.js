@@ -7,8 +7,6 @@ class Parchment extends BaseMainSurface {
 
     constructor(input) {
         super(input);
-        this.declareZoomSettings();
-        this.setup();
         this.addKeyboardPanEvent();
         this.addMouseMoveEvent();
         this.addMouseWheelZoomEvent();
@@ -39,39 +37,33 @@ class Parchment extends BaseMainSurface {
     };
 
     animationLoop(timestamp) {
-        const ctx = this.canvas.getContext('2d');
-        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         // draw hexes
-        ctx.strokeStyle = 'red';
-        ctx.beginPath();
+        this.ctx.strokeStyle = 'red';
+        this.ctx.beginPath();
         for (let key in this.gridParam.hexList) {
             let aHex = this.gridParam.hexList[key];
             aHex.createPath({
-                canvasCtx: ctx,
+                canvasCtx: this.ctx,
                 cameraOffsetX: this.cameraParam.offsetX,
                 cameraOffsetY: this.cameraParam.offsetY,
             });
         }
-        ctx.stroke();
+        this.ctx.stroke();
 
         // draw map boundary
-        ctx.strokeStyle = 'cyan';
-        ctx.beginPath();
-        ctx.moveTo(this.cameraParam.offsetX, this.cameraParam.offsetY);
-        ctx.lineTo(this.mapParam.width + this.cameraParam.offsetX, this.cameraParam.offsetY);
-        ctx.lineTo(this.mapParam.width + this.cameraParam.offsetX, this.mapParam.height + this.cameraParam.offsetY);
-        ctx.lineTo(this.cameraParam.offsetX, this.mapParam.height + this.cameraParam.offsetY);
-        ctx.lineTo(this.cameraParam.offsetX, this.cameraParam.offsetY);
-        ctx.stroke();
+        this.ctx.strokeStyle = 'cyan';
+        this.ctx.strokeRect(this.cameraParam.offsetX, this.cameraParam.offsetY,
+            this.mapParam.width, this.mapParam.height);
 
         // draw hex coords
-        ctx.font = this.hexParam.coordFontSize + 'px Arial';
-        ctx.fillStyle = 'green';
-        ctx.textBaseline = 'middle';
+        this.ctx.font = this.hexParam.coordFontSize + 'px Arial';
+        this.ctx.fillStyle = 'green';
+        this.ctx.textBaseline = 'middle';
         for (let key in this.gridParam.hexList) {
             let aHex = this.gridParam.hexList[key];
             aHex.drawCoord({
-                canvasCtx: ctx,
+                canvasCtx: this.ctx,
                 cameraOffsetX: this.cameraParam.offsetX,
                 cameraOffsetY: this.cameraParam.offsetY,
             });
@@ -175,7 +167,6 @@ class Parchment extends BaseMainSurface {
                 hexParam: parent.hexParam,
                 gridParam: parent.gridParam,
             });
-
             parent.emitter.emit(Shared.EMITTER_SIGNAL.PARCHMENT_ZOOMED);
         }, { passive: false });
     };

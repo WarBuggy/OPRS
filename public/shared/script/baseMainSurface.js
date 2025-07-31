@@ -28,6 +28,7 @@ class BaseMainSurface {
             minOffsetX: -Infinity, minOffsetY: -Infinity,
             offsetX: null, offsetY: null,
             moveSpeed: null,
+            zoomLevel: null,
         };
         this.userInputParam = {
             mousePos: { x: 0, y: 0 },
@@ -43,6 +44,7 @@ class BaseMainSurface {
         };
         this.canvas = document.getElementById(input.canvasId);
         if (!this.canvas) throw new Error(`[BaseMainSurface] Parchment canvas not found`);
+        this.ctx = this.canvas.getContext('2d');
         this.canvas.width = this.canvas.parentElement.offsetWidth;
         this.canvas.height = this.canvas.parentElement.offsetHeight;
         this._isLooping = true;
@@ -213,13 +215,13 @@ class BaseMainSurface {
         offsetX = Math.min(maxOffsetX, Math.max(minOffsetX, offsetX));
         offsetY = Math.min(maxOffsetY, Math.max(minOffsetY, offsetY));
 
-        let moveSpeed = input.hexWidth * 1.3;
-
+        const moveSpeed = input.hexWidth * 1.3;
         return {
             maxOffsetX, maxOffsetY,
             minOffsetX, minOffsetY,
             offsetX, offsetY,
             moveSpeed,
+            zoomLevel: input.zoomLevel,
         };
     };
 
@@ -246,6 +248,7 @@ class BaseMainSurface {
             canvasWidth: input.canvasWidth,
             canvasHeight: input.canvasHeight,
             hexWidth: hexParam.width,
+            zoomLevel: input.zoomLevel,
         });
         return {
             hexParam,
@@ -269,6 +272,7 @@ class BaseMainSurface {
                     mapWidthInInch: input.mapWidthInInch,
                     mapHeightInInch: input.mapHeightInInch,
                     hexWidthPerInch: input.hexWidthPerInch,
+                    zoomLevel,
                 });
                 result[mode][zoomLevel] = params;
             }
