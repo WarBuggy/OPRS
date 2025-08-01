@@ -1,3 +1,6 @@
+// Coord system starts at top left corner of the map (i.e top left corner is 0,0).
+// The padded edge is 1 inch on all four sides of the map. That makes the coord of the padded-map's top left corner is in the negative.
+
 class BaseMainSurface {
     constructor(input) {
         this.hexParam = {
@@ -186,8 +189,8 @@ class BaseMainSurface {
             expectedHeight: expectedMapHeightInPixel,
             width: maxX,
             height: yCoord - (input.side / 2),
-            padHorizontal: input.side * 2,
-            padVertical: input.side * 2,
+            padHorizontal: pixelPerInch * 1,
+            padVertical: pixelPerInch * 1,
         };
         result.gridParam.minQ = minQ;
         result.gridParam.maxQ = maxQ;
@@ -200,20 +203,18 @@ class BaseMainSurface {
 
     calculateCameraParam(input) {
         // Bounds when adding offsets:
-        const maxOffsetX = input.padHorizontal;
-        const maxOffsetY = input.padVertical;
+        const minOffsetX = -input.padHorizontal;
+        const minOffsetY = -input.padVertical;
 
-        const minOffsetX = input.canvasWidth - input.mapWidth - input.padHorizontal;
-        const minOffsetY = input.canvasHeight - input.mapHeight - input.padVertical;
+        const maxOffsetX = input.mapWidth + input.padHorizontal - input.canvasWidth;
+        const maxOffsetY = input.mapHeight + input.padVertical - input.canvasHeight;
 
-        // Center camera: offsetX/Y = canvasCenter - mapCenter
-        const totalWidth = input.mapWidth + input.padHorizontal * 2;
-        const totalHeight = input.mapHeight + input.padVertical * 2;
-        let offsetX = (input.canvasWidth / 2) - (totalWidth / 2);
-        let offsetY = (input.canvasHeight / 2) - (totalHeight / 2);
+        // Center camera
+        let offsetX = (input.mapWidth - input.canvasWidth) / 2;
+        let offsetY = (input.mapHeight - input.canvasHeight) / 2;
         // Clamp to bounds
-        offsetX = Math.min(maxOffsetX, Math.max(minOffsetX, offsetX));
-        offsetY = Math.min(maxOffsetY, Math.max(minOffsetY, offsetY));
+        offsetX = Shared.clamp({ max: maxOffsetX, min: minOffsetX, value: offsetX, });
+        offsetY = Shared.clamp({ max: maxOffsetY, min: minOffsetY, value: offsetY, });
 
         const moveSpeed = input.hexWidth * 1.3;
         return {
@@ -288,22 +289,25 @@ class BaseMainSurface {
         if (!input.valueY) {
             input.valueY = cameraParam.offsetY;
         }
-        cameraParam.offsetX = Math.max(cameraParam.minOffsetX,
-            Math.min(cameraParam.maxOffsetX, input.valueX));
-        cameraParam.offsetY = Math.max(cameraParam.minOffsetY,
-            Math.min(cameraParam.maxOffsetY, input.valueY));
+        cameraParam.offsetX = Shared.clamp({
+            max: cameraParam.maxOffsetX, min: cameraParam.minOffsetX, value: input.valueX,
+        });
+        cameraParam.offsetY = Shared.clamp({
+            max: cameraParam.maxOffsetY, min: cameraParam.minOffsetY, value: input.valueY,
+        });
     };
 
     updateMouseMapPosition(input) {
-        input.userInputParam.mouseMapPos.x = input.userInputParam.mousePos.x - input.cameraParam.offsetX;
-        input.userInputParam.mouseMapPos.y = input.userInputParam.mousePos.y - input.cameraParam.offsetY;
-        input.userInputParam.currentMouseOverHex = Hex.getHexFromCoord({
+        input.userInputParam.mouseMapPos.x = input.userInputParam.mousePos.x + input.cameraParam.offsetX;
+        input.userInputParam.mouseMapPos.y = input.userInputParam.mousePos.y + input.cameraParam.offsetY;
+        const currentMouseOverHex = Hex.getHexFromCoord({
             pointX: input.userInputParam.mouseMapPos.x,
             pointY: input.userInputParam.mouseMapPos.y,
             side: input.hexParam.side,
             hexHalfWidth: input.hexParam.halfWidth,
             hexList: input.gridParam.hexList,
         });
+        input.userInputParam.currentMouseOverHex = currentMouseOverHex;
         // CONSIDER TO REMOVE
         // console.debug(parent.userInputParam.mouseMapPos);
         // console.debug(Parchment.mapParam.padHorizontal, Parchment.mapParam.padVertical);
@@ -312,6 +316,11 @@ class BaseMainSurface {
         // } else {
         //     console.debug(`No found in hex list`);
         // }
+        if (currentMouseOverHex) {
+            console.debug(currentMouseOverHex.q, currentMouseOverHex.r, currentMouseOverHex.s);
+        } else {
+            console.debug('Out of bound');
+        }
     };
 
     // CONSIDER TO REMOVE

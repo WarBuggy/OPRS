@@ -53,7 +53,7 @@ class Parchment extends BaseMainSurface {
 
         // draw map boundary
         this.ctx.strokeStyle = 'cyan';
-        this.ctx.strokeRect(this.cameraParam.offsetX, this.cameraParam.offsetY,
+        this.ctx.strokeRect(-this.cameraParam.offsetX, -this.cameraParam.offsetY,
             this.mapParam.width, this.mapParam.height);
 
         // draw hex coords
@@ -74,10 +74,10 @@ class Parchment extends BaseMainSurface {
         const parent = this;
         document.addEventListener('keydown', (e) => {
             switch (e.key.toLowerCase()) {
-                case 'w': parent.cameraParam.offsetY += parent.cameraParam.moveSpeed; break;
-                case 'a': parent.cameraParam.offsetX += parent.cameraParam.moveSpeed; break;
-                case 's': parent.cameraParam.offsetY -= parent.cameraParam.moveSpeed; break;
-                case 'd': parent.cameraParam.offsetX -= parent.cameraParam.moveSpeed; break;
+                case 'w': parent.cameraParam.offsetY -= parent.cameraParam.moveSpeed; break;
+                case 'a': parent.cameraParam.offsetX -= parent.cameraParam.moveSpeed; break;
+                case 's': parent.cameraParam.offsetY += parent.cameraParam.moveSpeed; break;
+                case 'd': parent.cameraParam.offsetX += parent.cameraParam.moveSpeed; break;
             };
             parent.clampCameraOffset({
                 cameraParam: parent.cameraParam,
@@ -116,9 +116,9 @@ class Parchment extends BaseMainSurface {
             e.preventDefault();
 
             // get before zoom data
-            const unpadMapPosBeforeX = parent.userInputParam.mousePos.x - parent.cameraParam.offsetX - this.mapParam.padHorizontal;
-            const unpadMapPosBeforeY = parent.userInputParam.mousePos.y - parent.cameraParam.offsetY - this.mapParam.padVertical;
-            const sideBefore = this.hexParam.side;
+            const oldMouseMapPosX = parent.userInputParam.mouseMapPos.x;
+            const oldMouseMapPosY = parent.userInputParam.mouseMapPos.y;
+            const oldSide = this.hexParam.side;
 
             const zoomLevels = Object.keys(this.zoomSettings.landscape.levels)
                 .map(Number)
@@ -151,14 +151,14 @@ class Parchment extends BaseMainSurface {
             localStorage.setItem(parent.STORAGE_KEYS.ZOOM_LEVEL, newZoom);
 
             // Update after zoom
-            const scale = parent.hexParam.side / sideBefore;
-            const unpadMapPosAfterX = unpadMapPosBeforeX * scale;
-            const unpadMapPosAfterY = unpadMapPosBeforeY * scale;
-            const newOffsetX = parent.userInputParam.mousePos.x - unpadMapPosAfterX - parent.mapParam.padHorizontal;
-            const newOffsetY = parent.userInputParam.mousePos.y - unpadMapPosAfterY - parent.mapParam.padVertical;
+            const scale = parent.hexParam.side / oldSide;
+            const newMouseMapPosX = oldMouseMapPosX * scale;
+            const newMouseMapPosY = oldMouseMapPosY * scale;
+            const newCameraOffsetX = newMouseMapPosX - parent.userInputParam.mousePos.x;
+            const newCameraOffsetY = newMouseMapPosY - parent.userInputParam.mousePos.y;
             parent.clampCameraOffset({
                 cameraParam: parent.cameraParam,
-                valueX: newOffsetX, valueY: newOffsetY,
+                valueX: newCameraOffsetX, valueY: newCameraOffsetY,
             });
             // Update mouse position on map
             parent.updateMouseMapPosition({
@@ -205,8 +205,8 @@ class Parchment extends BaseMainSurface {
 
                 if (distTotal >= parent.userInputParam.dragThreshold) {
                     // Update camera offsets
-                    parent.cameraParam.offsetX += dx;
-                    parent.cameraParam.offsetY += dy;
+                    parent.cameraParam.offsetX -= dx;
+                    parent.cameraParam.offsetY -= dy;
                     // Clamp offsets
                     parent.clampCameraOffset({ cameraParam: parent.cameraParam, });
                     parent.userInputParam.lastDragPos = { x: currentX, y: currentY };
@@ -241,8 +241,8 @@ class Parchment extends BaseMainSurface {
     };
 
     onMiniMapClicked(input) {
-        this.cameraParam.offsetX = -input.miniMapScaledClickOffsetX;
-        this.cameraParam.offsetY = -input.miniMapScaledClickOffsetY;
+        this.cameraParam.offsetX = input.miniMapScaledClickOffsetX - (this.canvas.width / 2);
+        this.cameraParam.offsetY = input.miniMapScaledClickOffsetY - (this.canvas.height / 2);
         this.clampCameraOffset({
             cameraParam: this.cameraParam,
         });

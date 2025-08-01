@@ -42,19 +42,19 @@ class Hex {
     };
 
     createPath(input) {
-        input.canvasCtx.moveTo(this.topX + input.cameraOffsetX, this.topY + input.cameraOffsetY);
-        input.canvasCtx.lineTo(this.topRightX + input.cameraOffsetX, this.topRightY + input.cameraOffsetY);
-        input.canvasCtx.lineTo(this.bottomRightX + input.cameraOffsetX, this.bottomRightY + input.cameraOffsetY);
-        input.canvasCtx.lineTo(this.bottomX + input.cameraOffsetX, this.bottomY + input.cameraOffsetY);
-        input.canvasCtx.lineTo(this.bottomLeftX + input.cameraOffsetX, this.bottomLeftY + input.cameraOffsetY);
-        input.canvasCtx.lineTo(this.topLeftX + input.cameraOffsetX, this.topLeftY + input.cameraOffsetY);
-        input.canvasCtx.lineTo(this.topX + input.cameraOffsetX, this.topY + input.cameraOffsetY);
+        input.canvasCtx.moveTo(this.topX - input.cameraOffsetX, this.topY - input.cameraOffsetY);
+        input.canvasCtx.lineTo(this.topRightX - input.cameraOffsetX, this.topRightY - input.cameraOffsetY);
+        input.canvasCtx.lineTo(this.bottomRightX - input.cameraOffsetX, this.bottomRightY - input.cameraOffsetY);
+        input.canvasCtx.lineTo(this.bottomX - input.cameraOffsetX, this.bottomY - input.cameraOffsetY);
+        input.canvasCtx.lineTo(this.bottomLeftX - input.cameraOffsetX, this.bottomLeftY - input.cameraOffsetY);
+        input.canvasCtx.lineTo(this.topLeftX - input.cameraOffsetX, this.topLeftY - input.cameraOffsetY);
+        input.canvasCtx.lineTo(this.topX - input.cameraOffsetX, this.topY - input.cameraOffsetY);
     };
 
     drawCoord(input) {
-        input.canvasCtx.fillText(this.q, this.qX + input.cameraOffsetX, this.qY + input.cameraOffsetY);
-        input.canvasCtx.fillText(this.r, this.rX + input.cameraOffsetX, this.rY + input.cameraOffsetY);
-        input.canvasCtx.fillText(this.s, this.sX + input.cameraOffsetX, this.sY + input.cameraOffsetY);
+        input.canvasCtx.fillText(this.q, this.qX - input.cameraOffsetX, this.qY - input.cameraOffsetY);
+        input.canvasCtx.fillText(this.r, this.rX - input.cameraOffsetX, this.rY - input.cameraOffsetY);
+        input.canvasCtx.fillText(this.s, this.sX - input.cameraOffsetX, this.sY - input.cameraOffsetY);
     };
 
     static cubeRound(input) {

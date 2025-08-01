@@ -43,8 +43,8 @@ class MiniMapParchment extends BaseMiniMap {
         this.ctx.strokeRect(this.scaledMapParam.offsetX, this.scaledMapParam.offsetY,
             this.scaledMapParam.width, this.scaledMapParam.height);
 
-        const cameraX = this.scaledMapParam.offsetX - this.scaledCameraParam.offsetX;
-        const cameraY = this.scaledMapParam.offsetY - this.scaledCameraParam.offsetY;
+        const cameraX = this.scaledMapParam.offsetX + this.scaledCameraParam.offsetX;
+        const cameraY = this.scaledMapParam.offsetY + this.scaledCameraParam.offsetY;
         this.ctx.strokeStyle = 'green';
         this.ctx.strokeRect(cameraX, cameraY,
             this.scaledCameraParam.width, this.scaledCameraParam.height);
@@ -89,9 +89,9 @@ class MiniMapParchment extends BaseMiniMap {
                 return;
             }
             parent.userInputParam.scaledClickOffsetX =
-                (parent.userInputParam.mouseX - parent.scaledMapParam.withPaddingOffsetX - (parent.scaledCameraParam.width / 2)) / parent.scaledMapParam.scale;
+                (parent.userInputParam.mouseX - parent.scaledMapParam.offsetX) / parent.scaledMapParam.scale;
             parent.userInputParam.scaledClickOffsetY =
-                (parent.userInputParam.mouseY - parent.scaledMapParam.withPaddingOffsetY - (parent.scaledCameraParam.height / 2)) / parent.scaledMapParam.scale;
+                (parent.userInputParam.mouseY - parent.scaledMapParam.offsetY) / parent.scaledMapParam.scale;
             parent.emitter.emit(Shared.EMITTER_SIGNAL.MINI_MAP_CLICKED);
         });
     };

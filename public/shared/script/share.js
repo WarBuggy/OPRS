@@ -18,4 +18,8 @@ class Shared {
         BOTTOM_LEFT: "bl",
         BOTTOM_RIGHT: "br",
     };
+
+    static clamp(input) {
+        return Math.min(input.max, Math.max(input.min, input.value));
+    };
 };
