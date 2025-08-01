@@ -7,5 +7,6 @@ class Shared {
     static EMITTER_SIGNAL = {
         PARCHMENT_PANNED: 'parchment_panned',
         PARCHMENT_ZOOMED: 'parchment_zoomed',
+        MINI_MAP_CLICKED: 'miniMap_clicked',
     };
 };

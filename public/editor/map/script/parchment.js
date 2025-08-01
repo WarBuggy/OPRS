@@ -240,6 +240,15 @@ class Parchment extends BaseMainSurface {
         });
     };
 
+    onMiniMapClicked(input) {
+        this.cameraParam.offsetX = -input.miniMapScaledClickOffsetX;
+        this.cameraParam.offsetY = -input.miniMapScaledClickOffsetY;
+        this.clampCameraOffset({
+            cameraParam: this.cameraParam,
+        });
+        this.emitter.emit(Shared.EMITTER_SIGNAL.PARCHMENT_PANNED);
+    };
+
     loop(timestamp) {
         if (!this._isLooping) return;
         const minFrameTime = 1000 / 30; // 30 FPS

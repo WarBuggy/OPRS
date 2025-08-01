@@ -1,10 +1,19 @@
 class BaseMiniMap {
     constructor(input) {
+        this.userInputParam = {
+            mouseX: null,
+            mouseY: null,
+            cursorInsidePaddedMap: false,
+            scaledClickOffsetX: null,
+            scaledClickOffsetY: null,
+        };
+
         this.canvas = document.getElementById(input.canvasId);
         if (!this.canvas) throw new Error(`[BaseMiniMap] Mini-map canvas not found`);
         this.canvas.width = this.canvas.parentElement.offsetWidth;
         this.canvas.height = this.canvas.parentElement.offsetHeight;
         this.ctx = this.canvas.getContext(`2d`);
+        this.emitter = input.emitter;
     };
 
     preCalculateParamsFromZoomData(input) {

@@ -16,7 +16,8 @@ class MiniMapParchment extends BaseMiniMap {
             cameraOffsetY: input.cameraOffsetY,
             zoomLevel: input.zoomLevel,
         });
-
+        this.addMouseMoveEvents();
+        this.addMouseClickEvent();
         this.draw();
     };
 
@@ -81,20 +82,32 @@ class MiniMapParchment extends BaseMiniMap {
         this.draw();
     };
 
-    registerClickInsideSquare(input) {
-        canvas.addEventListener('click', function (event) {
-            const rect = canvas.getBoundingClientRect();
-            const clickX = event.clientX - rect.left;
-            const clickY = event.clientY - rect.top;
-
-            const { x, y, width, height } = square;
-            const inside =
-                clickX >= x && clickX <= x + width &&
-                clickY >= y && clickY <= y + height;
-
-            if (inside) {
-                callback({ x: clickX, y: clickY });
+    addMouseClickEvent(input) {
+        const parent = this;
+        this.canvas.addEventListener('click', function (event) {
+            if (!parent.userInputParam.cursorInsidePaddedMap) {
+                return;
             }
+            parent.userInputParam.scaledClickOffsetX =
+                (parent.userInputParam.mouseX - parent.scaledMapParam.withPaddingOffsetX - (parent.scaledCameraParam.width / 2)) / parent.scaledMapParam.scale;
+            parent.userInputParam.scaledClickOffsetY =
+                (parent.userInputParam.mouseY - parent.scaledMapParam.withPaddingOffsetY - (parent.scaledCameraParam.height / 2)) / parent.scaledMapParam.scale;
+            parent.emitter.emit(Shared.EMITTER_SIGNAL.MINI_MAP_CLICKED);
+        });
+    };
+
+    addMouseMoveEvents(input) {
+        const parent = this;
+        this.canvas.addEventListener('mousemove', function (event) {
+            const bounds = parent.canvas.getBoundingClientRect();
+            const mouseX = event.clientX - bounds.left;
+            const mouseY = event.clientY - bounds.top;
+            parent.userInputParam.mouseX = mouseX;
+            parent.userInputParam.mouseY = mouseY;
+            parent.userInputParam.cursorInsidePaddedMap =
+                mouseX >= parent.scaledMapParam.withPaddingOffsetX && mouseX <= parent.scaledMapParam.withPaddingOffsetX + parent.scaledMapParam.widthWithPadding &&
+                mouseY >= parent.scaledMapParam.withPaddingOffsetY && mouseY <= parent.scaledMapParam.withPaddingOffsetY + parent.scaledMapParam.heightWithPadding
+            parent.canvas.style.cursor = parent.userInputParam.cursorInsidePaddedMap ? 'pointer' : 'default';
         });
     };
 };

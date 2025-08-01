@@ -26,6 +26,9 @@ class ManagerMap {
         this.emitter.on(Shared.EMITTER_SIGNAL.PARCHMENT_ZOOMED, function () {
             parent.handleParchmentZoomed(parent);
         });
+        this.emitter.on(Shared.EMITTER_SIGNAL.MINI_MAP_CLICKED, function () {
+            parent.handleMiniMapClicked(parent);
+        });
 
         requestAnimationFrame(this.parchment.loop);
     };
@@ -42,6 +45,13 @@ class ManagerMap {
             zoomLevel: parent.parchment.cameraParam.zoomLevel,
             cameraOffsetX: parent.parchment.cameraParam.offsetX,
             cameraOffsetY: parent.parchment.cameraParam.offsetY,
+        });
+    };
+
+    handleMiniMapClicked(parent) {
+        parent.parchment.onMiniMapClicked({
+            miniMapScaledClickOffsetX: parent.miniMap.userInputParam.scaledClickOffsetX,
+            miniMapScaledClickOffsetY: parent.miniMap.userInputParam.scaledClickOffsetY,
         });
     };
 };
