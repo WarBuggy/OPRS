@@ -8,5 +8,8 @@ window.translatableTexts = {
         noZoomLevelDataFound: `Mode {mode} does not have zoom level {zoomLevel}.`,
         invalidNumberOfHexes: `Invalid number of hexes: expected positive integer, got {value}.`,
         noPreCachedZoomLevelDataFound: `Mode {mode} does not have pre-cached data for zoom level {zoomLevel}.`,
+        // noMinMaxQSFoundForRow: `No min max q, s data found for row {row}.`, // CONSIDER TO REMOVE
+        invalidHexDirection: `Failed to transver hex grid due to invalid direction '{direction}'.`,
+        hexTransverseInvalidStart: `Failed to transver hex grid due to invalid starting coord ({q}, {r}, {s}).`,
     },
 };

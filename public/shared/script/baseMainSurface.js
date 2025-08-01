@@ -304,6 +304,7 @@ class BaseMainSurface {
             hexHalfWidth: input.hexParam.halfWidth,
             hexList: input.gridParam.hexList,
         });
+        // CONSIDER TO REMOVE
         // console.debug(parent.userInputParam.mouseMapPos);
         // console.debug(Parchment.mapParam.padHorizontal, Parchment.mapParam.padVertical);
         // if (parent.userInputParam.currentMouseOverHex) {
@@ -312,6 +313,18 @@ class BaseMainSurface {
         //     console.debug(`No found in hex list`);
         // }
     };
+
+    // CONSIDER TO REMOVE
+    // calculateRowMinMaxQS(input) {
+    //     const result = {};
+    //     for (let r = input.minR; r <= input.maxR; r++) {
+    //         const rowResult = Hex.getRowMinMaxQS({
+    //             r, maxQ: input.maxQ, minR: input.minR,
+    //         });
+    //         result[r] = rowResult;
+    //     }
+    //     return result;
+    // };
 
     declareZoomSettings() {
         throw new Error("[BaseMainSurface] Zoom settings must be implemented in subclass!");

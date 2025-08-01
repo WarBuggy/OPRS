@@ -99,7 +99,69 @@ class Hex {
             hexHalfWidth: input.hexHalfWidth,
         });
         let listKey = Hex.createListKey({ q: hexCoord.q, r: hexCoord.r, s: hexCoord.s, });
-        console.debug(listKey);
         return input.hexList[listKey];
     };
+
+    static getHexDataDistanceOfHex(input) {
+        const modParam = {
+            [Shared.HEX_DIRECTION.LEFT]: { qMod: -1, rMod: 0, sMod: 1, },
+            [Shared.HEX_DIRECTION.RIGHT]: { qMod: 1, rMod: 0, sMod: -1, },
+            [Shared.HEX_DIRECTION.TOP_LEFT]: { qMod: 0, rMod: -1, sMod: 1, },
+            [Shared.HEX_DIRECTION.BOTTOM_RIGHT]: { qMod: 0, rMod: 1, sMod: -1, },
+            [Shared.HEX_DIRECTION.TOP_RIGHT]: { qMod: 1, rMod: -1, sMod: 0, },
+            [Shared.HEX_DIRECTION.BOTTOM_LEFT]: { qMod: -1, rMod: 1, sMod: 0, },
+        };
+        if (input.distance == null || isNaN(input.distance)) {
+            input.distance = 1;
+        }
+        const modData = modParam[input.direction];
+        if (!modData) {
+            throw new Error(`[Hex] ${window.taggedString.invalidHexDirection(input.direction)}`);
+        }
+        const result = this.transverseHex({
+            r: input.r, q: input.q, s: input.s,
+            distance: input.distance, hexList: input.hexList,
+            qMod: modData.qMod, rMod: modData.rMod, sMod: modData.sMod,
+        });
+        return result;
+    };
+
+    static transverseHex(input) {
+        let q = input.q;
+        let s = input.s;
+        let r = input.r;
+        let hexListKey = Hex.createListKey({ q, r, s, });
+        const startingHex = input.hexList[hexListKey];
+        if (!startingHex) {
+            throw new Error(`[Hex] ${window.taggedString.hexTransverseInvalidStart(input.q, input.r, input.s)}`);
+        }
+        for (let i = 1; i <= input.distance; i++) {
+            const newQ = q + input.qMod;
+            const newR = r + input.rMod;
+            const newS = s + input.sMod;
+            const newHexListKey = Hex.createListKey({ q: newQ, r: newR, s: newS, });
+            const aHex = input.hexList[newHexListKey];
+            if (!aHex) {
+                break;
+            }
+            q = newQ;
+            r = newR;
+            s = newS;
+            hexListKey = newHexListKey;
+        }
+        return { q, r, s, hexListKey, };
+    };
+
+    // CONSIDER TO REMOVE
+    // static getRowMinMaxQS(input) {
+    //     const rowConst = Math.floor((input.r - input.minR) / 2);
+    //     const rowMinQ = -rowConst; // only work for the current hex grid setup
+    //     const rowMaxQ = input.maxQ + rowConst - input.r;
+    //     const rowMaxS = -(input.r + rowMinQ);
+    //     const rowMinS = -(input.r + rowMaxQ);
+    //     return {
+    //         minQ: rowMinQ, maxQ: rowMaxQ,
+    //         minS: rowMinS, maxS: rowMaxS,
+    //     };
+    // };
 };
