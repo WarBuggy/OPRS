@@ -1,4 +1,13 @@
 class Hex {
+    static TRANSVERSE_MOD_PARAM = {
+        [Shared.HEX_DIRECTION.LEFT]: { qMod: -1, rMod: 0, sMod: 1, },
+        [Shared.HEX_DIRECTION.RIGHT]: { qMod: 1, rMod: 0, sMod: -1, },
+        [Shared.HEX_DIRECTION.TOP_LEFT]: { qMod: 0, rMod: -1, sMod: 1, },
+        [Shared.HEX_DIRECTION.BOTTOM_RIGHT]: { qMod: 0, rMod: 1, sMod: -1, },
+        [Shared.HEX_DIRECTION.TOP_RIGHT]: { qMod: 1, rMod: -1, sMod: 0, },
+        [Shared.HEX_DIRECTION.BOTTOM_LEFT]: { qMod: -1, rMod: 1, sMod: 0, },
+    };
+
     constructor(input) {
         const halfHeight = input.side / 2;
         this.centerX = input.centerX;
@@ -103,18 +112,10 @@ class Hex {
     };
 
     static getHexDataDistanceOfHex(input) {
-        const modParam = {
-            [Shared.HEX_DIRECTION.LEFT]: { qMod: -1, rMod: 0, sMod: 1, },
-            [Shared.HEX_DIRECTION.RIGHT]: { qMod: 1, rMod: 0, sMod: -1, },
-            [Shared.HEX_DIRECTION.TOP_LEFT]: { qMod: 0, rMod: -1, sMod: 1, },
-            [Shared.HEX_DIRECTION.BOTTOM_RIGHT]: { qMod: 0, rMod: 1, sMod: -1, },
-            [Shared.HEX_DIRECTION.TOP_RIGHT]: { qMod: 1, rMod: -1, sMod: 0, },
-            [Shared.HEX_DIRECTION.BOTTOM_LEFT]: { qMod: -1, rMod: 1, sMod: 0, },
-        };
         if (input.distance == null || isNaN(input.distance)) {
             input.distance = 1;
         }
-        const modData = modParam[input.direction];
+        const modData = Hex.TRANSVERSE_MOD_PARAM[input.direction];
         if (!modData) {
             throw new Error(`[Hex] ${window.taggedString.invalidHexDirection(input.direction)}`);
         }
@@ -135,6 +136,9 @@ class Hex {
         if (!startingHex) {
             throw new Error(`[Hex] ${window.taggedString.hexTransverseInvalidStart(input.q, input.r, input.s)}`);
         }
+        const transversedHexes = {
+            [hexListKey]: startingHex,
+        };
         for (let i = 1; i <= input.distance; i++) {
             const newQ = q + input.qMod;
             const newR = r + input.rMod;
@@ -148,8 +152,9 @@ class Hex {
             r = newR;
             s = newS;
             hexListKey = newHexListKey;
+            transversedHexes[newHexListKey] = aHex;
         }
-        return { q, r, s, hexListKey, };
+        return { q, r, s, hexListKey, transversedHexes, };
     };
 
     // CONSIDER TO REMOVE

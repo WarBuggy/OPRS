@@ -22,6 +22,8 @@ class BaseMainSurface {
         };
         this.gridParam = {
             hexList: {},
+            estimateHexPerWidth: 0,
+            estimateHexPerHeight: 0,
             minQ: 0, maxQ: 0,
             minR: 0, maxR: 0,
             minS: 0, maxS: 0,
@@ -198,6 +200,8 @@ class BaseMainSurface {
         result.gridParam.maxR = r - 1;
         result.gridParam.minS = minS;
         result.gridParam.maxS = maxS;
+        result.gridParam.estimateHexPerWidth = Math.floor(input.canvasWidth / input.hexHalfWidth / 2);
+        result.gridParam.estimateHexPerHeight = Math.floor(input.canvasHeight / input.side / 1.5) + 1;
         return result;
     };
 
@@ -240,6 +244,8 @@ class BaseMainSurface {
             hexWidth: hexParam.width,
             hexHalfWidth: hexParam.halfWidth,
             side: hexParam.side,
+            canvasWidth: input.canvasWidth,
+            canvasHeight: input.canvasHeight,
         });
         const cameraParam = this.calculateCameraParam({
             padHorizontal: metaData.mapParam.padHorizontal,
@@ -321,6 +327,62 @@ class BaseMainSurface {
         } else {
             console.debug('Out of bound');
         }
+    };
+
+    getVisibleHexes(input) {
+        const safeguardHexDistance = 3;
+        const horizontalSafetyPad = input.hexHalfWidth * 0.05;
+        const verticalSafetyPad = input.hexSide * 0.05;
+        const startX = Math.max(input.cameraOffsetX, input.hexHalfWidth) + horizontalSafetyPad;
+        const startY = Math.max(input.cameraOffsetY, input.hexSide) + verticalSafetyPad;
+        const startHex = Hex.getHexFromCoord({
+            pointX: startX, pointY: startY, hexList: input.hexList,
+            side: input.hexSide, hexHalfWidth: input.hexHalfWidth,
+        });
+        if (!startHex) {
+            throw new Error(`[BaseMainSurface] ${taggedString.failedToGetStartHex(input.cameraOffsetX, input.cameraOffsetY)}`);
+        }
+        const safeguardHexData = Hex.getHexDataDistanceOfHex({
+            distance: safeguardHexDistance,
+            direction: Shared.HEX_DIRECTION.TOP_LEFT,
+            hexList: input.hexList,
+            q: startHex.q, r: startHex.r, s: startHex.s,
+        });
+        const safeGuardHex = safeguardHexData.transversedHexes[safeguardHexData.hexListKey];
+        const safeGuardHorizontalDistance = input.estimateHexPerWidth + (safeguardHexDistance * 2);
+        const safeGuardVerticalDistance = input.estimateHexPerHeight + (safeguardHexDistance * 2);
+        let result = {};
+        let currentQ = safeGuardHex.q;
+        let currentR = safeGuardHex.r;
+        let currentS = safeGuardHex.s;
+        for (let r = 0; r < safeGuardVerticalDistance; r++) {
+            let direction = Shared.HEX_DIRECTION.BOTTOM_RIGHT;
+            if (r % 2 == 1) {
+                direction = Shared.HEX_DIRECTION.BOTTOM_LEFT;
+            }
+            const transverseLeftData = Hex.getHexDataDistanceOfHex({
+                q: currentQ, r: currentR, s: currentS,
+                distance: safeGuardHorizontalDistance,
+                direction: Shared.HEX_DIRECTION.RIGHT,
+                hexList: input.hexList,
+            });
+            result = { ...result, ...transverseLeftData.transversedHexes };
+            const transverseBottomRightData = Hex.getHexDataDistanceOfHex({
+                q: currentQ, r: currentR, s: currentS,
+                distance: 1,
+                direction,
+                hexList: input.hexList,
+            });
+            if (transverseBottomRightData.q == currentQ &&
+                transverseBottomRightData.r == currentR &&
+                transverseBottomRightData.s == currentS) {
+                break;
+            }
+            currentQ = transverseBottomRightData.q;
+            currentR = transverseBottomRightData.r;
+            currentS = transverseBottomRightData.s;
+        }
+        return result;
     };
 
     // CONSIDER TO REMOVE

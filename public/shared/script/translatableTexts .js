@@ -11,5 +11,6 @@ window.translatableTexts = {
         // noMinMaxQSFoundForRow: `No min max q, s data found for row {row}.`, // CONSIDER TO REMOVE
         invalidHexDirection: `Failed to transver hex grid due to invalid direction '{direction}'.`,
         hexTransverseInvalidStart: `Failed to transver hex grid due to invalid starting coord ({q}, {r}, {s}).`,
+        failedToGetStartHex: `Failed to get hex at camera offset {offset}, {offsetY}.`,
     },
 };
