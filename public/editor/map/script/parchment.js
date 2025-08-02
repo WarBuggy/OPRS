@@ -11,6 +11,7 @@ class Parchment extends BaseMainSurface {
         this.addMouseMoveEvent();
         this.addMouseWheelZoomEvent();
         this.addMouseDragEvents();
+        this.addToggleOptionKeyEvent();
 
         // Bind loop so manager can call it
         this.loop = this.loop.bind(this);
@@ -49,6 +50,40 @@ class Parchment extends BaseMainSurface {
         this.ctx.strokeRect(-this.cameraParam.offsetX, -this.cameraParam.offsetY,
             this.mapParam.width, this.mapParam.height);
 
+        const visibleHexes = this.getVisibleHexes({
+            hexSide: this.hexParam.side,
+            hexHalfWidth: this.hexParam.halfWidth,
+            cameraOffsetX: this.cameraParam.offsetX,
+            cameraOffsetY: this.cameraParam.offsetY,
+            hexList: this.gridParam.hexList,
+            canvasWidth: this.canvas.width,
+            canvasHeight: this.canvas.height,
+            estimateHexPerWidth: this.gridParam.estimateHexPerWidth,
+            estimateHexPerHeight: this.gridParam.estimateHexPerHeight,
+        });
+        // highlight current mouse over hex
+        const mouseOverHex = this.userInputParam.currentMouseOverHex;
+        if (mouseOverHex != null) {
+            delete visibleHexes[mouseOverHex.key];
+            this.ctx.beginPath();
+            mouseOverHex.createPath({
+                canvasCtx: this.ctx,
+                cameraOffsetX: this.cameraParam.offsetX,
+                cameraOffsetY: this.cameraParam.offsetY,
+            });
+            this.ctx.closePath();
+            this.ctx.fillStyle = 'rgba(255, 215, 0, 0.6)';
+            this.ctx.fill();
+            if (this.option.visual.showHexCoord) {
+                this.ctx.font = (this.hexParam.coordFontSize * 1.5) + 'px Arial';
+                this.ctx.fillStyle = '#222222';
+                mouseOverHex.drawCoord({
+                    canvasCtx: this.ctx,
+                    cameraOffsetX: this.cameraParam.offsetX,
+                    cameraOffsetY: this.cameraParam.offsetY,
+                });
+            }
+        }
         // draw hexes
         // CONSIDER TO REMOVE
         // this.ctx.strokeStyle = 'red';
@@ -62,50 +97,44 @@ class Parchment extends BaseMainSurface {
         //     });
         // }
         // this.ctx.stroke();
-        const visibleHexes = this.getVisibleHexes({
-            hexSide: this.hexParam.side,
-            hexHalfWidth: this.hexParam.halfWidth,
-            cameraOffsetX: this.cameraParam.offsetX,
-            cameraOffsetY: this.cameraParam.offsetY,
-            hexList: this.gridParam.hexList,
-            canvasWidth: this.canvas.width,
-            canvasHeight: this.canvas.height,
-            estimateHexPerWidth: this.gridParam.estimateHexPerWidth,
-            estimateHexPerHeight: this.gridParam.estimateHexPerHeight,
-        });
-        this.ctx.strokeStyle = 'red';
-        this.ctx.beginPath();
-        for (let key in visibleHexes) {
-            let aHex = visibleHexes[key];
-            aHex.createPath({
-                canvasCtx: this.ctx,
-                cameraOffsetX: this.cameraParam.offsetX,
-                cameraOffsetY: this.cameraParam.offsetY,
-            });
-        }
-        this.ctx.stroke();
 
-        // draw hex coords
-        this.ctx.font = this.hexParam.coordFontSize + 'px Arial';
-        this.ctx.fillStyle = 'green';
-        this.ctx.textBaseline = 'middle';
-        // CONSIDER TO REMOVE
-        // for (let key in this.gridParam.hexList) {
-        //     let aHex = this.gridParam.hexList[key];
-        //     aHex.drawCoord({
-        //         canvasCtx: this.ctx,
-        //         cameraOffsetX: this.cameraParam.offsetX,
-        //         cameraOffsetY: this.cameraParam.offsetY,
-        //     });
-        // };
-        for (let key in visibleHexes) {
-            let aHex = visibleHexes[key];
-            aHex.drawCoord({
-                canvasCtx: this.ctx,
-                cameraOffsetX: this.cameraParam.offsetX,
-                cameraOffsetY: this.cameraParam.offsetY,
-            });
-        };
+        if (this.option.visual.showHexGrid) {
+            this.ctx.strokeStyle = '#555';
+            this.ctx.beginPath();
+            for (let key in visibleHexes) {
+                let aHex = visibleHexes[key];
+                aHex.createPath({
+                    canvasCtx: this.ctx,
+                    cameraOffsetX: this.cameraParam.offsetX,
+                    cameraOffsetY: this.cameraParam.offsetY,
+                });
+            }
+            this.ctx.stroke();
+        }
+
+        if (this.option.visual.showHexCoord) {
+            // draw hex coords
+            this.ctx.font = this.hexParam.coordFontSize + 'px Arial';
+            this.ctx.fillStyle = '#888888';
+            this.ctx.textBaseline = 'middle';
+            // CONSIDER TO REMOVE
+            // for (let key in this.gridParam.hexList) {
+            //     let aHex = this.gridParam.hexList[key];
+            //     aHex.drawCoord({
+            //         canvasCtx: this.ctx,
+            //         cameraOffsetX: this.cameraParam.offsetX,
+            //         cameraOffsetY: this.cameraParam.offsetY,
+            //     });
+            // };
+            for (let key in visibleHexes) {
+                let aHex = visibleHexes[key];
+                aHex.drawCoord({
+                    canvasCtx: this.ctx,
+                    cameraOffsetX: this.cameraParam.offsetX,
+                    cameraOffsetY: this.cameraParam.offsetY,
+                });
+            };
+        }
 
         // CONSIDER TO REMOVE
         // const end = performance.now();
@@ -353,6 +382,19 @@ class Parchment extends BaseMainSurface {
             if (e.ctrlKey && e.key.toLowerCase() === 'p') {
                 e.preventDefault();
                 parent.toggleLoop();
+            }
+        });
+    };
+
+    addToggleOptionKeyEvent() {
+        const parent = this;
+        window.addEventListener('keydown', function (e) {
+            if (e.ctrlKey && e.key.toLowerCase() === '.') {
+                e.preventDefault();
+                parent.option.visual.showHexGrid = !parent.option.visual.showHexGrid;
+            }
+            if (e.ctrlKey && e.key.toLowerCase() === '/') {
+                parent.option.visual.showHexCoord = !parent.option.visual.showHexCoord;
             }
         });
     };

@@ -44,6 +44,12 @@ class BaseMainSurface {
             dragStartPos: { x: 0, y: 0 },
             dragThreshold: 5,
         };
+        this.option = {
+            visual: {
+                showHexGrid: true,
+                showHexCoord: false,
+            },
+        };
         this.STORAGE_KEYS = {
             ZOOM_LEVEL: input.storageKeyZoomLevel,
         };
