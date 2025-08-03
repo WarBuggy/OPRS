@@ -4,7 +4,6 @@ class ManagerMap {
 
         this.parchment = new Parchment({
             canvasId: input.parchment.canvasId,
-            storageKeyZoomLevel: input.parchment.storageKeyZoomLevel,
             emitter: this.emitter,
         });
 

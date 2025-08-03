@@ -17,17 +17,6 @@ window.addEventListener('DOMContentLoaded', () => {
             currentMessages = window.translatableTexts[currentLanguage] || {};
         };
 
-        // function setLanguage(langCode) {
-        //     if (window.translatableTexts[langCode]) {
-        //         currentLanguage = langCode;
-        //         currentMessages = window.translatableTexts[langCode];
-        //         localStorage.setItem(Shared.STORAGE_KEYS.LANGUAGE, langCode);
-        //         // TODO: Handle event
-        //     } else {
-        //         console.warn(`No translation found for ${langCode} found. Fall back to en-English.`);
-        //     }
-        // }
-
         function formatByOrder(template, values = []) {
             let index = 0;
             return template.replace(/\{[^}]+\}/g, () => values[index++] ?? 'not_given');

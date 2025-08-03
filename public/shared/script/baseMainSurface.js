@@ -1,7 +1,20 @@
 // Coord system starts at top left corner of the map (i.e top left corner is 0,0).
-// The padded edge is 1 inch on all four sides of the map. That makes the coord of the padded-map's top left corner is in the negative.
+// The padded edge is 1 inch on all four sides of the map.
+// That makes the coord of the padded-map's top left corner is in the negative.
 
 class BaseMainSurface {
+
+    static STORAGE_KEYS = {
+        ZOOM_LEVEL: Shared.STORAGE_KEYS.ZOOM_LEVEL_MAP_EDITOR_PARCHMENT,
+    };
+
+    /**
+     * Initializes the main surface object responsible for managing canvas rendering, user input,
+     * camera controls, and hex grid state for a hex-based map editor.
+     *
+     * @param {string} input.canvasId - The DOM ID of the target canvas element.
+     * @param {EventEmitter} input.emitter - An event emitter instance for broadcasting UI events.
+     */
     constructor(input) {
         this.hexParam = {
             side: 0,
@@ -50,9 +63,7 @@ class BaseMainSurface {
                 showHexCoord: false,
             },
         };
-        this.STORAGE_KEYS = {
-            ZOOM_LEVEL: input.storageKeyZoomLevel,
-        };
+
         this.canvas = document.getElementById(input.canvasId);
         if (!this.canvas) throw new Error(`[BaseMainSurface] Parchment canvas not found`);
         this.ctx = this.canvas.getContext('2d');
@@ -65,6 +76,18 @@ class BaseMainSurface {
         this.setup();
     };
 
+    /**
+     * Retrieves the pre-cached zoom level data for a given display mode, using a value stored in localStorage,
+     * or falling back to the default zoom level if no stored value exists.
+     *
+     * @param {string} input.mode - The current display mode to retrieve zoom data for.
+     * @param {Object} input.cachedData - Pre-cached data to be used in case stored zoom level is available.
+     *
+     * @returns {Object} - The pre-cached data object corresponding to the zoom level.
+     *
+     * Throws:
+     *   An error if the default zoom level is undefined or not listed in available levels.
+     */
     getPreCachedZoomLevelDataFromStorage(input) {
         const modeData = this.getDisplayModeData({ mode: input.mode, });
         const defaultZoom = modeData.defaultZoomLevel;
@@ -76,9 +99,9 @@ class BaseMainSurface {
             throw new Error(`[BaseMainSurface] ${taggedString.noDefaultZoomLevelDataFound(input.mode)}`);
         }
 
-        const stored = localStorage.getItem(this.STORAGE_KEYS.ZOOM_LEVEL);
+        const stored = localStorage.getItem(BaseMainSurface.STORAGE_KEYS.ZOOM_LEVEL);
         if (stored === null) {
-            localStorage.setItem(this.STORAGE_KEYS.ZOOM_LEVEL, defaultZoom);
+            localStorage.setItem(BaseMainSurface.STORAGE_KEYS.ZOOM_LEVEL, defaultZoom);
             console.log(window.taggedString.noZoomInStorage());
             console.log(window.taggedString.fallBackToDefaultZoomLevel());
             return modeData.levels[defaultZoom];
@@ -93,6 +116,19 @@ class BaseMainSurface {
         return preCachedData;
     };
 
+    /**
+     * Retrieves pre-cached data for a specific zoom level within a given display mode.
+     *
+     * @param {string} input.mode - The display mode being queried.
+     * @param {Object} input.modeData - Zoom settings data for the given mode (should include a `levels` object).
+     * @param {number} input.parsed - The zoom level to retrieve.
+     * @param {Object} input.cachedData - Object containing all pre-cached zoom data by mode and zoom level.
+     *
+     * @returns {Object} - The pre-cached data object for the given mode and zoom level.
+     * Throws:
+     *   An error if no zoom level data exists in `modeData.levels` for the requested level.
+     *   An error if no pre-cached data exists in `cachedData` for the requested mode and level.
+     */
     getPreCachedZoomLevelData(input) {
         const data = input.modeData.levels[input.parsed];
         if (!data) {
@@ -105,6 +141,16 @@ class BaseMainSurface {
         return preCachedData;
     };
 
+    /**
+     * Retrieves zoom setting data for a specific display mode from internal configuration.
+     *
+     * @param {string} input.mode - The name of the display mode to retrieve settings for.
+     *
+     * @returns {Object} - The zoom settings data associated with the given mode.
+     *
+     * Throws:
+     *   An error if the requested display mode is not defined in `zoomSettings`.
+     */
     getDisplayModeData(input) {
         const modeData = this.zoomSettings[input.mode];
         if (!modeData) {
@@ -113,6 +159,25 @@ class BaseMainSurface {
         return modeData;
     };
 
+    /**
+     * Calculates core geometric parameters for hex tiles based on the canvas size,
+     * display mode, and number of hexes across the key dimension.
+     *
+     * @param {number} input.canvasWidth - Width of the canvas in pixels.
+     * @param {number} input.canvasHeight - Height of the canvas in pixels.
+     * @param {string} input.mode - Display mode, either 'landscape' or 'portrait'.
+     * @param {number} input.hexesPerDimension - Number of hexes along the primary dimension (height for landscape, width for portrait).
+     *
+     * @returns {Object} - Calculated hex geometry values:
+     *   @property {number} side - Outer radius (center to corner) of a hex.
+     *   @property {number} width - Width of a hex from flat side to flat side.
+     *   @property {number} halfWidth - Half the width of a hex.
+     *   @property {number} height - Full height of a hex from point to point.
+     *   @property {number} coordFontSize - Recommended font size for drawing cube coordinates.
+     *
+     * Throws:
+     *   An error if `hexesPerDimension` is not a valid positive integer.
+     */
     calculateHexParam(input) {
         if (!Number.isInteger(input.hexesPerDimension) || input.hexesPerDimension < 1) {
             throw new Error(`[BaseMainSurface] ${window.taggedString.invalidNumberOfHexes()}`);
@@ -138,6 +203,45 @@ class BaseMainSurface {
         };
     };
 
+    /**
+     * Calculates map layout and hex grid parameters based on physical map size,
+     * hex sizing, and canvas resolution.
+     * Iteratively places hexes in a staggered pointy-top grid starting from top-left.
+     * Tracks bounds of Q, R, and S cube coordinates while placing.
+     * Calculates map's expected and final rendered dimensions.
+     * Uses hardcoded 1.5 * side for vertical step and full width for horizontal step.
+     * 
+     * @param {number} input.hexWidthPerInch - Number of hexes that fit in one inch horizontally.
+     * @param {number} input.hexWidth - Pixel width of a hex.
+     * @param {number} input.hexHalfWidth - Half the pixel width of a hex.
+     * @param {number} input.side - Outer radius of a hex (center to corner).
+     * @param {number} input.mapWidthInInch - Total map width in inches.
+     * @param {number} input.mapHeightInInch - Total map height in inches.
+     * @param {number} input.canvasWidth - Width of the canvas in pixels.
+     * @param {number} input.canvasHeight - Height of the canvas in pixels.
+     *
+     * @returns {Object} Object with `mapParam` and `gridParam` properties:
+     *   @property {Object} mapParam - Calculated map layout dimensions:
+     *     @property {number} widthInInch - Input width in inches.
+     *     @property {number} heightInInch - Input height in inches.
+     *     @property {number} expectedWidth - Target width in pixels based on hex density.
+     *     @property {number} expectedHeight - Target height in pixels.
+     *     @property {number} width - Actual pixel width used (based on hex placement).
+     *     @property {number} height - Actual pixel height used (rounded to nearest hex row).
+     *     @property {number} padHorizontal - Horizontal padding in pixels (1 inch).
+     *     @property {number} padVertical - Vertical padding in pixels (1 inch).
+     *
+     *   @property {Object} gridParam - Metadata and full list of placed hexes:
+     *     @property {Object<string, Hex>} hexList - Dictionary of all hexes, keyed by cube coordinates.
+     *     @property {number} minQ - Minimum Q coordinate in the grid.
+     *     @property {number} maxQ - Maximum Q coordinate.
+     *     @property {number} minR - Minimum R coordinate (always 0).
+     *     @property {number} maxR - Maximum R coordinate.
+     *     @property {number} minS - Minimum S coordinate.
+     *     @property {number} maxS - Maximum S coordinate.
+     *     @property {number} estimateHexPerWidth - Rough estimate of how many hexes fit horizontally.
+     *     @property {number} estimateHexPerHeight - Rough estimate of vertical hex count.
+     */
     calculateMapAndGridParam(input) {
         const pixelPerInch = input.hexWidthPerInch * input.hexWidth;
         const expectedMapWidthInPixel = input.mapWidthInInch * pixelPerInch;
@@ -211,6 +315,31 @@ class BaseMainSurface {
         return result;
     };
 
+    /**
+     * Calculates initial camera parameters including offset bounds, centered position, and movement speed.
+     * Clamps the initial camera offset to stay within extended bounds.
+     * Calculates camera move speed proportional to hex width.
+     * Centering is based on the difference between canvas size and map size.
+     *
+     * @param {number} input.mapWidth - Width of the rendered map in pixels.
+     * @param {number} input.mapHeight - Height of the rendered map in pixels.
+     * @param {number} input.canvasWidth - Width of the canvas viewport in pixels.
+     * @param {number} input.canvasHeight - Height of the canvas viewport in pixels.
+     * @param {number} input.padHorizontal - Extra horizontal padding to allow camera movement beyond map edges.
+     * @param {number} input.padVertical - Extra vertical padding to allow camera movement beyond map edges.
+     * @param {number} input.hexWidth - Width of a single hex in pixels (used to scale move speed).
+     * @param {number} input.zoomLevel - Current zoom level (passed through to return).
+     *
+     * @returns {Object} Object containing calculated camera properties:
+     *   @property {number} maxOffsetX - Maximum allowed X offset.
+     *   @property {number} maxOffsetY - Maximum allowed Y offset.
+     *   @property {number} minOffsetX - Minimum allowed X offset.
+     *   @property {number} minOffsetY - Minimum allowed Y offset.
+     *   @property {number} offsetX - Initial clamped horizontal offset (centered).
+     *   @property {number} offsetY - Initial clamped vertical offset (centered).
+     *   @property {number} moveSpeed - Pixel amount camera moves per step, scaled by hex size.
+     *   @property {number} zoomLevel - Same zoom level passed in input.
+     */
     calculateCameraParam(input) {
         // Bounds when adding offsets:
         const minOffsetX = -input.padHorizontal;
@@ -236,6 +365,30 @@ class BaseMainSurface {
         };
     };
 
+    /**
+     * Computes all key rendering and interaction parameters based on zoom-level configuration and canvas settings.
+     * Determines hex geometry using canvas dimensions and layout mode.
+     * Calculates map layout and hex grid data using physical map size and hex dimensions.
+     * Computes camera limits and centered offset based on map size and canvas size.
+     * 
+     * @param {string} input.mode - Display mode ('landscape' or 'portrait').
+     * @param {number} input.hexesPerDimension - Number of hexes along the deciding canvas dimension.
+     * @param {number} input.canvasWidth - Width of the canvas in pixels.
+     * @param {number} input.canvasHeight - Height of the canvas in pixels.
+     * @param {number} input.hexWidthPerInch - Hex width in inches, used for scaling map size.
+     * @param {number} input.mapWidthInInch - Width of the map in inches.
+     * @param {number} input.mapHeightInInch - Height of the map in inches.
+     * @param {number} input.zoomLevel - Zoom level used to calculate camera state.
+     *
+     * @returns {Object} Aggregated rendering parameters:
+     *   @property {Object} hexParam - Hexagon size and layout measurements (side, width, height, etc.).
+     *   @property {Object} mapParam - Pixel dimensions of the full map with padding.
+     *   @property {Object} gridParam - Grid metadata including bounds and hex list.
+     *   @property {Object} cameraParam - Initial camera settings including offset, bounds, and move speed.
+     *
+     * Behavior:
+     
+     */
     calculateParamsFromZoomData(input) {
         const hexParam = this.calculateHexParam({
             mode: input.mode,
@@ -271,6 +424,25 @@ class BaseMainSurface {
         };
     };
 
+    /**
+     * Precomputes and caches all rendering parameters for every zoom level across all display modes.
+     * Iterates over all display modes and their zoom levels defined in `this.zoomSettings`.
+     * For each zoom level, calculates all rendering parameters by calling `calculateParamsFromZoomData`.
+     * Returns a comprehensive cache object mapping modes and zoom levels to their computed parameters.
+     *
+     * @param {number} input.canvasWidth - Width of the canvas in pixels.
+     * @param {number} input.canvasHeight - Height of the canvas in pixels.
+     * @param {number} input.mapWidthInInch - Width of the map in inches.
+     * @param {number} input.mapHeightInInch - Height of the map in inches.
+     * @param {number} input.hexWidthPerInch - Number of hexes horizontally per inch.
+     *
+     * @returns {Object} - Nested cache object structured by mode and zoom level:
+     *   Each zoom level object contains:
+     *   @property {Object} hexParam - Hexagon size and layout measurements (side, width, height, etc.).
+     *   @property {Object} mapParam - Pixel dimensions of the full map with padding.
+     *   @property {Object} gridParam - Grid metadata including bounds and hex list.
+     *   @property {Object} cameraParam - Initial camera settings including offset, bounds, and move speed.
+     */
     preCalculateParamsFromZoomData(input) {
         const result = {};
         for (const [mode, modeData] of Object.entries(this.zoomSettings)) {
@@ -293,6 +465,15 @@ class BaseMainSurface {
         return result;
     };
 
+    /**
+     * Clamps the camera offset values to ensure they stay within allowed bounds.
+     * Uses `Shared.clamp` to restrict offsetX and offsetY within min and max bounds.
+     * Updates `cameraParam.offsetX` and `cameraParam.offsetY` with clamped values.
+     *
+     * @param {Object} input.cameraParam - Camera parameters containing offset bounds and current offsets.
+     * @param {number} [input.valueX] - Optional horizontal offset value to clamp; defaults to current offsetX.
+     * @param {number} [input.valueY] - Optional vertical offset value to clamp; defaults to current offsetY.
+     */
     clampCameraOffset(input) {
         const cameraParam = input.cameraParam;
         if (!input.valueX) {
@@ -309,6 +490,22 @@ class BaseMainSurface {
         });
     };
 
+    /**
+     * Updates the mouse position relative to the map (world coordinates) based on current camera offset,
+     * and determines which hex tile the mouse is currently over.
+     * Calculates the map-relative mouse coordinates by adding camera offset to canvas mouse position.
+     * Uses `Hex.getHexFromCoord` to find which hex the mouse is currently over.
+     * Updates `userInputParam.currentMouseOverHex` with the found hex or null if none.
+     * Outputs debug info about the hex under the mouse or if the mouse is out of bounds.
+     *
+     * @param {Object} input.userInputParam - User interaction state, including mouse positions.
+     * @param {Object} input.userInputParam.mousePos - Current mouse pixel position relative to the canvas ({ x, y }).
+     * @param {Object} input.userInputParam.mouseMapPos - Mouse position adjusted for camera offset ({ x, y }), updated by this function.
+     * @param {Object} input.userInputParam.currentMouseOverHex - The hex currently under the mouse; updated by this function.
+     * @param {Object} input.cameraParam - Camera parameters, including current offsets.
+     * @param {Object} input.hexParam - Hex size parameters (side length, half width).
+     * @param {Object} input.gridParam - Grid data, including the list of hex tiles.
+     */
     updateMouseMapPosition(input) {
         input.userInputParam.mouseMapPos.x = input.userInputParam.mousePos.x + input.cameraParam.offsetX;
         input.userInputParam.mouseMapPos.y = input.userInputParam.mousePos.y + input.cameraParam.offsetY;
@@ -335,6 +532,28 @@ class BaseMainSurface {
         }
     };
 
+    /**
+     * Determines and returns all hex tiles visible within the current camera viewport,
+     * including a safety padding area around the edges to avoid clipping.
+     * Finds the starting hex based on the camera offset adjusted for small safety padding.
+     * Expands visibility bounds by a fixed safeguard distance around the viewport edges.
+     * Iteratively traverses hex rows and columns within these expanded bounds.
+     * Collects and returns all traversed hexes as a flat object.
+     *
+     * @param {number} input.cameraOffsetX - Current horizontal camera offset in pixels.
+     * @param {number} input.cameraOffsetY - Current vertical camera offset in pixels.
+     * @param {number} input.hexHalfWidth - Half the width of a hex tile in pixels.
+     * @param {number} input.hexSide - Outer radius (center to corner) of a hex tile.
+     * @param {Object<string, Hex>} input.hexList - Dictionary of all hex tiles keyed by cube coordinates.
+     * @param {number} input.estimateHexPerWidth - Estimated number of hexes visible horizontally.
+     * @param {number} input.estimateHexPerHeight - Estimated number of hexes visible vertically.
+     *
+     * @returns {Object<string, Hex>} - An object containing all hex tiles visible within the viewport plus padding,
+     *   keyed by their cube coordinate keys.
+     *
+     * Throws:
+     *   An error if it cannot find a valid starting hex at the camera position.
+     */
     getVisibleHexes(input) {
         const safeguardHexDistance = 3;
         const horizontalSafetyPad = input.hexHalfWidth * 0.05;
