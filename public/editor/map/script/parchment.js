@@ -5,6 +5,10 @@ class Parchment extends BaseMainSurface {
         hexWidthPerInch: 1,
     };
 
+    /**
+     * @param {string} input.canvasId - The DOM ID of the target canvas element.
+     * @param {EventEmitter} input.emitter - An event emitter instance for broadcasting UI events.
+     */
     constructor(input) {
         super(input);
         this.addKeyboardPanEvent();
@@ -20,6 +24,13 @@ class Parchment extends BaseMainSurface {
         this.addAnimationLoopKeyEvent();
     };
 
+    /**
+     * Initializes the setup by pre-calculating zoom parameters and loading the default zoom data.
+     * Pre-calculates parameters for all zoom levels based on canvas size and map configuration.
+     * Retrieves pre-cached zoom data from storage for the 'landscape' mode.
+     * Sets the current hex, map, grid, and camera parameters from the loaded data.
+     * Note: Portrait mode is currently not supported.
+     */
     setup() {
         this.zoomCachedData = this.preCalculateParamsFromZoomData({
             canvasWidth: this.canvas.width,
@@ -41,6 +52,17 @@ class Parchment extends BaseMainSurface {
         this.cameraParam = preCachedZoomData.cameraParam;
     };
 
+    /**
+     * Runs the main animation loop to render the hex map.
+     * Clears the canvas each frame.
+     * Draws the map boundary rectangle.
+     * Retrieves visible hexes based on camera position and viewport size.
+     * Highlights the hex currently under the mouse cursor, optionally showing coordinates.
+     * Optionally draws the hex grid outlines and hex coordinates for all visible hexes.
+     * Contains commented-out performance profiling code for runtime measurement.
+     *
+     * @param {DOMHighResTimeStamp} timestamp - The current time passed by requestAnimationFrame.
+     */
     animationLoop(timestamp) {
         const start = performance.now();
 
@@ -151,6 +173,14 @@ class Parchment extends BaseMainSurface {
         // console.log(`Runtime: ${(end - start).toFixed(3)} ms. Max: ${this.maxDrawTime} ms. Avg: ${this.totalTime / this.totalFrame} ms.`);
     };
 
+    /**
+     * Adds keyboard event listener for camera panning.
+     * Listens for WASD keys to move the camera up, left, down, and right respectively.
+     * Updates camera offsets by moveSpeed on key press.
+     * Clamps camera offsets within allowed bounds.
+     * Updates the mouse map position accordingly.
+     * Emits a signal to notify that the parchment (map) has been panned.
+     */
     addKeyboardPanEvent() {
         const parent = this;
         document.addEventListener('keydown', (e) => {
@@ -173,6 +203,11 @@ class Parchment extends BaseMainSurface {
         });
     };
 
+    /**
+     * Adds mousemove event listener on the canvas.
+     * Tracks the mouse position relative to the canvas.
+     * Updates the mouse map position using current camera, hex, and grid parameters.
+     */
     addMouseMoveEvent() {
         this.userInputParam.mousePos = { x: 0, y: 0 };
         this.userInputParam.mouseMapPos = { x: 0, y: 0 };
@@ -190,6 +225,14 @@ class Parchment extends BaseMainSurface {
         });
     };
 
+    /**
+     * Adds mouse wheel event listener to handle zooming in and out on the map.
+     * Zooms based on wheel direction, cycling through predefined zoom levels.
+     * Updates hex, map, grid, and camera parameters based on new zoom level.
+     * Adjusts camera offset to keep mouse position stable relative to map content.
+     * Updates mouse map position accordingly.
+     * Emits a zoom event when zoom level changes.
+     */
     addMouseWheelZoomEvent() {
         const mode = 'landscape';
         const parent = this;
@@ -252,6 +295,12 @@ class Parchment extends BaseMainSurface {
         }, { passive: false });
     };
 
+    /**
+     * Adds mouse drag event listeners to enable dragging the map view.
+     * Initializes drag state and updates camera offsets based on drag movements,
+     * while enforcing drag threshold and clamping camera position within bounds.
+     * Emits a signal when the map is panned via dragging.
+     */
     addMouseDragEvents() {
         this.userInputParam.isDragging = false;
         this.userInputParam.lastDragPos = { x: 0, y: 0 };
@@ -321,6 +370,14 @@ class Parchment extends BaseMainSurface {
         });
     };
 
+    /**
+     * Handles a click event on the mini-map by updating the main camera offset
+     * to center the view around the clicked position, then clamps the offset within valid bounds.
+     * Emits a signal indicating the main parchment (map) has been panned.
+     *
+     * @param {number} input.miniMapScaledClickOffsetX - The scaled X coordinate of the click on the mini-map.
+     * @param {number} input.miniMapScaledClickOffsetY - The scaled Y coordinate of the click on the mini-map.
+     */
     onMiniMapClicked(input) {
         this.cameraParam.offsetX = input.miniMapScaledClickOffsetX - (this.canvas.width / 2);
         this.cameraParam.offsetY = input.miniMapScaledClickOffsetY - (this.canvas.height / 2);
@@ -330,6 +387,13 @@ class Parchment extends BaseMainSurface {
         this.emitter.emit(Shared.EMITTER_SIGNAL.PARCHMENT_PANNED);
     };
 
+    /**
+     * Runs the animation loop at a maximum of 30 frames per second.
+     * Skips frames if called too quickly to maintain frame rate.
+     * Calls the animationLoop method on each valid frame.
+     *
+     * @param {DOMHighResTimeStamp} timestamp - The current time provided by requestAnimationFrame.
+     */
     loop(timestamp) {
         if (!this._isLooping) return;
         const minFrameTime = 1000 / 30; // 30 FPS
@@ -342,6 +406,11 @@ class Parchment extends BaseMainSurface {
         requestAnimationFrame(this.loop);
     };
 
+    /**
+     * Toggles the animation loop state between running and paused.
+     * When resumed, starts the loop using requestAnimationFrame.
+     * Logs the current state ('Resume' or 'Pause') to the console.
+     */
     toggleLoop() {
         if (!this._isLooping) {
             this._isLooping = true;
@@ -354,6 +423,10 @@ class Parchment extends BaseMainSurface {
         console.log('Pause');
     };
 
+    /**
+     * Initializes the zoomSettings property with predefined zoom levels and default zoom for supported modes.
+     * Currently supports 'landscape' mode with specific zoom level mappings.
+     */
     declareZoomSettings() {
         this.zoomSettings = {
             landscape: {
@@ -376,6 +449,9 @@ class Parchment extends BaseMainSurface {
         };
     };
 
+    /**
+     * Adds a global keyboard event listener to toggle the animation loop on Ctrl + 'P' key press.
+     */
     addAnimationLoopKeyEvent() {
         const parent = this;
         window.addEventListener('keydown', function (e) {
@@ -386,6 +462,11 @@ class Parchment extends BaseMainSurface {
         });
     };
 
+    /**
+     * Adds global keyboard event listeners to toggle visual options:
+     * - Ctrl + '.' toggles visibility of the hex grid.
+     * - Ctrl + '/' toggles visibility of hex coordinates.
+     */
     addToggleOptionKeyEvent() {
         const parent = this;
         window.addEventListener('keydown', function (e) {

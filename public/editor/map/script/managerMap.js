@@ -1,4 +1,5 @@
 class ManagerMap {
+
     constructor(input) {
         this.emitter = new EventEmitter();
 
