@@ -3,11 +3,6 @@
 // That makes the coord of the padded-map's top left corner is in the negative.
 
 class BaseMainSurface {
-
-    static STORAGE_KEYS = {
-        ZOOM_LEVEL: Shared.STORAGE_KEYS.ZOOM_LEVEL_MAP_EDITOR_PARCHMENT,
-    };
-
     /**
      * Initializes the main surface object responsible for managing canvas rendering, user input,
      * camera controls, and hex grid state for a hex-based map editor.
@@ -16,6 +11,7 @@ class BaseMainSurface {
      * @param {EventEmitter} input.emitter - An event emitter instance for broadcasting UI events.
      */
     constructor(input) {
+        this.STORAGE_KEYS = {};
         this.hexParam = {
             side: 0,
             width: 0,
@@ -99,9 +95,9 @@ class BaseMainSurface {
             throw new Error(`[BaseMainSurface] ${taggedString.noDefaultZoomLevelDataFound(input.mode)}`);
         }
 
-        const stored = localStorage.getItem(BaseMainSurface.STORAGE_KEYS.ZOOM_LEVEL);
+        const stored = localStorage.getItem(this.STORAGE_KEYS.ZOOM_LEVEL);
         if (stored === null) {
-            localStorage.setItem(BaseMainSurface.STORAGE_KEYS.ZOOM_LEVEL, defaultZoom);
+            localStorage.setItem(this.STORAGE_KEYS.ZOOM_LEVEL, defaultZoom);
             console.log(window.taggedString.noZoomInStorage());
             console.log(window.taggedString.fallBackToDefaultZoomLevel());
             return modeData.levels[defaultZoom];

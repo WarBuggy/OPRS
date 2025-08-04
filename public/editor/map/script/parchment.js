@@ -428,6 +428,7 @@ class Parchment extends BaseMainSurface {
      * Currently supports 'landscape' mode with specific zoom level mappings.
      */
     declareZoomSettings() {
+        this.STORAGE_KEYS.ZOOM_LEVEL = Shared.STORAGE_KEYS.ZOOM_LEVEL_MAP_EDITOR_PARCHMENT;
         this.zoomSettings = {
             landscape: {
                 levels: {
