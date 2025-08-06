@@ -4,6 +4,8 @@ window.addEventListener('load', function () {
 
 class EditorMap {
     constructor() {
+        this.createPageHTMLComponent();
+
         this.managerMap = new ManagerMap({
             parchment: {
                 canvasId: 'canvasParchment',
@@ -20,5 +22,51 @@ class EditorMap {
     };
 
     setup() {
+        this.managerMap.setup();
+    };
+
+    createPageHTMLComponent(input) {
+        const divMain = Shared.createHTMLComponent({
+            id: 'divMain',
+            class: 'outerMain',
+            parent: document.body,
+        });
+        Shared.createHTMLComponent({
+            id: 'divTopMenu',
+            class: 'topBar',
+            parent: divMain,
+        });
+        const divViewport = Shared.createHTMLComponent({
+            id: 'divViewport',
+            class: 'viewport',
+            parent: divMain,
+        });
+        Shared.createHTMLComponent({
+            tag: 'canvas',
+            id: 'canvasParchment',
+            parent: divViewport,
+            class: 'parchment',
+        });
+        const divSideBar = Shared.createHTMLComponent({
+            id: 'divSideBar',
+            parent: divMain,
+            class: 'sideBar',
+        });
+        const divMiniMap = Shared.createHTMLComponent({
+            id: 'divMiniMap',
+            parent: divSideBar,
+            class: 'outerMiniMap',
+        });
+        Shared.createHTMLComponent({
+            tag: 'canvas',
+            id: 'canvasMiniMap',
+            parent: divMiniMap,
+            class: 'miniMap',
+        });
+        Shared.createHTMLComponent({
+            id: 'divBottomBar',
+            parent: divMain,
+            class: 'bottomBar',
+        });
     };
 };

@@ -33,6 +33,25 @@ class ManagerMap {
         requestAnimationFrame(this.parchment.loop);
     };
 
+    setup(input) {
+        this.parchment.setup();
+        this.miniMap.setup({
+            zoomCachedData: this.parchment.zoomCachedData,
+            cameraWidth: this.parchment.canvas.width,
+            cameraHeight: this.parchment.canvas.height,
+            cameraOffsetX: this.parchment.cameraParam.offsetX,
+            cameraOffsetY: this.parchment.cameraParam.offsetY,
+            zoomLevel: this.parchment.cameraParam.zoomLevel,
+        });
+        this.miniMap.draw({
+            canvasWidth: this.miniMap.canvas.width,
+            canvasHeight: this.miniMap.canvas.height,
+            scaledMapParam: this.miniMap.scaledMapParam,
+            scaledCameraParam: this.miniMap.scaledCameraParam,
+            ctx: this.miniMap.ctx,
+        });
+    };
+
     handleParchmentPanned(parent) {
         parent.miniMap.onCameraPanned({
             cameraOffsetX: parent.parchment.cameraParam.offsetX,

@@ -63,8 +63,6 @@ class BaseMainSurface {
         this.canvas = document.getElementById(input.canvasId);
         if (!this.canvas) throw new Error(`[BaseMainSurface] Parchment canvas not found`);
         this.ctx = this.canvas.getContext('2d');
-        this.canvas.width = this.canvas.parentElement.offsetWidth;
-        this.canvas.height = this.canvas.parentElement.offsetHeight;
         this._isLooping = true;
         this._lastFrameTime = null;
         this.emitter = input.emitter;

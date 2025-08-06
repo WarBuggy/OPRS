@@ -33,13 +33,25 @@ div.sideBar {
     background-color: green;
 }
 
+div.outerMiniMap {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
 div.bottomBar {
     display: grid;
     grid-row: 3/4;
     grid-column: 1/3;
     background-color: yellow;
+    width: 100%;
+    height: 100%;
 }
 
 canvas.miniMap {
+    background-color: black;
+}
+
+div.parchment {
     background-color: black;
 }

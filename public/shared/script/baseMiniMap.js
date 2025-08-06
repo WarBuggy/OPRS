@@ -20,8 +20,6 @@ class BaseMiniMap {
 
         this.canvas = document.getElementById(input.canvasId);
         if (!this.canvas) throw new Error(`[BaseMiniMap] Mini-map canvas not found`);
-        this.canvas.width = this.canvas.parentElement.offsetWidth;
-        this.canvas.height = this.canvas.parentElement.offsetHeight;
         this.ctx = this.canvas.getContext(`2d`);
         this.emitter = input.emitter;
     };

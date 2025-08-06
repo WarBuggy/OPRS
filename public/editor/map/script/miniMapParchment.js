@@ -47,6 +47,8 @@ class MiniMapParchment extends BaseMiniMap {
      * @param {number} input.cameraOffsetY - Initial vertical camera offset.
      */
     setup(input) {
+        this.canvas.width = this.canvas.parentElement.offsetWidth;
+        this.canvas.height = this.canvas.parentElement.offsetHeight;
         this.zoomCachedData = this.preCalculateParamsFromZoomData({
             zoomCachedData: input.zoomCachedData,
             cameraWidth: input.cameraWidth,

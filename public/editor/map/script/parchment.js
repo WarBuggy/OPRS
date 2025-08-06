@@ -32,6 +32,8 @@ class Parchment extends BaseMainSurface {
      * Note: Portrait mode is currently not supported.
      */
     setup() {
+        this.canvas.width = this.canvas.parentElement.offsetWidth;
+        this.canvas.height = this.canvas.parentElement.offsetHeight;
         this.zoomCachedData = this.preCalculateParamsFromZoomData({
             canvasWidth: this.canvas.width,
             canvasHeight: this.canvas.height,
