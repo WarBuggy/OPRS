@@ -59,6 +59,7 @@ class BaseMainSurface {
                 showHexCoord: false,
             },
         };
+        this.flipped = false;
 
         this.canvas = document.getElementById(input.canvasId);
         if (!this.canvas) throw new Error(`[BaseMainSurface] Parchment canvas not found`);
@@ -233,13 +234,21 @@ class BaseMainSurface {
      *     @property {number} maxR - Maximum R coordinate.
      *     @property {number} minS - Minimum S coordinate.
      *     @property {number} maxS - Maximum S coordinate.
+     *     @property {number} hexPerEvenRow - Number of hexes on any even row (max number of hexes in any row).
      *     @property {number} estimateHexPerWidth - Rough estimate of how many hexes fit horizontally.
      *     @property {number} estimateHexPerHeight - Rough estimate of vertical hex count.
      */
     calculateMapAndGridParam(input) {
         const pixelPerInch = input.hexWidthPerInch * input.hexWidth;
+        const hexPerEvenRow = input.mapWidthInInch * input.hexWidthPerInch;
         const expectedMapWidthInPixel = input.mapWidthInInch * pixelPerInch;
         const expectedMapHeightInPixel = input.mapHeightInInch * pixelPerInch;
+        let rowNum = Math.floor(((expectedMapHeightInPixel - input.side) / (1.5 * input.side)) + 1);
+        // Ensure the number of rows is an odd number.
+        // So the last row is always full (not shifted).
+        if (rowNum % 2 == 0) {
+            rowNum++;
+        }
 
         let yCoord = input.side;
         let q = 0;
@@ -253,14 +262,16 @@ class BaseMainSurface {
         let maxX = -Infinity;
         let minQ = Infinity, maxQ = -Infinity;
         let minS = Infinity, maxS = -Infinity;
-        while (yCoord + input.side <= expectedMapHeightInPixel) {
+        for (let row = 0; row < rowNum; row++) {
+            let maxHex = hexPerEvenRow;
             xCoord = input.hexHalfWidth;
             if (r % 2 != 0) {
                 xCoord = input.hexWidth;
+                maxHex = hexPerEvenRow - 1;
             }
             q = - Math.floor(r / 2);
             s = - (q + r);
-            while (xCoord + input.hexHalfWidth <= expectedMapWidthInPixel) {
+            for (let hex = 0; hex < maxHex; hex++) {
                 let aHex = new Hex({
                     centerX: xCoord,
                     centerY: yCoord,
@@ -306,6 +317,11 @@ class BaseMainSurface {
         result.gridParam.maxS = maxS;
         result.gridParam.estimateHexPerWidth = Math.floor(input.canvasWidth / input.hexHalfWidth / 2);
         result.gridParam.estimateHexPerHeight = Math.floor(input.canvasHeight / input.side / 1.5) + 1;
+        result.gridParam.hexPerEvenRow = hexPerEvenRow;
+        this.setHexListFlipCoord({
+            hexList: result.gridParam.hexList,
+            mapWidth: maxX,
+        });
         return result;
     };
 
@@ -499,10 +515,14 @@ class BaseMainSurface {
      * @param {Object} input.cameraParam - Camera parameters, including current offsets.
      * @param {Object} input.hexParam - Hex size parameters (side length, half width).
      * @param {Object} input.gridParam - Grid data, including the list of hex tiles.
+     * @param {boolean} input.flipped - Is this map flipped (mirror image)?
      */
     updateMouseMapPosition(input) {
         input.userInputParam.mouseMapPos.x = input.userInputParam.mousePos.x + input.cameraParam.offsetX;
         input.userInputParam.mouseMapPos.y = input.userInputParam.mousePos.y + input.cameraParam.offsetY;
+        if (input.flipped) {
+            input.userInputParam.mouseMapPos.x = input.mapWidth - input.userInputParam.mouseMapPos.x;
+        }
         const currentMouseOverHex = Hex.getHexFromCoord({
             pointX: input.userInputParam.mouseMapPos.x,
             pointY: input.userInputParam.mouseMapPos.y,
@@ -541,6 +561,7 @@ class BaseMainSurface {
      * @param {Object<string, Hex>} input.hexList - Dictionary of all hex tiles keyed by cube coordinates.
      * @param {number} input.estimateHexPerWidth - Estimated number of hexes visible horizontally.
      * @param {number} input.estimateHexPerHeight - Estimated number of hexes visible vertically.
+     * @param {boolean} input.flipped - Is this map flipped (mirror image)?
      *
      * @returns {Object<string, Hex>} - An object containing all hex tiles visible within the viewport plus padding,
      *   keyed by their cube coordinate keys.
@@ -552,8 +573,11 @@ class BaseMainSurface {
         const safeguardHexDistance = 3;
         const horizontalSafetyPad = input.hexHalfWidth * 0.05;
         const verticalSafetyPad = input.hexSide * 0.05;
-        const startX = Math.max(input.cameraOffsetX, input.hexHalfWidth) + horizontalSafetyPad;
+        let startX = Math.max(input.cameraOffsetX, input.hexHalfWidth) + horizontalSafetyPad;
         const startY = Math.max(input.cameraOffsetY, input.hexSide) + verticalSafetyPad;
+        if (input.flipped) {
+            startX = Math.min(input.mapWidth - input.cameraOffsetX, input.mapWidth - input.hexHalfWidth) - horizontalSafetyPad;
+        }
         const startHex = Hex.getHexFromCoord({
             pointX: startX, pointY: startY, hexList: input.hexList,
             side: input.hexSide, hexHalfWidth: input.hexHalfWidth,
@@ -566,6 +590,7 @@ class BaseMainSurface {
             direction: Shared.HEX_DIRECTION.TOP_LEFT,
             hexList: input.hexList,
             q: startHex.q, r: startHex.r, s: startHex.s,
+            flipped: input.flipped,
         });
         const safeGuardHex = safeguardHexData.transversedHexes[safeguardHexData.hexListKey];
         const safeGuardHorizontalDistance = input.estimateHexPerWidth + (safeguardHexDistance * 2);
@@ -584,6 +609,7 @@ class BaseMainSurface {
                 distance: safeGuardHorizontalDistance,
                 direction: Shared.HEX_DIRECTION.RIGHT,
                 hexList: input.hexList,
+                flipped: input.flipped,
             });
             result = { ...result, ...transverseLeftData.transversedHexes };
             const transverseBottomRightData = Hex.getHexDataDistanceOfHex({
@@ -591,6 +617,7 @@ class BaseMainSurface {
                 distance: 1,
                 direction,
                 hexList: input.hexList,
+                flipped: input.flipped,
             });
             if (transverseBottomRightData.q == currentQ &&
                 transverseBottomRightData.r == currentR &&
@@ -602,6 +629,48 @@ class BaseMainSurface {
             currentS = transverseBottomRightData.s;
         }
         return result;
+    };
+
+    /**
+     * Set horizontal flip coord to be the draw coord for every hex in the provided hex list.
+     *
+     * @param {Object} input.hexList - A dictionary of hexes keyed by their cube coordinates.
+     * @param {number} input.mapWidth - Total pixel width of the map, used to calculate flipped positions.
+     */
+    setHexListFlipCoord(input) {
+        for (const [key, hex] of Object.entries(input.hexList)) {
+            hex.setFlipCoord({ mapWidth: input.mapWidth, });
+        }
+    };
+
+    /**
+     * Updates the drawing X coordinates for each hex in the provided hex list.
+     * Delegates to each hex's `flip` method to set either the flipped or normal
+     * X coordinates based on the `flipped` flag.
+     *
+     * @param {Object} input.hexList - A map of hex keys to Hex instances.
+     * @param {boolean} input.flipped - Whether to apply flipped X coordinates.
+     */
+    setHexDrawXCoord(input) {
+        for (const [key, hex] of Object.entries(input.hexList)) {
+            hex.flip({ flipped: input.flipped, });
+        }
+    };
+
+    // For debug purpose
+    flipMap(input) {
+        this.flipped = !this.flipped;
+        if (!input) {
+            input = {
+                hexList: this.gridParam.hexList,
+            };
+        }
+        if (!input.hexList) {
+            input.hexList = this.gridParam.hexList;
+        }
+        for (const [key, hex] of Object.entries(input.hexList)) {
+            hex.flip({ flipped: this.flipped, });
+        }
     };
 
     // CONSIDER TO REMOVE

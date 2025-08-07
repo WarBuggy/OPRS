@@ -1,11 +1,31 @@
 class Hex {
+    static FLIPMODE_STANDARD = 'standard';
+    static FLIPMODE_FLIPPED = 'flipped';
     static TRANSVERSE_MOD_PARAM = {
-        [Shared.HEX_DIRECTION.LEFT]: { qMod: -1, rMod: 0, sMod: 1, },
-        [Shared.HEX_DIRECTION.RIGHT]: { qMod: 1, rMod: 0, sMod: -1, },
-        [Shared.HEX_DIRECTION.TOP_LEFT]: { qMod: 0, rMod: -1, sMod: 1, },
-        [Shared.HEX_DIRECTION.BOTTOM_RIGHT]: { qMod: 0, rMod: 1, sMod: -1, },
-        [Shared.HEX_DIRECTION.TOP_RIGHT]: { qMod: 1, rMod: -1, sMod: 0, },
-        [Shared.HEX_DIRECTION.BOTTOM_LEFT]: { qMod: -1, rMod: 1, sMod: 0, },
+        [Shared.HEX_DIRECTION.LEFT]: {
+            [Hex.FLIPMODE_STANDARD]: { qMod: -1, rMod: 0, sMod: 1, },
+            [Hex.FLIPMODE_FLIPPED]: { qMod: 1, rMod: 0, sMod: -1, },
+        },
+        [Shared.HEX_DIRECTION.RIGHT]: {
+            [Hex.FLIPMODE_STANDARD]: { qMod: 1, rMod: 0, sMod: -1, },
+            [Hex.FLIPMODE_FLIPPED]: { qMod: -1, rMod: 0, sMod: 1, },
+        },
+        [Shared.HEX_DIRECTION.TOP_LEFT]: {
+            [Hex.FLIPMODE_STANDARD]: { qMod: 0, rMod: -1, sMod: 1, },
+            [Hex.FLIPMODE_FLIPPED]: { qMod: 1, rMod: -1, sMod: 0, },
+        },
+        [Shared.HEX_DIRECTION.BOTTOM_RIGHT]: {
+            [Hex.FLIPMODE_STANDARD]: { qMod: 0, rMod: 1, sMod: -1, },
+            [Hex.FLIPMODE_FLIPPED]: { qMod: -1, rMod: 1, sMod: 0, },
+        },
+        [Shared.HEX_DIRECTION.TOP_RIGHT]: {
+            [Hex.FLIPMODE_STANDARD]: { qMod: 1, rMod: -1, sMod: 0, },
+            [Hex.FLIPMODE_FLIPPED]: { qMod: 0, rMod: -1, sMod: 1, },
+        },
+        [Shared.HEX_DIRECTION.BOTTOM_LEFT]: {
+            [Hex.FLIPMODE_STANDARD]: { qMod: -1, rMod: 1, sMod: 0, },
+            [Hex.FLIPMODE_FLIPPED]: { qMod: 0, rMod: 1, sMod: -1, },
+        },
     };
 
     /**
@@ -23,26 +43,22 @@ class Hex {
     constructor(input) {
         const halfHeight = input.side / 2;
         this.centerX = input.centerX;
-        this.centerY = input.centerY;
-        this.point0 = input.centerX - input.side;
+        this.drawCenterX = this.centerX;
+        this.flippedCenterX = null;
 
-        this.topX = input.centerX;
+        this.leftX = input.centerX - input.hexHalfWidth;
+        this.drawLeftX = this.leftX;
+        this.flippedLeftX = null;
+
+        this.rightX = input.centerX + input.hexHalfWidth;
+        this.drawRightX = this.rightX;
+        this.flippedRightX = null;
+
         this.topY = input.centerY - input.side;
-
-        this.bottomX = input.centerX;
+        this.upperY = input.centerY - halfHeight;
+        this.centerY = input.centerY;
+        this.lowerY = input.centerY + halfHeight;
         this.bottomY = input.centerY + input.side;
-
-        this.topLeftX = input.centerX - input.hexHalfWidth;
-        this.topLeftY = input.centerY - halfHeight;
-
-        this.topRightX = input.centerX + input.hexHalfWidth;
-        this.topRightY = input.centerY - halfHeight;
-
-        this.bottomLeftX = input.centerX - input.hexHalfWidth;
-        this.bottomLeftY = input.centerY + halfHeight;
-
-        this.bottomRightX = input.centerX + input.hexHalfWidth;
-        this.bottomRightY = input.centerY + halfHeight;
 
         this.q = input.q;
         this.r = input.r;
@@ -54,6 +70,14 @@ class Hex {
         this.rY = input.centerY;
         this.sX = input.centerX - input.hexHalfWidth * 0.4;
         this.sY = input.centerY + halfHeight * 0.9;
+
+        this.drawQx = this.qX;
+        this.drawRx = this.rX;
+        this.drawSx = this.sX;
+
+        this.flippedQx = null;
+        this.flippedRx = null;
+        this.flippedSx = null;
 
         this.key = Hex.createListKey({
             q: this.q,
@@ -71,13 +95,13 @@ class Hex {
      * @param {number} input.cameraOffsetY - Vertical camera offset to apply.
      */
     createPath(input) {
-        input.canvasCtx.moveTo(this.topX - input.cameraOffsetX, this.topY - input.cameraOffsetY);
-        input.canvasCtx.lineTo(this.topRightX - input.cameraOffsetX, this.topRightY - input.cameraOffsetY);
-        input.canvasCtx.lineTo(this.bottomRightX - input.cameraOffsetX, this.bottomRightY - input.cameraOffsetY);
-        input.canvasCtx.lineTo(this.bottomX - input.cameraOffsetX, this.bottomY - input.cameraOffsetY);
-        input.canvasCtx.lineTo(this.bottomLeftX - input.cameraOffsetX, this.bottomLeftY - input.cameraOffsetY);
-        input.canvasCtx.lineTo(this.topLeftX - input.cameraOffsetX, this.topLeftY - input.cameraOffsetY);
-        input.canvasCtx.lineTo(this.topX - input.cameraOffsetX, this.topY - input.cameraOffsetY);
+        input.canvasCtx.moveTo(this.drawCenterX - input.cameraOffsetX, this.topY - input.cameraOffsetY);
+        input.canvasCtx.lineTo(this.drawRightX - input.cameraOffsetX, this.upperY - input.cameraOffsetY);
+        input.canvasCtx.lineTo(this.drawRightX - input.cameraOffsetX, this.lowerY - input.cameraOffsetY);
+        input.canvasCtx.lineTo(this.drawCenterX - input.cameraOffsetX, this.bottomY - input.cameraOffsetY);
+        input.canvasCtx.lineTo(this.drawLeftX - input.cameraOffsetX, this.lowerY - input.cameraOffsetY);
+        input.canvasCtx.lineTo(this.drawLeftX - input.cameraOffsetX, this.upperY - input.cameraOffsetY);
+        input.canvasCtx.lineTo(this.drawCenterX - input.cameraOffsetX, this.topY - input.cameraOffsetY);
     };
 
     /**
@@ -90,9 +114,9 @@ class Hex {
      * @param {number} input.cameraOffsetY - Vertical camera offset to apply.
      */
     drawCoord(input) {
-        input.canvasCtx.fillText(this.q, this.qX - input.cameraOffsetX, this.qY - input.cameraOffsetY);
-        input.canvasCtx.fillText(this.r, this.rX - input.cameraOffsetX, this.rY - input.cameraOffsetY);
-        input.canvasCtx.fillText(this.s, this.sX - input.cameraOffsetX, this.sY - input.cameraOffsetY);
+        input.canvasCtx.fillText(this.q, this.drawQx - input.cameraOffsetX, this.qY - input.cameraOffsetY);
+        input.canvasCtx.fillText(this.r, this.drawRx - input.cameraOffsetX, this.rY - input.cameraOffsetY);
+        input.canvasCtx.fillText(this.s, this.drawSx - input.cameraOffsetX, this.sY - input.cameraOffsetY);
     };
 
     /**
@@ -202,6 +226,7 @@ class Hex {
      * @param {string} input.direction - Direction to move in (must be a valid key in TRANSVERSE_MOD_PARAM).
      * @param {number} [input.distance=1] - Number of hexes to move in the specified direction; defaults to 1 if missing or invalid.
      * @param {Object} input.hexList - A map of hex tiles keyed by "q,r,s" strings.
+     * @param {boolean} input.flipped - Is this map flipped (mirror image)?
      *
      * @returns {Object} - The object returned by `transverseHex`, containing:
      *   @property {number} q - The q coordinate of the resulting hex.
@@ -217,7 +242,11 @@ class Hex {
         if (input.distance == null || isNaN(input.distance)) {
             input.distance = 1;
         }
-        const modData = Hex.TRANSVERSE_MOD_PARAM[input.direction];
+        let flipMode = Hex.FLIPMODE_STANDARD;
+        if (input.flipped) {
+            flipMode = Hex.FLIPMODE_FLIPPED;
+        }
+        const modData = Hex.TRANSVERSE_MOD_PARAM[input.direction]?.[flipMode];
         if (!modData) {
             throw new Error(`[Hex] ${window.taggedString.invalidHexDirection(input.direction)}`);
         }
@@ -279,6 +308,49 @@ class Hex {
             transversedHexes[newHexListKey] = aHex;
         }
         return { q, r, s, hexListKey, transversedHexes, };
+    };
+
+    /**
+     * Updates x coordinates used for drawing when the map is flipped (mirror image)
+     *
+     * @param {Object.<string, Hex>} input.hexList - A dictionary of hexes keyed by cube coordinates.
+     * @param {number} input.mapWidth - Total pixel width of the map, used as the axis of reflection.
+     */
+    setFlipCoord(input) {
+        this.flippedCenterX = input.mapWidth - this.centerX;
+        this.flippedLeftX = input.mapWidth - this.leftX;
+        this.flippedRightX = input.mapWidth - this.rightX;
+
+        this.flippedQx = input.mapWidth - this.qX;
+        this.flippedRx = input.mapWidth - this.rX;
+        this.flippedSx = input.mapWidth - this.sX;
+
+    };
+
+    /**
+     * Sets the drawing coordinates of the hex depending on the flip state.
+     *
+     * @param {boolean} input.flipped - Whether to use flipped coordinates for rendering.
+     */
+    flip(input) {
+        if (input.flipped) {
+            this.drawCenterX = this.flippedCenterX;
+            this.drawLeftX = this.flippedLeftX;
+            this.drawRightX = this.flippedRightX;
+
+            this.drawQx = this.flippedQx;
+            this.drawRx = this.flippedRx;
+            this.drawSx = this.flippedSx;
+
+            return;
+        }
+        this.drawCenterX = this.centerX;
+        this.drawLeftX = this.leftX;
+        this.drawRightX = this.rightX;
+
+        this.drawQx = this.qX;
+        this.drawRx = this.rX;
+        this.drawSx = this.sX;
     };
 
     // CONSIDER TO REMOVE

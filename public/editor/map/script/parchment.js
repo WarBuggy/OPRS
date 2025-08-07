@@ -84,6 +84,8 @@ class Parchment extends BaseMainSurface {
             canvasHeight: this.canvas.height,
             estimateHexPerWidth: this.gridParam.estimateHexPerWidth,
             estimateHexPerHeight: this.gridParam.estimateHexPerHeight,
+            flipped: this.flipped,
+            mapWidth: this.mapParam.width,
         });
         // highlight current mouse over hex
         const mouseOverHex = this.userInputParam.currentMouseOverHex;
@@ -200,6 +202,8 @@ class Parchment extends BaseMainSurface {
                 cameraParam: parent.cameraParam,
                 hexParam: parent.hexParam,
                 gridParam: parent.gridParam,
+                flipped: parent.flipped,
+                mapWidth: parent.mapParam.width,
             });
             parent.emitter.emit(Shared.EMITTER_SIGNAL.PARCHMENT_PANNED);
         });
@@ -223,6 +227,8 @@ class Parchment extends BaseMainSurface {
                 cameraParam: parent.cameraParam,
                 hexParam: parent.hexParam,
                 gridParam: parent.gridParam,
+                flipped: parent.flipped,
+                mapWidth: parent.mapParam.width,
             });
         });
     };
@@ -242,8 +248,8 @@ class Parchment extends BaseMainSurface {
             e.preventDefault();
 
             // get before zoom data
-            const oldMouseMapPosX = parent.userInputParam.mouseMapPos.x;
-            const oldMouseMapPosY = parent.userInputParam.mouseMapPos.y;
+            let oldMouseMapPosX = parent.userInputParam.mouseMapPos.x;
+            let oldMouseMapPosY = parent.userInputParam.mouseMapPos.y;
             const oldSide = this.hexParam.side;
 
             const zoomLevels = Object.keys(this.zoomSettings.landscape.levels)
@@ -273,6 +279,7 @@ class Parchment extends BaseMainSurface {
             parent.hexParam = preCachedZoomData.hexParam;
             parent.mapParam = preCachedZoomData.mapParam;
             parent.gridParam = preCachedZoomData.gridParam;
+            parent.setHexDrawXCoord({ hexList: parent.gridParam.hexList, flipped: parent.flipped, });
             parent.cameraParam = preCachedZoomData.cameraParam;
             localStorage.setItem(parent.STORAGE_KEYS.ZOOM_LEVEL, newZoom);
 
@@ -280,7 +287,10 @@ class Parchment extends BaseMainSurface {
             const scale = parent.hexParam.side / oldSide;
             const newMouseMapPosX = oldMouseMapPosX * scale;
             const newMouseMapPosY = oldMouseMapPosY * scale;
-            const newCameraOffsetX = newMouseMapPosX - parent.userInputParam.mousePos.x;
+            let newCameraOffsetX = newMouseMapPosX - parent.userInputParam.mousePos.x;
+            if (parent.flipped) {
+                newCameraOffsetX = parent.mapParam.width - newMouseMapPosX - parent.userInputParam.mousePos.x;
+            }
             const newCameraOffsetY = newMouseMapPosY - parent.userInputParam.mousePos.y;
             parent.clampCameraOffset({
                 cameraParam: parent.cameraParam,
@@ -292,6 +302,8 @@ class Parchment extends BaseMainSurface {
                 cameraParam: parent.cameraParam,
                 hexParam: parent.hexParam,
                 gridParam: parent.gridParam,
+                flipped: parent.flipped,
+                mapWidth: parent.mapParam.width,
             });
             parent.emitter.emit(Shared.EMITTER_SIGNAL.PARCHMENT_ZOOMED);
         }, { passive: false });
