@@ -34,11 +34,15 @@ class Parchment extends BaseMainSurface {
     setup() {
         this.canvas.width = this.canvas.parentElement.offsetWidth;
         this.canvas.height = this.canvas.parentElement.offsetHeight;
+        const drawMapWidthAndHeight = this.setMapWidthAndHeight({
+            userInputWidth: Parchment.userMapInput.mapWidthInInch,
+            userInputHeight: Parchment.userMapInput.mapHeightInInch,
+        });
         this.zoomCachedData = this.preCalculateParamsFromZoomData({
             canvasWidth: this.canvas.width,
             canvasHeight: this.canvas.height,
-            mapWidthInInch: Parchment.userMapInput.mapWidthInInch,
-            mapHeightInInch: Parchment.userMapInput.mapHeightInInch,
+            mapWidthInInch: drawMapWidthAndHeight.width,
+            mapHeightInInch: drawMapWidthAndHeight.height,
             hexWidthPerInch: Parchment.userMapInput.hexWidthPerInch,
         });
         // NOTE: there is no plan to support map editor in portrait mode

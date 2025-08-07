@@ -199,6 +199,27 @@ class BaseMainSurface {
     };
 
     /**
+     * Determines the map's width and height based on user input,
+     * ensuring the smaller value is always assigned as the width
+     * and the larger as the height.
+     *
+     * @param {number} input.userInputWidth - The width provided by the user.
+     * @param {number} input.userInputHeight - The height provided by the user.
+     * @returns {Object} An object containing:
+     *   @property {number} width  - The smaller of the two input values.
+     *   @property {number} height - The larger of the two input values.
+     */
+    setMapWidthAndHeight(input) {
+        let width = input.userInputWidth;
+        let height = input.userInputHeight;
+        if (input.userInputWidth > input.userInputHeight) {
+            width = input.userInputHeight;
+            height = input.userInputWidth;
+        }
+        return { width, height, };
+    };
+
+    /**
      * Calculates map layout and hex grid parameters based on physical map size,
      * hex sizing, and canvas resolution.
      * Iteratively places hexes in a staggered pointy-top grid starting from top-left.
