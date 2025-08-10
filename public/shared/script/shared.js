@@ -58,4 +58,24 @@ class Shared {
     }
     return comp;
   };
+
+  static parseXmlString(xmlString, tags = ["title", "author", "year", "price", "code"]) {
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlString, "application/xml");
+
+    if (xmlDoc.querySelector("parsererror")) {
+      throw new Error("Invalid XML");
+    }
+
+    const result = {};
+    for (const tag of tags) {
+      const elements = xmlDoc.getElementsByTagName(tag);
+      if (elements.length > 1) {
+        result[tag] = Array.from(elements).map(el => el.textContent);
+      } else if (elements.length === 1) {
+        result[tag] = elements[0].textContent;
+      }
+    }
+    return result;
+  }
 };

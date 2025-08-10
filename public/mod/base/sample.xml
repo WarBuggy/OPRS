@@ -1,0 +1,12 @@
+<book>
+    <title>Example</title>
+    <author>Ben Ho</author>
+    <year>2025</year>
+    <price>39.95</price>
+    <code><![CDATA[
+function hello() {
+    console.log("<tag>safe</tag>");
+};
+  ]]>
+    </code>
+</book>

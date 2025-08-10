@@ -4,6 +4,9 @@ window.addEventListener('load', function () {
 
 class EditorMap {
     constructor() {
+        this.modList = {};
+        this.loadMod();
+
         this.createPageHTMLComponent();
 
         this.managerMap = new ManagerMap({
@@ -23,6 +26,11 @@ class EditorMap {
 
     setup() {
         this.managerMap.setup();
+    };
+
+    loadMod() {
+        // TODO get mod location from config
+        const modLocation = '../../../mod/';
     };
 
     createPageHTMLComponent(input) {
