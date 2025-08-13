@@ -3,16 +3,16 @@
     </setting>
     <list>
         <listEntry>
-            <modName></modName>
-            <dirName></dirName>
+            <modName>sampleMod0</modName>
+            <dirName>base</dirName>
         </listEntry>
         <listEntry>
-            <modName></modName>
-            <dirName></dirName>
+            <modName>sampleMod02</modName>
+            <dirName>test2</dirName>
         </listEntry>
         <listEntry>
-            <modName></modName>
-            <dirName></dirName>
+            <modName>sampleMod01</modName>
+            <dirName>test1</dirName>
         </listEntry>
     </list>
 </mod>
