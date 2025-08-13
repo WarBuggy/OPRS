@@ -1,7 +1,7 @@
 window.addEventListener('load', async function () {
-    window.editorMap = new EditorMap();
     window.ml = new ModLoader();
-    await window.editorMap.loadMod();
+    await window.ml.loadMod();
+    window.editorMap = new EditorMap();
 });
 
 class EditorMap {
@@ -30,29 +30,6 @@ class EditorMap {
 
     setup() {
         this.managerMap.setup();
-    };
-
-    async loadMod() {
-        const modList = await ModLoader.parseModSettingXML({
-            modDirLocation: Shared.MOD_STRING.MOD_DIR_LOCATION.EDITOR_MAP,
-        });
-        for (let h = 0; h < modList.list.length; h++) {
-            const modMetaData = modList.list[h];
-            const modData = await ModLoader.parseModAboutXML({
-                modDirLocation: Shared.MOD_STRING.MOD_DIR_LOCATION.EDITOR_MAP,
-                dirName: modMetaData.dirName,
-            });
-            const dirPath = `${Shared.MOD_STRING.MOD_DIR_LOCATION.EDITOR_MAP}${modMetaData.dirName}/`;
-            for (let i = 0; i < modData.hooks.length; i++) {
-                const modFile = modData.hooks[i];
-                const modPath = `${dirPath}${modFile}`;
-                await window.ml.loadMod({
-                    modPath,
-                    modName: modData.name,
-                    modFile,
-                });
-            }
-        }
     };
 
     createPageHTMLComponent(input) {

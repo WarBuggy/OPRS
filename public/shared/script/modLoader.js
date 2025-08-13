@@ -2,7 +2,30 @@ class ModLoader {
     static OPRSClasses = window.OPRSClasses = window.OPRSClasses || {};
     static modHooksSymbol = Symbol.for('modHooks');
 
-    async loadMod(input) {
+    async loadMod() {
+        const modList = await ModLoader.parseModSettingXML({
+            modDirLocation: Shared.MOD_STRING.MOD_DIR_LOCATION.EDITOR_MAP,
+        });
+        for (let h = 0; h < modList.list.length; h++) {
+            const modMetaData = modList.list[h];
+            const modData = await ModLoader.parseModAboutXML({
+                modDirLocation: Shared.MOD_STRING.MOD_DIR_LOCATION.EDITOR_MAP,
+                dirName: modMetaData.dirName,
+            });
+            const dirPath = `${Shared.MOD_STRING.MOD_DIR_LOCATION.EDITOR_MAP}${modMetaData.dirName}/`;
+            for (let i = 0; i < modData.hooks.length; i++) {
+                const modFile = modData.hooks[i];
+                const modPath = `${dirPath}${modFile}`;
+                await window.ml.loadAMod({
+                    modPath,
+                    modName: modData.name,
+                    modFile,
+                });
+            }
+        }
+    };
+
+    async loadAMod(input) {
         try {
             const modModule = await import(input.modPath);
 
