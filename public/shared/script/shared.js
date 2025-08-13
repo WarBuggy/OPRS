@@ -19,6 +19,33 @@ class Shared {
     BOTTOM_RIGHT: "br",
   };
 
+  static MOD_STRING = {
+    MOD_DIR_LOCATION: {
+      EDITOR_MAP: '../../../mod/',
+    },
+    BASE_TAG_NAME: 'mod',
+    ABOUT_XML: {
+      FILE_NAME: 'about.xml',
+      NAME: 'name',
+      VERSION: 'version',
+      AUTHOR: 'author',
+      HOOKS: 'hooks',
+      HOOK: 'hook',
+    },
+    SETTING_XML: {
+      FILE_NAME: 'setting.xml',
+      LIST: 'list',
+      LIST_ENTRY: 'listEntry',
+      MOD_NAME: 'modName',
+      DIR_NAME: 'dirName',
+    },
+    HOOKS: {
+      BEFORE: 'before',
+      AFTER: 'after',
+      REPLACE: 'replace',
+    },
+  };
+
   /**
    * Clamps a numeric value between a minimum and maximum bound.
    *
@@ -58,24 +85,4 @@ class Shared {
     }
     return comp;
   };
-
-  static parseXmlString(xmlString, tags = ["title", "author", "year", "price", "code"]) {
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xmlString, "application/xml");
-
-    if (xmlDoc.querySelector("parsererror")) {
-      throw new Error("Invalid XML");
-    }
-
-    const result = {};
-    for (const tag of tags) {
-      const elements = xmlDoc.getElementsByTagName(tag);
-      if (elements.length > 1) {
-        result[tag] = Array.from(elements).map(el => el.textContent);
-      } else if (elements.length === 1) {
-        result[tag] = elements[0].textContent;
-      }
-    }
-    return result;
-  }
 };
