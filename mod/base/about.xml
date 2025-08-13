@@ -1,0 +1,10 @@
+<mod>
+  <name>sampleMod00</name>
+  <version>1.0.0</version>
+  <author>Buggy</author>
+  <hooks>
+    <hook>fire.js</hook>
+    <hook>jump.js</hook>
+    <hook>player2.js</hook>
+  </hooks>
+</mod>
