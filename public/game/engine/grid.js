@@ -83,8 +83,8 @@ class Grid {
             q = - Math.floor(r / 2);
             s = - (q + r);
             while (horizontalHexNum < maxHorizontalHexNum) {
-                let aHex = new Hex(xCoord, yCoord, q, r, s);
-                let listKey = Hex.createListKey(q, r, s);
+                let aHex = new OPRSClasses.Hex(xCoord, yCoord, q, r, s);
+                let listKey = window.OPRSClasses.Hex.createListKey(q, r, s);
                 this.hexList[listKey] = aHex;
 
                 xCoord = xCoord + Grid.hexParam.width;

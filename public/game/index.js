@@ -29,8 +29,8 @@ class GameManager {
 //     const pageY = event.pageY;
 //     const offsetX = event.offsetX;
 //     const offsetY = event.offsetY;
-//     let hexCoord = Hex.pixelToHexCoord(offsetX, offsetY);
-//     let listKey = Hex.createListKey(hexCoord.q, hexCoord.r, hexCoord.s);
+//     let hexCoord = = window.OPRSClasses.Hex.pixelToHexCoord(offsetX, offsetY);
+//     let listKey = window.OPRSClasses.Hex.createListKey(hexCoord.q, hexCoord.r, hexCoord.s);
 //     let aHex = Grid.hexParam.list[listKey];
 //     console.log(`offset X: ${offsetX}, offset Y: ${offsetY}, (${hexCoord.q}, ${hexCoord.r}, ${hexCoord.s}), centerX: ${aHex.centerX}, centerY: ${aHex.centerY}`);
 // });

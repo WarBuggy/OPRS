@@ -1,6 +1,4 @@
-window.OPRSClasses = window.OPRSClasses || {};
-
-window.OPRSClasses.Player = class Player {
+export class Player {
     constructor(name) {
         this.name = name;
     };

@@ -2,7 +2,7 @@
 // The padded edge is 1 inch on all four sides of the map.
 // That makes the coord of the padded-map's top left corner is in the negative.
 
-class BaseMainSurface {
+export class BaseMainSurface {
     /**
      * Initializes the main surface object responsible for managing canvas rendering, user input,
      * camera controls, and hex grid state for a hex-based map editor.
@@ -293,14 +293,14 @@ class BaseMainSurface {
             q = - Math.floor(r / 2);
             s = - (q + r);
             for (let hex = 0; hex < maxHex; hex++) {
-                let aHex = new Hex({
+                let aHex = new OPRSClasses.Hex({
                     centerX: xCoord,
                     centerY: yCoord,
                     q, r, s,
                     side: input.side,
                     hexHalfWidth: input.hexHalfWidth,
                 });
-                let listKey = Hex.createListKey({ q, r, s, });
+                let listKey = window.OPRSClasses.Hex.createListKey({ q, r, s, });
                 result.gridParam.hexList[listKey] = aHex;
 
                 // Update maxX
@@ -544,7 +544,7 @@ class BaseMainSurface {
         if (input.flipped) {
             input.userInputParam.mouseMapPos.x = input.mapWidth - input.userInputParam.mouseMapPos.x;
         }
-        const currentMouseOverHex = Hex.getHexFromCoord({
+        const currentMouseOverHex = window.OPRSClasses.Hex.getHexFromCoord({
             pointX: input.userInputParam.mouseMapPos.x,
             pointY: input.userInputParam.mouseMapPos.y,
             side: input.hexParam.side,
@@ -599,14 +599,14 @@ class BaseMainSurface {
         if (input.flipped) {
             startX = Math.min(input.mapWidth - input.cameraOffsetX, input.mapWidth - input.hexHalfWidth) - horizontalSafetyPad;
         }
-        const startHex = Hex.getHexFromCoord({
+        const startHex = window.OPRSClasses.Hex.getHexFromCoord({
             pointX: startX, pointY: startY, hexList: input.hexList,
             side: input.hexSide, hexHalfWidth: input.hexHalfWidth,
         });
         if (!startHex) {
             throw new Error(`[BaseMainSurface] ${taggedString.failedToGetStartHex(input.cameraOffsetX, input.cameraOffsetY)}`);
         }
-        const safeguardHexData = Hex.getHexDataDistanceOfHex({
+        const safeguardHexData = window.OPRSClasses.Hex.getHexDataDistanceOfHex({
             distance: safeguardHexDistance,
             direction: Shared.HEX_DIRECTION.TOP_LEFT,
             hexList: input.hexList,
@@ -625,7 +625,7 @@ class BaseMainSurface {
             if (r % 2 == 1) {
                 direction = Shared.HEX_DIRECTION.BOTTOM_LEFT;
             }
-            const transverseLeftData = Hex.getHexDataDistanceOfHex({
+            const transverseLeftData = window.OPRSClasses.Hex.getHexDataDistanceOfHex({
                 q: currentQ, r: currentR, s: currentS,
                 distance: safeGuardHorizontalDistance,
                 direction: Shared.HEX_DIRECTION.RIGHT,
@@ -633,7 +633,7 @@ class BaseMainSurface {
                 flipped: input.flipped,
             });
             result = { ...result, ...transverseLeftData.transversedHexes };
-            const transverseBottomRightData = Hex.getHexDataDistanceOfHex({
+            const transverseBottomRightData = window.OPRSClasses.Hex.getHexDataDistanceOfHex({
                 q: currentQ, r: currentR, s: currentS,
                 distance: 1,
                 direction,
@@ -698,7 +698,7 @@ class BaseMainSurface {
     // calculateRowMinMaxQS(input) {
     //     const result = {};
     //     for (let r = input.minR; r <= input.maxR; r++) {
-    //         const rowResult = Hex.getRowMinMaxQS({
+    //         const rowResult = window.OPRSClasses.Hex.getRowMinMaxQS({
     //             r, maxQ: input.maxQ, minR: input.minR,
     //         });
     //         result[r] = rowResult;

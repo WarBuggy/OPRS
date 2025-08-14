@@ -3,7 +3,7 @@
 // There is no zooming on the mini map. 
 // Click on the mini map will pan to that location on the parchment.
 
-class MiniMapParchment extends BaseMiniMap {
+export class MiniMapParchment extends OPRSClasses.BaseMiniMap {
     static ONLY_SUPPORTED_MODE = 'landscape';
     /**
      * Initializes the BaseMiniMap instance with zoom configuration, camera setup, and event bindings.

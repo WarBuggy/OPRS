@@ -3,10 +3,6 @@
     </setting>
     <list>
         <listEntry>
-            <modName>sampleMod0</modName>
-            <dirName>base</dirName>
-        </listEntry>
-        <listEntry>
             <modName>sampleMod02</modName>
             <dirName>test2</dirName>
         </listEntry>

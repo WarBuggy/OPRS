@@ -1,14 +1,14 @@
-class ManagerMap {
+export class ManagerMap {
 
     constructor(input) {
-        this.emitter = new EventEmitter();
+        this.emitter = new window.OPRSClasses.EventEmitter();
 
-        this.parchment = new Parchment({
+        this.parchment = new window.OPRSClasses.Parchment({
             canvasId: input.parchment.canvasId,
             emitter: this.emitter,
         });
 
-        this.miniMap = new MiniMapParchment({
+        this.miniMap = new window.OPRSClasses.MiniMapParchment({
             canvasId: input.miniMap.canvasId,
             zoomCachedData: this.parchment.zoomCachedData,
             cameraWidth: this.parchment.canvas.width,

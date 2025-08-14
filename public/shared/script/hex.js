@@ -1,4 +1,4 @@
-class Hex {
+export class Hex {
     static FLIPMODE_STANDARD = 'standard';
     static FLIPMODE_FLIPPED = 'flipped';
     static TRANSVERSE_MOD_PARAM = {
@@ -42,34 +42,34 @@ class Hex {
      */
     constructor(input) {
         const halfHeight = input.side / 2;
-        this.centerX = input.centerX;
+        this.centerX = Math.round(input.centerX);
         this.drawCenterX = this.centerX;
         this.flippedCenterX = null;
 
-        this.leftX = input.centerX - input.hexHalfWidth;
+        this.leftX = Math.round(input.centerX - input.hexHalfWidth);
         this.drawLeftX = this.leftX;
         this.flippedLeftX = null;
 
-        this.rightX = input.centerX + input.hexHalfWidth;
+        this.rightX = Math.round(input.centerX + input.hexHalfWidth);
         this.drawRightX = this.rightX;
         this.flippedRightX = null;
 
-        this.topY = input.centerY - input.side;
-        this.upperY = input.centerY - halfHeight;
-        this.centerY = input.centerY;
-        this.lowerY = input.centerY + halfHeight;
-        this.bottomY = input.centerY + input.side;
+        this.topY = Math.round(input.centerY - input.side);
+        this.upperY = Math.round(input.centerY - halfHeight);
+        this.centerY = Math.round(input.centerY);
+        this.lowerY = Math.round(input.centerY + halfHeight);
+        this.bottomY = Math.round(input.centerY + input.side);
 
-        this.q = input.q;
-        this.r = input.r;
-        this.s = input.s;
+        this.q = Math.round(input.q);
+        this.r = Math.round(input.r);
+        this.s = Math.round(input.s);
 
-        this.qX = input.centerX - input.hexHalfWidth * 0.4;
-        this.qY = input.centerY - halfHeight * 0.9;
-        this.rX = input.centerX + input.hexHalfWidth * 0.6;
-        this.rY = input.centerY;
-        this.sX = input.centerX - input.hexHalfWidth * 0.4;
-        this.sY = input.centerY + halfHeight * 0.9;
+        this.qX = Math.round(input.centerX - input.hexHalfWidth * 0.4);
+        this.qY = Math.round(input.centerY - halfHeight * 0.9);
+        this.rX = Math.round(input.centerX + input.hexHalfWidth * 0.6);
+        this.rY = Math.round(input.centerY);
+        this.sX = Math.round(input.centerX - input.hexHalfWidth * 0.4);
+        this.sY = Math.round(input.centerY + halfHeight * 0.9);
 
         this.drawQx = this.qX;
         this.drawRx = this.rX;
@@ -79,7 +79,7 @@ class Hex {
         this.flippedRx = null;
         this.flippedSx = null;
 
-        this.key = Hex.createListKey({
+        this.key = window.OPRSClasses.Hex.createListKey({
             q: this.q,
             r: this.r,
             s: this.s,
@@ -206,13 +206,13 @@ class Hex {
      * @returns {Hex} - The hex object corresponding to the pixel location, or undefined if not found.
      */
     static getHexFromCoord(input) {
-        let hexCoord = Hex.pixelToHexCoord({
+        let hexCoord = window.OPRSClasses.Hex.pixelToHexCoord({
             pointX: input.pointX,
             pointY: input.pointY,
             side: input.side,
             hexHalfWidth: input.hexHalfWidth,
         });
-        let listKey = Hex.createListKey({ q: hexCoord.q, r: hexCoord.r, s: hexCoord.s, });
+        let listKey = window.OPRSClasses.Hex.createListKey({ q: hexCoord.q, r: hexCoord.r, s: hexCoord.s, });
         return input.hexList[listKey];
     };
 
@@ -242,11 +242,11 @@ class Hex {
         if (input.distance == null || isNaN(input.distance)) {
             input.distance = 1;
         }
-        let flipMode = Hex.FLIPMODE_STANDARD;
+        let flipMode = window.OPRSClasses.Hex.FLIPMODE_STANDARD;
         if (input.flipped) {
-            flipMode = Hex.FLIPMODE_FLIPPED;
+            flipMode = window.OPRSClasses.Hex.FLIPMODE_FLIPPED;
         }
-        const modData = Hex.TRANSVERSE_MOD_PARAM[input.direction]?.[flipMode];
+        const modData = window.OPRSClasses.Hex.TRANSVERSE_MOD_PARAM[input.direction]?.[flipMode];
         if (!modData) {
             throw new Error(`[Hex] ${window.taggedString.invalidHexDirection(input.direction)}`);
         }
@@ -284,7 +284,7 @@ class Hex {
         let q = input.q;
         let s = input.s;
         let r = input.r;
-        let hexListKey = Hex.createListKey({ q, r, s, });
+        let hexListKey = window.OPRSClasses.Hex.createListKey({ q, r, s, });
         const startingHex = input.hexList[hexListKey];
         if (!startingHex) {
             throw new Error(`[Hex] ${window.taggedString.hexTransverseInvalidStart(input.q, input.r, input.s)}`);
@@ -296,7 +296,7 @@ class Hex {
             const newQ = q + input.qMod;
             const newR = r + input.rMod;
             const newS = s + input.sMod;
-            const newHexListKey = Hex.createListKey({ q: newQ, r: newR, s: newS, });
+            const newHexListKey = window.OPRSClasses.Hex.createListKey({ q: newQ, r: newR, s: newS, });
             const aHex = input.hexList[newHexListKey];
             if (!aHex) {
                 break;
@@ -313,17 +313,17 @@ class Hex {
     /**
      * Updates x coordinates used for drawing when the map is flipped (mirror image)
      *
-     * @param {Object.<string, Hex>} input.hexList - A dictionary of hexes keyed by cube coordinates.
+     * @param {Object.<string, window.OPRSClasses.Hex>} input.hexList - A dictionary of hexes keyed by cube coordinates.
      * @param {number} input.mapWidth - Total pixel width of the map, used as the axis of reflection.
      */
     setFlipCoord(input) {
-        this.flippedCenterX = input.mapWidth - this.centerX;
-        this.flippedLeftX = input.mapWidth - this.leftX;
-        this.flippedRightX = input.mapWidth - this.rightX;
+        this.flippedCenterX = Math.round(input.mapWidth - this.centerX);
+        this.flippedLeftX = Math.round(input.mapWidth - this.leftX);
+        this.flippedRightX = Math.round(input.mapWidth - this.rightX);
 
-        this.flippedQx = input.mapWidth - this.qX;
-        this.flippedRx = input.mapWidth - this.rX;
-        this.flippedSx = input.mapWidth - this.sX;
+        this.flippedQx = Math.round(input.mapWidth - this.qX);
+        this.flippedRx = Math.round(input.mapWidth - this.rX);
+        this.flippedSx = Math.round(input.mapWidth - this.sX);
 
     };
 

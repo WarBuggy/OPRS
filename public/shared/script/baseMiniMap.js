@@ -1,4 +1,4 @@
-class BaseMiniMap {
+export class BaseMiniMap {
 
     /**
      * Initializes the BaseMiniMap instance by setting up canvas, context, and user input tracking.

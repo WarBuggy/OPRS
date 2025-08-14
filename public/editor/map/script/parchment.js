@@ -1,4 +1,4 @@
-class Parchment extends BaseMainSurface {
+export class Parchment extends OPRSClasses.BaseMainSurface {
     static userMapInput = {
         mapWidthInInch: 72,
         mapHeightInInch: 48,

@@ -13,7 +13,7 @@ class EditorMap {
 
         this.createPageHTMLComponent();
 
-        this.managerMap = new ManagerMap({
+        this.managerMap = new window.OPRSClasses.ManagerMap({
             parchment: {
                 canvasId: 'canvasParchment',
             },

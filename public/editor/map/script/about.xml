@@ -1,0 +1,19 @@
+<mod>
+  <name>Base</name>
+  <version>1.0.0</version>
+  <author>Buggy</author>
+  <hooks>
+    <hook>../../../shared/script/hex.js</hook>
+    <hook>../../../shared/script/eventEmitter.js</hook>
+    <hook>../../../shared/script/baseMainSurface.js</hook>
+    <hook>../../../shared/script/baseMiniMap.js</hook>
+    <hook>managerMap.js</hook>
+    <hook>parchment.js</hook>
+    <hook>minimapParchment.js</hook>
+    <hook></hook>
+    <hook>zzModTestPlayer.js</hook>
+    <hook>zzModTestFire.js</hook>
+    <hook>zzModTestJump.js</hook>
+    <hook>zzModTestPlayer2.js</hook>
+  </hooks>
+</mod>

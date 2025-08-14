@@ -6,6 +6,7 @@ class ModLoader {
         const modList = await ModLoader.parseModSettingXML({
             modDirLocation: Shared.MOD_STRING.MOD_DIR_LOCATION.EDITOR_MAP,
         });
+        this.addBaseModToModList(modList.list);
         for (let h = 0; h < modList.list.length; h++) {
             const modMetaData = modList.list[h];
             const modData = await ModLoader.parseModAboutXML({
@@ -65,7 +66,6 @@ class ModLoader {
             if (exportedClassNames.length === 0) {
                 console.error(`[ModLoader] ${taggedString.newClassNoExport(input.modName, input.modPath)}.`);
             }
-
             // Register each exported class
             for (const className of exportedClassNames) {
                 const cls = modModule[className];
@@ -92,7 +92,6 @@ class ModLoader {
         if (!className || !methodName || !mode || typeof handler !== "function") {
             throw new Error(taggedString.methodHookInvalidInfo());
         }
-
 
         const targetClass = ModLoader.OPRSClasses[className];
         if (!targetClass) {
@@ -219,6 +218,14 @@ class ModLoader {
         } catch (e) {
             throw new Error(`[ModLoader] ${taggedString.newMethodError(methodName, className, e)}`);
         }
+    };
+
+    addBaseModToModList(modList) {
+        const baseMod = {
+            modName: 'base',
+            dirName: '../public/editor/map/script',
+        };
+        modList.unshift(baseMod);
     };
 
     /**
