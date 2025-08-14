@@ -20,6 +20,7 @@ class Shared {
   };
 
   static MOD_STRING = {
+    SCRIPT_FUNCTION_LIST: ['registerMethodMod', 'registerNewMethodMod'],
     RESERVED_MOD_NAME_LIST: ['base'],
     MOD_DIR_LOCATION: {
       EDITOR_MAP: '../../../mod/',

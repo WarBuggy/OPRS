@@ -1,16 +1,21 @@
-class ModLoader {
+class ScriptLoader {
     static OPRSClasses = window.OPRSClasses = window.OPRSClasses || {};
     static modHooksSymbol = Symbol.for('modHooks');
 
-    async loadMod() {
-        const modList = await ModLoader.parseModSettingXML({
+    async getModList() {
+        const modList = await ScriptLoader.parseModSettingXML({
             modDirLocation: Shared.MOD_STRING.MOD_DIR_LOCATION.EDITOR_MAP,
         });
         this.removeReservedNameFromModList(modList.list);
         this.addBaseModToModList(modList.list);
+        return modList;
+    };
+
+    async loadScriptMod(modList) {
+        const importModModule = {};
         for (let h = 0; h < modList.list.length; h++) {
             const modMetaData = modList.list[h];
-            const modData = await ModLoader.parseModAboutXML({
+            const modData = await ScriptLoader.parseModAboutXML({
                 modDirLocation: Shared.MOD_STRING.MOD_DIR_LOCATION.EDITOR_MAP,
                 dirName: modMetaData.dirName,
             });
@@ -18,41 +23,45 @@ class ModLoader {
             for (let i = 0; i < modData.hooks.length; i++) {
                 const modFile = modData.hooks[i];
                 const modPath = `${dirPath}${modFile}`;
-                await window.ml.loadAMod({
+                await this.loadAScriptMod({
                     modPath,
                     modName: modData.name,
                     modFile,
+                    importModModule,
                 });
             }
         }
+        return { importModModule, };
     };
 
-    async loadAMod(input) {
+    async loadAScriptMod(input) {
         try {
             const modModule = await import(input.modPath);
-
             const parent = this;
             // Check if default export is a function — method-hook mod
             if (typeof modModule.default === "function") {
-                // Provide registerMethodMod to mod code
+                if (!Shared.MOD_STRING.SCRIPT_FUNCTION_LIST.includes(modModule.default.name)) {
+                    input.importModModule[input.modName] = modModule;
+                    return;
+                }
                 await modModule.default({
                     modName: input.modName,
                     registerMethodMod: function (hookInfo) {
                         try {
                             parent.registerMethodMod({ modName: input.modName, hookInfo, });
-                            console.log(`[ModLoader] ${taggedString.methodHookLoaded(input.modName, input.modFile, hookInfo.className, hookInfo.methodName, hookInfo.mode)}`);
+                            console.log(`[ScriptLoader] ${taggedString.methodHookLoaded(input.modName, input.modFile, hookInfo.className, hookInfo.methodName, hookInfo.mode)}`);
                         } catch (e) {
-                            console.error(`[ModLoader] ${taggedString.methodHookFailed(input.modName, input.modFile, e)}`);
+                            console.error(`[ScriptLoader] ${taggedString.methodHookFailed(input.modName, input.modFile, e)}`);
                         }
                     },
                     registerNewMethodMod: function (newInfo) {
                         try {
                             parent.registerNewMethodMod(newInfo);
-                            console.log(`[ModLoader] ${taggedString.newMethodLoaded(input.modName, input.modFile, newInfo.className, newInfo.methodName)}`);
+                            console.log(`[ScriptLoader] ${taggedString.newMethodLoaded(input.modName, input.modFile, newInfo.className, newInfo.methodName)}`);
                         } catch (e) {
-                            console.error(`[ModLoader] ${taggedString.newMethodFailed(input.modName, input.modFile, e)}`);
+                            console.error(`[ScriptLoader] ${taggedString.newMethodFailed(input.modName, input.modFile, e)}`);
                         }
-                    }
+                    },
                 });
                 return;
             }
@@ -65,19 +74,19 @@ class ModLoader {
                 .map(([name]) => name);
 
             if (exportedClassNames.length === 0) {
-                console.error(`[ModLoader] ${taggedString.newClassNoExport(input.modName, input.modPath)}.`);
+                console.error(`[ScriptLoader] ${taggedString.newClassNoExport(input.modName, input.modPath)}.`);
             }
             // Register each exported class
             for (const className of exportedClassNames) {
                 const cls = modModule[className];
-                if (ModLoader.OPRSClasses[className]) {
-                    console.warn(`[ModLoader] ${taggedString.newClassExists(input.modName, className)}`);
+                if (ScriptLoader.OPRSClasses[className]) {
+                    console.warn(`[ScriptLoader] ${taggedString.newClassExists(input.modName, className)}`);
                 }
-                ModLoader.OPRSClasses[className] = cls;
-                console.log(`[ModLoader] ${taggedString.newClassLoaded(input.modName, className)}`);
+                ScriptLoader.OPRSClasses[className] = cls;
+                console.log(`[ScriptLoader] ${taggedString.newClassLoaded(input.modName, className)}`);
             }
         } catch (e) {
-            console.error(`[ModLoader] ${taggedString.newClassFailed(input.modFile, input.modName, e)}`);
+            console.error(`[ScriptLoader] ${taggedString.newClassFailed(input.modFile, input.modName, e)}`);
         }
     };
 
@@ -94,7 +103,7 @@ class ModLoader {
             throw new Error(taggedString.methodHookInvalidInfo());
         }
 
-        const targetClass = ModLoader.OPRSClasses[className];
+        const targetClass = ScriptLoader.OPRSClasses[className];
         if (!targetClass) {
             throw new Error(taggedString.methodHookNoClass(className));
         }
@@ -108,9 +117,9 @@ class ModLoader {
         }
 
         // Initialize hook storage for this method if not exists
-        targetObject[ModLoader.modHooksSymbol] = targetObject[ModLoader.modHooksSymbol] || {};
-        if (!targetObject[ModLoader.modHooksSymbol][methodName]) {
-            targetObject[ModLoader.modHooksSymbol][methodName] = {
+        targetObject[ScriptLoader.modHooksSymbol] = targetObject[ScriptLoader.modHooksSymbol] || {};
+        if (!targetObject[ScriptLoader.modHooksSymbol][methodName]) {
+            targetObject[ScriptLoader.modHooksSymbol][methodName] = {
                 originalFunc: targetObject[methodName],
                 beforeHooks: [],
                 afterHooks: [],
@@ -118,7 +127,7 @@ class ModLoader {
             };
         }
 
-        const hookData = targetObject[ModLoader.modHooksSymbol][methodName];
+        const hookData = targetObject[ScriptLoader.modHooksSymbol][methodName];
 
         // Wrap handler to catch errors and log mod info
         const safeHandler = function (...args) {
@@ -196,12 +205,12 @@ class ModLoader {
 
         // Validate required inputs
         if (!className || !methodName || typeof handler !== "function") {
-            throw new Error(`[ModLoader] ${taggedString.newMethodInvalidInput()}`);
+            throw new Error(`[ScriptLoader] ${taggedString.newMethodInvalidInput()}`);
         }
         // Find the target class
-        const targetClass = ModLoader.OPRSClasses[className];
+        const targetClass = ScriptLoader.OPRSClasses[className];
         if (!targetClass) {
-            throw new Error(`[ModLoader] ${taggedString.newMethodInvalidClassName(className)}`);
+            throw new Error(`[ScriptLoader] ${taggedString.newMethodInvalidClassName(className)}`);
         }
 
         // Decide where to attach the method: static or instance
@@ -209,15 +218,15 @@ class ModLoader {
 
         // Prevent overwriting existing methods
         if (Object.prototype.hasOwnProperty.call(targetObject, methodName)) {
-            throw new Error(`[ModLoader] ${taggedString.newMethodMethodExists(methodName, isStatic ? "static" : "instance", className)}`);
+            throw new Error(`[ScriptLoader] ${taggedString.newMethodMethodExists(methodName, isStatic ? "static" : "instance", className)}`);
         }
 
         try {
             // Add the new method
             targetObject[methodName] = handler;
-            console.log(`[ModLoader] ${taggedString.newMethodAdded(isStatic ? "static" : "instance", methodName, className)}`);
+            console.log(`[ScriptLoader] ${taggedString.newMethodAdded(isStatic ? "static" : "instance", methodName, className)}`);
         } catch (e) {
-            throw new Error(`[ModLoader] ${taggedString.newMethodError(methodName, className, e)}`);
+            throw new Error(`[ScriptLoader] ${taggedString.newMethodError(methodName, className, e)}`);
         }
     };
 
@@ -226,7 +235,7 @@ class ModLoader {
             const modName = modList[i].modName.toLowerCase().trim();
             if (Shared.MOD_STRING.RESERVED_MOD_NAME_LIST.includes(modName)) {
                 modList.splice(i, 1);
-                console.warn(`[ModLoader] ${taggedString.reservedModNameFound(modName)}`);
+                console.warn(`[ScriptLoader] ${taggedString.reservedModNameFound(modName)}`);
             }
         }
     };
@@ -238,6 +247,26 @@ class ModLoader {
         };
         modList.unshift(baseMod);
     };
+
+    registerAssetType(input) {
+        if (this.assetRegistry[input.typeName]) {
+            console.warn(`[ScriptLoader] Asset type "${input.typeName}" is being replaced by a new one.`);
+        }
+        this.assetRegistry[input.typeName] = new window.OPRSClasses.AssetRegistry({ name: input.typeName, modName: input.modName, });
+        return this.assetRegistry[input.typeName];
+    };
+
+    registerBiome(registry, input) {
+        if (!input.name) {
+            console.warn(`[ScriptLoader] Skipping biome registration: missing name`);
+            return;
+        }
+
+        const biome = new Biome(input.name, input.description || '', this.currentMod);
+        registry.add(input.name, biome);
+
+        console.log(`[ScriptLoader] Biome "${input.name}" registered from mod "${this.currentMod}"`);
+    }
 
     /**
      * Parses a mod's `about.xml` file to extract metadata such as name,
@@ -311,7 +340,7 @@ class ModLoader {
             const dirName = entry.querySelector(Shared.MOD_STRING.SETTING_XML.DIR_NAME)?.textContent.trim() || "";
 
             if (!modName || !dirName) {
-                console.error(`[ModLoader.parseModSettingXML] ${window.taggedString.invalidModSettingListEntry(index)}`);
+                console.error(`[ScriptLoader.parseModSettingXML] ${window.taggedString.invalidModSettingListEntry(index)}`);
                 return; // Skip this entry
             }
 
