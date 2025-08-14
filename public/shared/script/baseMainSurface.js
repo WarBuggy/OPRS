@@ -57,6 +57,7 @@ export class BaseMainSurface {
             visual: {
                 showHexGrid: true,
                 showHexCoord: false,
+                logHexCoord: false,
             },
         };
         this.flipped = false;
@@ -560,10 +561,12 @@ export class BaseMainSurface {
         // } else {
         //     console.debug(`No found in hex list`);
         // }
-        if (currentMouseOverHex) {
-            console.debug(currentMouseOverHex.q, currentMouseOverHex.r, currentMouseOverHex.s);
-        } else {
-            console.debug('Out of bound');
+        if (input.logHexCoord) {
+            if (currentMouseOverHex) {
+                console.debug(currentMouseOverHex.q, currentMouseOverHex.r, currentMouseOverHex.s);
+            } else {
+                console.debug('Out of bound');
+            }
         }
     };
 

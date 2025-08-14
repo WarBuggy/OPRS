@@ -208,6 +208,7 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
                 gridParam: parent.gridParam,
                 flipped: parent.flipped,
                 mapWidth: parent.mapParam.width,
+                logHexCoord: parent.option.visual.logHexCoord,
             });
             parent.emitter.emit(Shared.EMITTER_SIGNAL.PARCHMENT_PANNED);
         });
@@ -233,6 +234,7 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
                 gridParam: parent.gridParam,
                 flipped: parent.flipped,
                 mapWidth: parent.mapParam.width,
+                logHexCoord: parent.option.visual.logHexCoord,
             });
         });
     };
@@ -308,6 +310,7 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
                 gridParam: parent.gridParam,
                 flipped: parent.flipped,
                 mapWidth: parent.mapParam.width,
+                logHexCoord: parent.option.visual.logHexCoord,
             });
             parent.emitter.emit(Shared.EMITTER_SIGNAL.PARCHMENT_ZOOMED);
         }, { passive: false });
@@ -483,8 +486,9 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
 
     /**
      * Adds global keyboard event listeners to toggle visual options:
-     * - Ctrl + '.' toggles visibility of the hex grid.
      * - Ctrl + '/' toggles visibility of hex coordinates.
+     * - Ctrl + '.' toggles visibility of the hex grid.
+     * - Ctrl + ',' toggles logging of hex coordinates to debug console.
      */
     addToggleOptionKeyEvent() {
         const parent = this;
@@ -492,9 +496,16 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
             if (e.ctrlKey && e.key.toLowerCase() === '.') {
                 e.preventDefault();
                 parent.option.visual.showHexGrid = !parent.option.visual.showHexGrid;
+                return;
             }
             if (e.ctrlKey && e.key.toLowerCase() === '/') {
                 parent.option.visual.showHexCoord = !parent.option.visual.showHexCoord;
+                return;
+            }
+            if (e.ctrlKey && e.key.toLowerCase() === ',') {
+                e.preventDefault();
+                parent.option.visual.logHexCoord = !parent.option.visual.logHexCoord;
+                return;
             }
         });
     };
