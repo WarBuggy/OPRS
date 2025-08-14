@@ -6,6 +6,7 @@ class ModLoader {
         const modList = await ModLoader.parseModSettingXML({
             modDirLocation: Shared.MOD_STRING.MOD_DIR_LOCATION.EDITOR_MAP,
         });
+        this.removeReservedNameFromModList(modList.list);
         this.addBaseModToModList(modList.list);
         for (let h = 0; h < modList.list.length; h++) {
             const modMetaData = modList.list[h];
@@ -220,9 +221,19 @@ class ModLoader {
         }
     };
 
+    removeReservedNameFromModList(modList) {
+        for (let i = modList.length - 1; i >= 0; i--) {
+            const modName = modList[i].modName.toLowerCase().trim();
+            if (Shared.MOD_STRING.RESERVED_MOD_NAME_LIST.includes(modName)) {
+                modList.splice(i, 1);
+                console.warn(`[ModLoader] ${taggedString.reservedModNameFound(modName)}`);
+            }
+        }
+    };
+
     addBaseModToModList(modList) {
         const baseMod = {
-            modName: 'base',
+            modName: 'Base',
             dirName: '../public/editor/map/script',
         };
         modList.unshift(baseMod);

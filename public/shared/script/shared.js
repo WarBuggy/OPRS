@@ -20,6 +20,7 @@ class Shared {
   };
 
   static MOD_STRING = {
+    RESERVED_MOD_NAME_LIST: ['base'],
     MOD_DIR_LOCATION: {
       EDITOR_MAP: '../../../mod/',
     },
