@@ -3,7 +3,7 @@
   <version>1.0.0</version>
   <author>Buggy</author>
   <hooks>
-    <hook>../../../shared/script/settingLoader.js</hook>
+    <hook>../../../shared/script/objectLoader.js</hook>
     <hook>../../../shared/script/assetRegistry.js</hook>
     <hook>../../../shared/script/biome.js</hook>
     <hook>../../../shared/script/hex.js</hook>

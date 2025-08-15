@@ -2,8 +2,10 @@ window.addEventListener('load', async function () {
     window.scriptLoader = new ScriptLoader();
     const modList = await window.scriptLoader.getModList();
     const { importModModule } = await scriptLoader.loadScriptMod(modList);
-    window.settingLoader = new window.OPRSClasses.SettingLoader();
-    const { remainingModules } = await window.settingLoader.loadModSetting({ importModModule, });
+    window.OPRSSetting = new window.OPRSClasses.ObjectLoader({
+        targetRegistrationType: Shared.MOD_STRING.REGISTRATION_TYPE.SETTING,
+    });
+    const { remainingModules } = await window.OPRSSetting.loadMod({ importModModule, });
 });
 
 class EditorMap {

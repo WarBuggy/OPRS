@@ -1,7 +1,7 @@
 function mod({ register }) {
     register([
         {
-            key: "testSetting",
+            name: "testSetting",
             type: "number",
             data: {
                 default: 5,   // default value

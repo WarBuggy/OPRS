@@ -1,7 +1,7 @@
 function mod({ register }) {
-    register([
+    register(
         {
-            key: "test1Setting",
+            name: "test1Setting",
             type: "number",
             data: {
                 default: 5,   // default value
@@ -12,7 +12,7 @@ function mod({ register }) {
             description: "A test numeric setting for demonstration purposes.",
             tooltip: "Adjust this value to test the numeric setting functionality."
         },
-    ]);
+    );
 };
 
 mod.registrationType = Shared.MOD_STRING.REGISTRATION_TYPE.SETTING;

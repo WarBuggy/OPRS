@@ -1,7 +1,7 @@
 function mod({ register }) {
     // Single numeric setting
     register({
-        key: "testSetting",
+        name: "testSetting",
         type: "number",
         data: {
             default: 5,   // default value
@@ -16,7 +16,7 @@ function mod({ register }) {
     // Optional: another setting can be registered as an array
     register([
         {
-            key: "enableFeatureX",
+            name: "enableFeatureX",
             type: "boolean",
             data: {
                 default: true
