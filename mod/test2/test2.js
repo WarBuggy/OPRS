@@ -1,6 +1,6 @@
-export default function ({ registerNewMethodMod }) {
+function mod({ register }) {
     // test add new method hook, instance method
-    registerNewMethodMod({
+    register({
         className: "Player",
         methodName: "fire2",
         handler(input) {
@@ -9,7 +9,7 @@ export default function ({ registerNewMethodMod }) {
     });
 
     // test add new method hook, static method
-    registerNewMethodMod({
+    register({
         className: "Player",
         methodName: "fire3",
         isStatic: true,
@@ -18,3 +18,6 @@ export default function ({ registerNewMethodMod }) {
         },
     });
 };
+
+mod.registrationType = Shared.MOD_STRING.REGISTRATION_TYPE.NEW_METHOD;
+export default mod;

@@ -1,8 +1,9 @@
 window.addEventListener('load', async function () {
-    window.sciptLoader = new ScriptLoader();
-    const modList = await window.sciptLoader.getModList();
-    const { importModModule } = await sciptLoader.loadScriptMod(modList);
-    // begin the second phase here
+    window.scriptLoader = new ScriptLoader();
+    const modList = await window.scriptLoader.getModList();
+    const { importModModule } = await scriptLoader.loadScriptMod(modList);
+    window.settingLoader = new window.OPRSClasses.SettingLoader();
+    const { remainingModules } = await window.settingLoader.loadModSetting({ importModModule, });
 });
 
 class EditorMap {

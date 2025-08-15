@@ -1,9 +1,9 @@
-export default function ({ registerMethodMod }) {
+function mod({ register }) {
     // test after hook
     // test multiple before hook on a method
     // test input is passed to before hook
     // test mod error doesn't stop the app
-    registerMethodMod({
+    register({
         className: "Player",
         methodName: "fire",
         mode: Shared.MOD_STRING.HOOKS.BEFORE,
@@ -14,7 +14,7 @@ export default function ({ registerMethodMod }) {
     });
 
     // test replace hook
-    registerMethodMod({
+    register({
         className: "Player",
         methodName: "toBeReplace2",
         mode: Shared.MOD_STRING.HOOKS.REPLACE,
@@ -23,3 +23,6 @@ export default function ({ registerMethodMod }) {
         },
     });
 };
+
+mod.registrationType = Shared.MOD_STRING.REGISTRATION_TYPE.METHOD;
+export default mod;

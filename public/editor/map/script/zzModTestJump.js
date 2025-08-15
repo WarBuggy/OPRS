@@ -1,6 +1,6 @@
-export default function ({ registerMethodMod }) {
+function mod({ register }) {
     // Test fail to load case
-    registerMethodMod({
+    registers({
         className: "Player",
         methodName: "jump",
         mode: Shared.MOD_STRING.HOOKS.AFTER,
@@ -12,22 +12,25 @@ export default function ({ registerMethodMod }) {
     });
 
     // Test replace hook
-    registerMethodMod({
+    register({
         className: "Player",
         methodName: "toBeReplace1",
-        mode: "replace",
+        mode: Shared.MOD_STRING.HOOKS.REPLACE,
         handler: function () {
             console.log('This line should show up.');
         },
     });
 
     // Test replace hook
-    registerMethodMod({
+    register({
         className: "Player",
         methodName: "toBeReplace2",
-        mode: "replace",
+        mode: Shared.MOD_STRING.HOOKS.REPLACE,
         handler: function () {
             console.log('This line should not show up because it will be replaced.');
         },
     });
 };
+
+mod.registrationType = Shared.MOD_STRING.REGISTRATION_TYPE.METHOD;
+export default mod;

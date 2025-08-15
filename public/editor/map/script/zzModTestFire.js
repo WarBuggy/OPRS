@@ -1,6 +1,6 @@
-export default function ({ registerMethodMod }) {
+function mod({ register }) {
     // Test before hook
-    registerMethodMod({
+    register({
         className: "Player",
         methodName: "fire",
         mode: Shared.MOD_STRING.HOOKS.BEFORE,
@@ -10,7 +10,7 @@ export default function ({ registerMethodMod }) {
     });
 
     // Test after hook
-    registerMethodMod({
+    register({
         className: "Player",
         methodName: "heal",
         mode: Shared.MOD_STRING.HOOKS.AFTER,
@@ -19,3 +19,6 @@ export default function ({ registerMethodMod }) {
         },
     });
 };
+
+mod.registrationType = Shared.MOD_STRING.REGISTRATION_TYPE.METHOD;
+export default mod;

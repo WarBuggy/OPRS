@@ -4,5 +4,6 @@
     <author>Buggy</author>
     <hooks>
         <hook>test1.js</hook>
+        <hook>options.js</hook>
     </hooks>
 </mod>

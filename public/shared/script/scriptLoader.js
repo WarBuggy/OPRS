@@ -39,30 +39,39 @@ class ScriptLoader {
             const modModule = await import(input.modPath);
             const parent = this;
             // Check if default export is a function — method-hook mod
-            if (typeof modModule.default === "function") {
-                if (!Shared.MOD_STRING.SCRIPT_FUNCTION_LIST.includes(modModule.default.name)) {
-                    input.importModModule[input.modName] = modModule;
+            if (typeof modModule.default === 'function') {
+                const registrationType = modModule.default.registrationType;
+
+                if (registrationType === Shared.MOD_STRING.REGISTRATION_TYPE.METHOD) {
+                    await modModule.default({
+                        modName: input.modName,
+                        register: function (hookInfo) {
+                            try {
+                                parent.registerMethodMod({ modName: input.modName, hookInfo });
+                                console.log(`[ScriptLoader] ${taggedString.methodHookLoaded(input.modName, input.modFile, hookInfo.className, hookInfo.methodName, hookInfo.mode)}`);
+                            } catch (e) {
+                                console.error(`[ScriptLoader] ${taggedString.methodHookFailed(input.modName, input.modFile, e)}`);
+                            }
+                        },
+                    });
                     return;
                 }
-                await modModule.default({
-                    modName: input.modName,
-                    registerMethodMod: function (hookInfo) {
-                        try {
-                            parent.registerMethodMod({ modName: input.modName, hookInfo, });
-                            console.log(`[ScriptLoader] ${taggedString.methodHookLoaded(input.modName, input.modFile, hookInfo.className, hookInfo.methodName, hookInfo.mode)}`);
-                        } catch (e) {
-                            console.error(`[ScriptLoader] ${taggedString.methodHookFailed(input.modName, input.modFile, e)}`);
-                        }
-                    },
-                    registerNewMethodMod: function (newInfo) {
-                        try {
-                            parent.registerNewMethodMod(newInfo);
-                            console.log(`[ScriptLoader] ${taggedString.newMethodLoaded(input.modName, input.modFile, newInfo.className, newInfo.methodName)}`);
-                        } catch (e) {
-                            console.error(`[ScriptLoader] ${taggedString.newMethodFailed(input.modName, input.modFile, e)}`);
-                        }
-                    },
-                });
+                if (registrationType == Shared.MOD_STRING.REGISTRATION_TYPE.NEW_METHOD) {
+                    await modModule.default({
+                        modName: input.modName,
+                        register: function (newInfo) {
+                            try {
+                                parent.registerNewMethodMod(newInfo);
+                                console.log(`[ScriptLoader] ${taggedString.newMethodLoaded(input.modName, input.modFile, newInfo.className, newInfo.methodName)}`);
+                            } catch (e) {
+                                console.error(`[ScriptLoader] ${taggedString.newMethodFailed(input.modName, input.modFile, e)}`);
+                            }
+                        },
+                    });
+                    return;
+                }
+                // Otherwise, pass down to OptionLoader (or future loaders)
+                input.importModModule[input.modName] = modModule;
                 return;
             }
 

@@ -36,5 +36,10 @@ window.translatableTexts = {
         newMethodAdded: `Added new {isStatic} method "{methodName}" to class "{className}".`,
         newMethodError: `Error adding method "{methodName}" to class "{className}": {e}`,
         reservedModNameFound: `"{modName}" is a reserved name. This mod will not be loaded.`,
+        registerSettingInvalidFormat: `Invalid settings format for mod "{modName}".`,
+        registerSettingUnexpectedError: `Error registering a setting for mod "{modName}": {e}.`,
+        registerSettingSuccess: `Settings loaded for mod "{modName}".`,
+        registerSettingFailed: `Failed to load settings for mod "{modName}", skipping all its settings.`,
+
     },
 };
