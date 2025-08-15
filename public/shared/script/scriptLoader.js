@@ -248,26 +248,6 @@ class ScriptLoader {
         modList.unshift(baseMod);
     };
 
-    registerAssetType(input) {
-        if (this.assetRegistry[input.typeName]) {
-            console.warn(`[ScriptLoader] Asset type "${input.typeName}" is being replaced by a new one.`);
-        }
-        this.assetRegistry[input.typeName] = new window.OPRSClasses.AssetRegistry({ name: input.typeName, modName: input.modName, });
-        return this.assetRegistry[input.typeName];
-    };
-
-    registerBiome(registry, input) {
-        if (!input.name) {
-            console.warn(`[ScriptLoader] Skipping biome registration: missing name`);
-            return;
-        }
-
-        const biome = new Biome(input.name, input.description || '', this.currentMod);
-        registry.add(input.name, biome);
-
-        console.log(`[ScriptLoader] Biome "${input.name}" registered from mod "${this.currentMod}"`);
-    }
-
     /**
      * Parses a mod's `about.xml` file to extract metadata such as name,
      * version, author, and hooks, etc...
