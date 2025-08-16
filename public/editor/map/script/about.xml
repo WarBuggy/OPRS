@@ -4,8 +4,6 @@
   <author>Buggy</author>
   <hooks>
     <hook>../../../shared/script/objectLoader.js</hook>
-    <hook>../../../shared/script/assetRegistry.js</hook>
-    <hook>../../../shared/script/biome.js</hook>
     <hook>../../../shared/script/hex.js</hook>
     <hook>../../../shared/script/eventEmitter.js</hook>
     <hook>../../../shared/script/baseMainSurface.js</hook>
@@ -13,6 +11,7 @@
     <hook>editorMap.js</hook>
     <hook>setting.js</hook>
     <hook>biomeList.js</hook>
+    <hook>tileTextureList.js</hook>
     <hook>managerMap.js</hook>
     <hook>parchment.js</hook>
     <hook>minimapParchment.js</hook>
