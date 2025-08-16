@@ -24,6 +24,7 @@ class Shared {
       METHOD: 'method',
       NEW_METHOD: 'newMethod',
       SETTING: 'setting',
+      BIOME: 'biome',
     },
     RESERVED_MOD_NAME_LIST: ['base'],
     MOD_DIR_LOCATION: {
