@@ -12,7 +12,7 @@ class ScriptLoader {
     };
 
     async loadScriptMod(modList) {
-        const importModModule = {};
+        const importModModule = [];
         for (let h = 0; h < modList.list.length; h++) {
             const modMetaData = modList.list[h];
             const modData = await ScriptLoader.parseModAboutXML({
@@ -70,8 +70,11 @@ class ScriptLoader {
                     });
                     return;
                 }
-                // Otherwise, pass down to OptionLoader (or future loaders)
-                input.importModModule[input.modName] = modModule;
+                // Otherwise, pass down to future loaders
+                input.importModModule.push({
+                    modName: input.modName,
+                    modModule,
+                });
                 return;
             }
 

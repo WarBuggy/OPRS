@@ -6,20 +6,18 @@ export class ObjectLoader {
 
     async loadMod(input) {
         const { importModModule } = input;
-        const remainingModules = {};
+        const remainingModules = [];
 
-        for (const [modName, modModule] of Object.entries(importModModule)) {
+        for (const { modName, modModule } of importModModule) {
             const registrationType = modModule.default.registrationType;
             // If it is not of type setting, pass it on
             if (registrationType !== this.targetRegistrationType) {
-                remainingModules[modName] = modModule;
+                remainingModules.push({ modName, modModule, });
                 continue;
             }
             // Initialize mod namespace if not exist
             if (!this.registry[modName]) {
                 this.registry[modName] = {};
-            } else {
-                console.warn(`[ObjectLoader] ${taggedString.registerModExists(modName, registrationType)}`);
             }
             let allOk = true;
             try {

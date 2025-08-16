@@ -36,7 +36,6 @@ window.translatableTexts = {
         newMethodAdded: `Added new {isStatic} method "{methodName}" to class "{className}".`,
         newMethodError: `Error adding method "{methodName}" to class "{className}": {e}`,
         reservedModNameFound: `"{modName}" is a reserved name. This mod will not be loaded.`,
-        registerModExists: `"{modName}", type "{type}" already exists and will be overwritten with new data.`,
         registerModNoName: `Object at index {i} does not "name" property (mod "{modName}", type "{registrationType}") and was skipped.`,
         registerModSameName: `Overwriting object "{name}" in mod "{modName}", type "{registrationType}".`,
         registerModInvalidFormat: `Invalid data format for mod "{modName}", type "{type}".`,

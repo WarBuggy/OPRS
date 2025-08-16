@@ -81,15 +81,21 @@ export class EditorMap {
     };
 
     async loadModData(input) {
-        const { importModModule } = input;
-        this.setting = new window.OPRSClasses.ObjectLoader({
-            targetRegistrationType: Shared.MOD_STRING.REGISTRATION_TYPE.SETTING,
-        });
-        let { remainingModules } = await this.setting.loadMod({ importModModule, });
-
-        this.biome = new window.OPRSClasses.ObjectLoader({
-            targetRegistrationType: Shared.MOD_STRING.REGISTRATION_TYPE.BIOME,
-        });
-        remainingModules = (await this.biome.loadMod({ importModModule: remainingModules, })).remainingModules;
+        let { importModModule } = input;
+        let remainingModules = {};
+        this.data = {};
+        const typeList = [
+            Shared.MOD_STRING.REGISTRATION_TYPE.SETTING,
+            Shared.MOD_STRING.REGISTRATION_TYPE.BIOME,
+            Shared.MOD_STRING.REGISTRATION_TYPE.TILE_TEXTURE,
+        ];
+        for (let i = 0; i < typeList.length; i++) {
+            const type = typeList[i];
+            this.data[type] = new window.OPRSClasses.ObjectLoader({
+                targetRegistrationType: type,
+            });
+            remainingModules = (await this.data[type].loadMod({ importModModule, })).remainingModules;
+            importModModule = remainingModules;
+        }
     };
 };

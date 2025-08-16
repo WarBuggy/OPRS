@@ -25,6 +25,7 @@ function mod({ register }) {
             tooltip: "Toggle feature X on or off."
         },
         {
+            // test bad data (no name property)
             key: "username",
             type: "string",
             data: {
@@ -34,9 +35,7 @@ function mod({ register }) {
             tooltip: "Enter a custom player name."
         }
     ]);
-}
+};
 
-// Specify that this module is a setting module
 mod.registrationType = Shared.MOD_STRING.REGISTRATION_TYPE.SETTING;
-
 export default mod;

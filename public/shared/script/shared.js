@@ -25,6 +25,7 @@ class Shared {
       NEW_METHOD: 'newMethod',
       SETTING: 'setting',
       BIOME: 'biome',
+      TILE_TEXTURE: 'tileTexture',
     },
     RESERVED_MOD_NAME_LIST: ['base'],
     MOD_DIR_LOCATION: {
