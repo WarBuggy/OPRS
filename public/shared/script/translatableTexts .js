@@ -20,7 +20,7 @@ window.translatableTexts = {
         newClassNoExport: `Mod "{modName}" at "{modPath}" has no valid exports.`,
         newClassExists: `Mod "{modName}" overwrites existing class "{className}".`,
         newClassLoaded: `Mod "{modName}" registered new class "{className}".`,
-        newClassFailed: `Failed to load "{modFile}" from mod "{modName}": {e}.`,
+        unexpectedScriptLoadFailed: `Failed to load "{modFile}" from mod "{modName}": {e}. SOME OR ALL FILE CONTENT MIGHT NOT BE LOADED.`,
         methodHookInvalidInfo: `Invalid hookInfo: must specify className, methodName, mode, and handler function.`,
         methodHookNoClass: `Class "{className}" not found.`,
         methodHookNoMethod: `Method "{methodName}" not found on class "{className}"{isStatic}.`,
@@ -43,6 +43,11 @@ window.translatableTexts = {
         registerModSuccess: `All data loaded for mod "{modName}", type "{type}".`,
         registerModPartialSuccess: `Not all data loaded for mod "{modName}", type "{type}".`,
         registerModFailed: `An unexpected error occured when loading data for mod "{modName}", type "{type}": {e}. Not all data was loaded.`,
-
+        unknownMethodMod: `Failed to load "{modFile}" from mod "{modName}": Unknown mode "{mode}."`,
+        badModDataStructure: `Mod "{modName}" at "{modFile}" contains bad data structure: {e}. Item was not loaded.`,
+        invalidModDataStructure: `Mod "{modName}" at "{modFile}" contains bad data structure: Property "modData" is missing or not an array. ALL FILE CONTENT WAS NOT LOADED.`,
+        invalidModDataItemNotObject: `Item at index {i} is not an object`,
+        invalidModDataNoDataType: `Item at index {i} does not have a valid "dataType" property`,
+        invalidModDataNoName: `Item at index {i} does not have a valid "name" property`,
     },
 };

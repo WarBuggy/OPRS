@@ -1,6 +1,7 @@
-function mod({ register }) {
-    register([
+export default {
+    modData: [
         {
+            dataType: "setting",
             name: "testSetting1",
             type: "number",
             data: {
@@ -12,8 +13,5 @@ function mod({ register }) {
             description: "A test numeric setting for demonstration purposes.",
             tooltip: "Adjust this value to test the numeric setting functionality."
         },
-    ]);
+    ],
 };
-
-mod.registrationType = Shared.MOD_STRING.REGISTRATION_TYPE.SETTING;
-export default mod;

@@ -20,12 +20,11 @@ class Shared {
   };
 
   static MOD_STRING = {
-    REGISTRATION_TYPE: {
-      METHOD: 'method',
+    REGISTRATION_MODE: {
+      BEFORE: 'before',
+      AFTER: 'after',
+      REPLACE: 'replace',
       NEW_METHOD: 'newMethod',
-      SETTING: 'setting',
-      BIOME: 'biome',
-      TILE_TEXTURE: 'tileTexture',
     },
     RESERVED_MOD_NAME_LIST: ['base'],
     MOD_DIR_LOCATION: {
@@ -46,11 +45,6 @@ class Shared {
       LIST_ENTRY: 'listEntry',
       MOD_NAME: 'modName',
       DIR_NAME: 'dirName',
-    },
-    HOOKS: {
-      BEFORE: 'before',
-      AFTER: 'after',
-      REPLACE: 'replace',
     },
   };
 
