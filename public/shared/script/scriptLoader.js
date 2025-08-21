@@ -9,7 +9,7 @@ class ScriptLoader {
         this.removeReservedNameFromModList(modList.list);
         this.addBaseModToModList(modList.list);
         return modList;
-    };
+    }
 
     async loadScriptMod(modList) {
         const savedModData = [];
@@ -23,6 +23,10 @@ class ScriptLoader {
             for (let i = 0; i < modData.hooks.length; i++) {
                 const modFile = modData.hooks[i];
                 const modPath = `${dirPath}${modFile}`;
+                if (modFile.toLowerCase().endsWith(".css")) {
+                    ScriptLoader.importCSSLink({ modPath, modName: modData.name, });
+                    continue;
+                }
                 await this.loadAScriptMod({
                     modPath,
                     modName: modData.name,
@@ -32,7 +36,7 @@ class ScriptLoader {
             }
         }
         return { savedModData, };
-    };
+    }
 
     async loadAScriptMod(input) {
         try {
@@ -92,7 +96,7 @@ class ScriptLoader {
         } catch (e) {
             console.error(`[ScriptLoader] ${taggedString.unexpectedScriptLoadFailed(input.modFile, input.modName, e)}`);
         }
-    };
+    }
 
     checkModDataStructure(input) {
         const { modName, modFile, modModule } = input;
@@ -110,21 +114,15 @@ class ScriptLoader {
                 if (!item || typeof item !== "object") {
                     throw new Error(`${taggedString.invalidModDataItemNotObject(i)}`);
                 }
-                if (!item.dataType || typeof item.dataType !== "string") {
-                    throw new Error(`${taggedString.invalidModDataNoDataType(i)}`);
-                }
-                if (!item.name || typeof item.name !== "string") {
-                    throw new Error(`${taggedString.invalidModDataNoName(i)}`);
-                }
                 // If all checks passed, include in validData
-                validModData.push(item);
+                validModData.push({ modName, item, });
             }
             catch (e) {
                 console.error(`[ScriptLoader] ${taggedString.badModDataStructure(modName, modFile, e)}`);
             }
         }
         return { validModData, };
-    };
+    }
 
     registerMethodMod(input) {
         const {
@@ -189,7 +187,7 @@ class ScriptLoader {
 
         // Rebuild the method with hooks in a separate helper
         this._rebuildHookedMethod({ targetObject, methodName, hookData, className, });
-    };
+    }
 
     /**
      * Internal helper to rebuild the method with registered hooks.
@@ -234,7 +232,7 @@ class ScriptLoader {
 
             return result;
         };
-    };
+    }
 
     registerNewMethodMod(input) {
         const { className, methodName, handler, isStatic = false } = input;
@@ -264,7 +262,7 @@ class ScriptLoader {
         } catch (e) {
             throw new Error(`[ScriptLoader] ${taggedString.newMethodError(methodName, className, e)}`);
         }
-    };
+    }
 
     removeReservedNameFromModList(modList) {
         for (let i = modList.length - 1; i >= 0; i--) {
@@ -274,7 +272,7 @@ class ScriptLoader {
                 console.warn(`[ScriptLoader] ${taggedString.reservedModNameFound(modName)}`);
             }
         }
-    };
+    }
 
     addBaseModToModList(modList) {
         const baseMod = {
@@ -282,7 +280,7 @@ class ScriptLoader {
             dirName: '../public/editor/map/script',
         };
         modList.unshift(baseMod);
-    };
+    }
 
     /**
      * Parses a mod's `about.xml` file to extract metadata such as name,
@@ -318,7 +316,7 @@ class ScriptLoader {
             return null;
         }
         return { name, version, author, hooks };
-    };
+    }
 
     /**
      * Parses the mod settings XML file to extract a list of mod entries.
@@ -356,7 +354,7 @@ class ScriptLoader {
             const dirName = entry.querySelector(Shared.MOD_STRING.SETTING_XML.DIR_NAME)?.textContent.trim() || "";
 
             if (!modName || !dirName) {
-                console.error(`[ScriptLoader.parseModSettingXML] ${window.taggedString.invalidModSettingListEntry(index)}`);
+                console.error(`[ScriptLoader] ${window.taggedString.invalidModSettingListEntry(index)}`);
                 return; // Skip this entry
             }
 
@@ -367,5 +365,17 @@ class ScriptLoader {
         return {
             list: entries
         };
-    };
-};
+    }
+
+    static importCSSLink(input) {
+        try {
+            const link = document.createElement("link");
+            link.rel = "stylesheet";
+            link.href = input.modPath;
+            document.head.appendChild(link);
+            console.log(`[ScriptLoader] ${taggedString.scriptLoaderImportedCss(input.modPath, input.modName)}`);
+        } catch (e) {
+            console.error(`[ScriptLoader] ${taggedString.scriptLoaderImportedCssFailed(input.modPath, input.modName, e)}`);
+        }
+    }
+}
