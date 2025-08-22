@@ -2,13 +2,13 @@ class Shared {
   static STORAGE_KEYS = {
     LANGUAGE: 'language',
     ZOOM_LEVEL_MAP_EDITOR_PARCHMENT: 'mapEditorZoomLevel',
-  };
+  }
 
   static EMITTER_SIGNAL = {
     PARCHMENT_PANNED: 'parchment_panned',
     PARCHMENT_ZOOMED: 'parchment_zoomed',
     MINI_MAP_CLICKED: 'miniMap_clicked',
-  };
+  }
 
   static HEX_DIRECTION = {
     LEFT: "l",
@@ -17,7 +17,7 @@ class Shared {
     TOP_RIGHT: "tr",
     BOTTOM_LEFT: "bl",
     BOTTOM_RIGHT: "br",
-  };
+  }
 
   static MOD_STRING = {
     REGISTRATION_MODE: {
@@ -46,7 +46,7 @@ class Shared {
       MOD_NAME: 'modName',
       DIR_NAME: 'dirName',
     },
-  };
+  }
 
   /**
    * Clamps a numeric value between a minimum and maximum bound.
@@ -59,7 +59,7 @@ class Shared {
    */
   static clamp(input) {
     return Math.min(input.max, Math.max(input.min, input.value));
-  };
+  }
 
   /**
    * Creates an HTML element with optional id, class, and parent attachment.
@@ -86,5 +86,5 @@ class Shared {
       comp.className = input.class;
     }
     return comp;
-  };
+  }
 };

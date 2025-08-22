@@ -3,7 +3,11 @@
   <version>1.0.0</version>
   <author>Buggy</author>
   <hooks>
-    <hook>../../../shared/script/objectLoader.js</hook>
+    <hook>../css/index.css</hook>
+    <hook>../../../css/modDataTree.css</hook>
+    <hook>../../../shared/script/overlay.js</hook>
+    <hook>../../../shared/script/modDataTree.js</hook>
+    <hook>../../../shared/script/dataLoader.js</hook>
     <hook>../../../shared/script/hex.js</hook>
     <hook>../../../shared/script/eventEmitter.js</hook>
     <hook>../../../shared/script/baseMainSurface.js</hook>

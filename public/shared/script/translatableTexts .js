@@ -47,5 +47,12 @@ window.translatableTexts = {
         dataLoaderErrorItemMissingProperty: `Item object does not have the following required property: {missingKeyList}`,
         dataLoaderErrorPropertyMustBeString: `Property "{name}" must be a string`,
         dataLoaderErrorInvalidPayload: `Property {name} must be either an object or an array`,
+        modDataTreeCreator: 'Creator',
+        modDataTreeLastModifiers: 'Last modifiers',
+        modDataTreeNodeValue: 'Node value',
+        modDataTreeNodePath: 'Node path',
+        modDataTreeNoModifier: 'None',
+        modDataTreeCloseButtonText: 'Close',
+
     },
 }

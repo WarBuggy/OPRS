@@ -1,12 +1,15 @@
 export class EditorMap {
     constructor(input) {
-    };
+        this.modifyStaticProperty(input);
 
-    async init(input) {
-        // allow mods, if needed, to modify any existing static property of a class.
-        this.modifyStaticProperty();
-
-        await this.loadModData({ importModModule: input.importModModule, });
+        // allow mods to import data, or modify other mods' data if needed.
+        this.modData = {};
+        this.modHistory = {};
+        this.loadModData({
+            savedModData: input.savedModData,
+            modData: this.modData,
+            modHistory: this.modHistory,
+        });
 
         this.createPageHTMLComponent();
 
@@ -23,12 +26,11 @@ export class EditorMap {
         window.addEventListener('resize', function () {
             parent.setup();
         });
-    };
-
+    }
 
     setup() {
         this.managerMap.setup();
-    };
+    }
 
     createPageHTMLComponent(input) {
         const divMain = Shared.createHTMLComponent({
@@ -73,29 +75,25 @@ export class EditorMap {
             parent: divMain,
             class: 'bottomBar',
         });
-    };
+
+        this.overlay = new window.OPRSClasses.Overlay();
+    }
 
     modifyStaticProperty(input) {
         // for modders
         // intentionally left empty 
-    };
+    }
 
-    async loadModData(input) {
-        let { importModModule } = input;
-        let remainingModules = {};
-        this.data = {};
-        const typeList = [
-            Shared.MOD_STRING.REGISTRATION_TYPE.SETTING,
-            Shared.MOD_STRING.REGISTRATION_TYPE.BIOME,
-            Shared.MOD_STRING.REGISTRATION_TYPE.TILE_TEXTURE,
-        ];
-        for (let i = 0; i < typeList.length; i++) {
-            const type = typeList[i];
-            this.data[type] = new window.OPRSClasses.ObjectLoader({
-                targetRegistrationType: type,
-            });
-            remainingModules = (await this.data[type].loadMod({ importModModule, })).remainingModules;
-            importModModule = remainingModules;
+    loadModData(input) {
+        let { savedModData, modData, modHistory } = input;
+        for (let i = 0; i < savedModData.length; i++) {
+            const { modName, item } = savedModData[i];
+            window.OPRSClasses.DataLoader.processModItem({ modName, item, modData, modHistory, });
         }
-    };
+    }
+
+    showModDataTree(input) {
+        const modDataTree = new window.OPRSClasses.ModDataTree({ modData: this.modData, modHistory: this.modHistory, overlay: this.overlay, });
+        this.overlay.show({ divChild: modDataTree.divOuter, });
+    }
 };
