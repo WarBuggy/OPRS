@@ -10,6 +10,8 @@ export class ModDataTree {
     static HAS_CHILDREN_MARKER = '▸';
     static CHILDLESS_MARKER = '•';
 
+    static expandedNodeSet = new Set();
+
     constructor(input) {
         this.divOuter = Shared.createHTMLComponent({ class: 'base-mod-data-tree-outer', });
         this.divInner = Shared.createHTMLComponent({ class: 'base-mod-data-tree-inner', parent: this.divOuter, });
@@ -83,26 +85,20 @@ export class ModDataTree {
         const modifiers = (node.history ?? []).slice(1).reverse();
         const hasChildren = node.children && Object.keys(node.children).length > 0;
 
-        if (!hasChildren) {
-            node.cachedValue =
-                window.OPRSClasses.DataLoader.getModDataValue({ modData, pathString: pathSoFar, });
-        }
-
         // Create details element
         const details = Shared.createHTMLComponent({ tag: 'details' });
-        details.dataset.fullPath = pathSoFar;
 
         // Create summary
         const summary = Shared.createHTMLComponent({ tag: 'summary', parent: details });
-        summary.addEventListener('click', () => {
-            this.infoRowList[ModDataTree.INFO_KEY_LIST.CREATOR.key].innerText = creator;
-
-            this.infoRowList[ModDataTree.INFO_KEY_LIST.ALL_MODIFIER_LIST.key].innerText =
-                modifiers.length ? modifiers.join(', ') : taggedString.modDataTreeNoModifier();
-
-            const value = node.cachedValue;
+        summary.dataset.fullPath = pathSoFar;
+        summary.dataset.creator = creator;
+        summary.dataset.modifiers = modifiers.length ? modifiers.join(', ') : '';
+        summary.dataset.value = '';
+        if (!hasChildren) {
+            const value =
+                window.OPRSClasses.DataLoader.getModDataValue({ modData, pathString: pathSoFar, });
             let displayText;
-            if (hasChildren || value === null || value === undefined) {
+            if (value === null || value === undefined) {
                 displayText = '';
             } else if (Array.isArray(value)) {
                 displayText = `[${value.join(', ')}]`;
@@ -111,8 +107,37 @@ export class ModDataTree {
             } else {
                 displayText = String(value); // converts numbers, booleans, etc. to string
             }
-            this.infoRowList[ModDataTree.INFO_KEY_LIST.NODE_VALUE.key].innerText = displayText;
-            this.infoRowList[ModDataTree.INFO_KEY_LIST.NODE_PATH.key].innerText = pathSoFar;
+            summary.dataset.value = displayText;
+        }
+
+        // --- Add expand/collapse all by double-click ---
+        let clickTimer = null;
+        summary.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault(); // stop native open/close
+            // Delay single click so it won't conflict with dblclick
+            if (clickTimer) return; // already waiting for dblclick
+            clickTimer = setTimeout(() => {
+                clickTimer = null;
+                details.open = !details.open;
+                this.infoRowList[ModDataTree.INFO_KEY_LIST.CREATOR.key].innerText = summary.dataset.creator;
+                this.infoRowList[ModDataTree.INFO_KEY_LIST.ALL_MODIFIER_LIST.key].innerText =
+                    modifiers.length ? summary.dataset.modifiers : taggedString.modDataTreeNoModifier();
+                this.infoRowList[ModDataTree.INFO_KEY_LIST.NODE_VALUE.key].innerText = summary.dataset.value;
+                this.infoRowList[ModDataTree.INFO_KEY_LIST.NODE_PATH.key].innerText = summary.dataset.fullPath;
+
+                if (details.open) ModDataTree.expandedNodeSet.add(summary.dataset.fullPath);
+                else ModDataTree.expandedNodeSet.delete(summary.dataset.fullPath);
+            }, 200);
+        });
+        summary.addEventListener("dblclick", (e) => {
+            e.stopPropagation();
+            clearTimeout(clickTimer);
+            clickTimer = null;
+
+            const expand = !details.open;
+            this.updateExpandedSet({ details, expand, });
+            this.toggleRecursive({ details, expand, });
         });
 
 
@@ -145,8 +170,30 @@ export class ModDataTree {
                 }));
             }
         }
-
+        if (ModDataTree.expandedNodeSet.has(pathSoFar)) {
+            details.open = true;
+        }
         return details;
+    }
+
+    toggleRecursive({ details, expand, }) {
+        // Open/close this node
+        details.open = expand;
+        // Recursively apply to all child <details>
+        details.querySelectorAll("details").forEach(child => {
+            child.open = expand;
+        });
+    }
+
+    // Recursively update the expandedNodeSet
+    updateExpandedSet({ details, expand, }) {
+        const path = details.querySelector('summary').dataset.fullPath;
+        if (expand) ModDataTree.expandedNodeSet.add(path);
+        else ModDataTree.expandedNodeSet.delete(path);
+
+        details.querySelectorAll('details').forEach(child => {
+            this.updateExpandedSet(child, expand);
+        });
     }
 }
 
@@ -159,41 +206,12 @@ Highlight matching nodes and collapse non-matching branches.
 
 Optionally, allow regex search for advanced filtering.
 
-2. Expand/Collapse Controls
-
-Buttons to expand all or collapse all nodes.
-
-Keyboard shortcuts for faster navigation.
-
-Option to remember last expanded nodes between sessions.
-
 3. Sorting Options
 
 Sort child nodes alphabetically or by creator/modifier.
 
 Option to group nodes by creator, last modifier, or type of data.
 
-4. Path Display
-
-Show the full path of the selected node (e.g., setting.biome.nextNode) somewhere in the info panel.
-
-Allow copying the path to the clipboard.
-
-5. Node Value Visualization
-
-For numeric or boolean values, use small visual indicators (like progress bars, color coding, or toggles).
-
-For arrays, show a collapsible sub-list instead of just “An object.”
-
-For objects, optionally show a JSON preview in a small panel on demand.
-
-6. Modifier History
-
-Display full modifier history in the info panel, optionally collapsible.
-
-Highlight the last modifier separately for quick reference.
-
-Show timestamps if available for each modifier.
 
 7. Color Coding & Styling
 
@@ -205,13 +223,7 @@ Option to theme the tree (light/dark or custom).
 
 8. Node Actions
 
-Allow copying node key, value, or full path.
-
 Context menu on right-click for:
-
-Copy path/value
-
-Expand/Collapse branch
 
 Show only this branch
 
@@ -231,9 +243,4 @@ Export the mod history snapshot as JSON for debugging.
 
 Option to import a mod history snapshot to test offline or compare.
 
-11. Integration with Editor
-
-Clicking a node could highlight or focus the corresponding element in the map/unit editor.
-
-Ability to jump from a node to its corresponding mod in your editor UI.
 */
