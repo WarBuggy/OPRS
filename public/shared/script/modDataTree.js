@@ -80,13 +80,16 @@ export class ModDataTree {
         }
     }
 
-    renderNode({ key, node, pathSoFar, modData }) {
+    renderNode({ key, node, pathSoFar, modData, depth = 0, }) {
         const creator = node.history?.[0] ?? 'unknown';
         const modifiers = (node.history ?? []).slice(1).reverse();
         const hasChildren = node.children && Object.keys(node.children).length > 0;
 
         // Create details element
         const details = Shared.createHTMLComponent({ tag: 'details' });
+        // Add depth-based background class
+        const depthClass = `depth-bg-${depth % 4}`;
+        details.classList.add(depthClass);
 
         // Create summary
         const summary = Shared.createHTMLComponent({ tag: 'summary', parent: details });
@@ -158,7 +161,6 @@ export class ModDataTree {
         // Recursively add children
         if (hasChildren) {
             const ul = Shared.createHTMLComponent({ tag: 'ul', parent: details });
-
             for (const childKey of Object.keys(node.children)) {
                 const li = Shared.createHTMLComponent({ tag: 'li', parent: ul });
                 const childPath = `${pathSoFar}.${childKey}`;
@@ -167,12 +169,14 @@ export class ModDataTree {
                     node: node.children[childKey],
                     pathSoFar: childPath,
                     modData,
+                    depth: depth + 1,
                 }));
             }
         }
-        if (ModDataTree.expandedNodeSet.has(pathSoFar)) {
-            details.open = true;
-        }
+
+        // Restore expanded state
+        if (ModDataTree.expandedNodeSet.has(pathSoFar)) details.open = true;
+
         return details;
     }
 
@@ -192,7 +196,7 @@ export class ModDataTree {
         else ModDataTree.expandedNodeSet.delete(path);
 
         details.querySelectorAll('details').forEach(child => {
-            this.updateExpandedSet(child, expand);
+            this.updateExpandedSet({ details: child, expand, });
         });
     }
 }

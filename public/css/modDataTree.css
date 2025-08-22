@@ -92,6 +92,31 @@
     transition: transform 0.2s;
 }
 
+.depth-bg-0>summary {
+    background-color: rgba(80, 80, 80, 0.9);
+    color: #fff;
+}
+
+.depth-bg-1>summary {
+    background-color: rgba(70, 70, 70, 0.9);
+    color: #fff;
+}
+
+.depth-bg-2>summary {
+    background-color: rgba(60, 60, 60, 0.9);
+    color: #fff;
+}
+
+.depth-bg-3>summary {
+    background-color: rgba(50, 50, 50, 0.9);
+    color: #fff;
+}
+
+/* Optional smooth transition for expanding/collapsing */
+.base-mod-data-tree-inner summary {
+    transition: background-color 0.2s ease;
+}
+
 /* Rotate arrow when open */
 .base-mod-data-tree-inner details[open] .node-marker-parent {
     transform: rotate(90deg);
