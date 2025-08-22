@@ -10,6 +10,21 @@ export class ModDataTree {
     static HAS_CHILDREN_MARKER = '▸';
     static CHILDLESS_MARKER = '•';
 
+    static CRITERIA_LABEL = {
+        CB_CRITERIA_PREFIX: 'cbCriteria',
+        ALL: 'All',
+        NAME: 'Name',
+        CREATOR: 'Creator',
+        MODIFIER: 'Modifier',
+        PATH: 'Path',
+    };
+    static CRITERIA_SINGLE = [
+        ModDataTree.CRITERIA_LABEL.NAME,
+        ModDataTree.CRITERIA_LABEL.CREATOR,
+        ModDataTree.CRITERIA_LABEL.MODIFIER,
+        ModDataTree.CRITERIA_LABEL.PATH,
+    ];
+
     static expandedNodeSet = new Set();
 
     constructor(input) {
@@ -27,6 +42,9 @@ export class ModDataTree {
             class: 'base-mod-data-tree-info-panel',
             parent: divInfoPanelOuter,
         });
+
+        // --- Search UI ---
+        this.createSearchUI({ parent: divInfoPanelOuter, });
 
         this.infoRowList = {};
         this.addInfoRow({ parent: divInfoPanel, });
@@ -68,7 +86,8 @@ export class ModDataTree {
         });
     };
 
-    renderTree({ divParent, modHistory, modData }) {
+    renderTree(input) {
+        const { divParent, modHistory, modData } = input;
         for (const rootKey of Object.keys(modHistory)) {
             const nodeEl = this.renderNode({
                 key: rootKey,
@@ -80,7 +99,8 @@ export class ModDataTree {
         }
     }
 
-    renderNode({ key, node, pathSoFar, modData, depth = 0, }) {
+    renderNode(input) {
+        const { key, node, pathSoFar, modData, depth = 0, } = input;
         const creator = node.history?.[0] ?? 'unknown';
         const modifiers = (node.history ?? []).slice(1).reverse();
         const hasChildren = node.children && Object.keys(node.children).length > 0;
@@ -180,7 +200,8 @@ export class ModDataTree {
         return details;
     }
 
-    toggleRecursive({ details, expand, }) {
+    toggleRecursive(input) {
+        const { details, expand, } = input;
         // Open/close this node
         details.open = expand;
         // Recursively apply to all child <details>
@@ -190,7 +211,8 @@ export class ModDataTree {
     }
 
     // Recursively update the expandedNodeSet
-    updateExpandedSet({ details, expand, }) {
+    updateExpandedSet(input) {
+        const { details, expand, } = input;
         const path = details.querySelector('summary').dataset.fullPath;
         if (expand) ModDataTree.expandedNodeSet.add(path);
         else ModDataTree.expandedNodeSet.delete(path);
@@ -198,6 +220,93 @@ export class ModDataTree {
         details.querySelectorAll('details').forEach(child => {
             this.updateExpandedSet({ details: child, expand, });
         });
+    }
+
+    createSearchUI(input) {
+        const parent = input.parent;
+        this.divSearchOuter = this.createSearchInput({ parent });
+        this.divCriteriaOuter = this.createSearchCriteria({ parent });
+        this.divResultOuter = this.createSearchResultContainer({ parent });
+    }
+
+    createSearchInput(input) {
+        const parent = input.parent;
+        const div = Shared.createHTMLComponent({
+            class: 'base-mod-data-tree-search-outer',
+            parent,
+        });
+        Shared.createHTMLComponent({
+            tag: 'input',
+            class: 'base-mod-data-tree-search-input',
+            parent: div,
+            placeholder: 'Search...',
+        });
+        return div;
+    }
+
+    createSearchCriteria(input) {
+        const parent = input.parent;
+        const div = Shared.createHTMLComponent({
+            class: 'base-mod-data-tree-criteria-outer',
+            parent,
+        });
+
+        const rowAll = Shared.createHTMLComponent({ class: 'base-mod-data-tree-criteria-item-all', parent: div });
+        const cbAllId = `${ModDataTree.CRITERIA_LABEL.CB_CRITERIA_PREFIX}${ModDataTree.CRITERIA_LABEL.ALL}`;
+        this[cbAllId] = Shared.createHTMLComponent({
+            tag: 'input',
+            type: 'checkbox',
+            id: cbAllId,
+            parent: rowAll
+        });
+        const allLabel = Shared.createHTMLComponent({ tag: 'label', parent: rowAll });
+        allLabel.textContent = ModDataTree.CRITERIA_LABEL.ALL;
+        allLabel.setAttribute('for', cbAllId);
+
+        const cbSingleList = [];
+        ModDataTree.CRITERIA_SINGLE.forEach(name => {
+            const className = `base-mod-data-tree-criteria-item-${name.toLowerCase()}`;
+            const id = `${ModDataTree.CRITERIA_LABEL.CB_CRITERIA_PREFIX}${name}`;
+            const rowGrid = Shared.createHTMLComponent({ class: className, parent: div });
+            this[id] = Shared.createHTMLComponent({ tag: 'input', type: 'checkbox', id, parent: rowGrid });
+            cbSingleList.push(this[id]);
+            const label = Shared.createHTMLComponent({ tag: 'label', parent: rowGrid });
+            label.textContent = name;
+            label.setAttribute('for', id);
+        });
+        this.setupSearchCheckboxes({ cbAll: this[cbAllId], cbSingleList, });
+        return div;
+    }
+
+    setupSearchCheckboxes(input) {
+        const { cbAll, cbSingleList } = input;
+        let isUpdating = false; // <-- flag
+
+        // When "All" is clicked
+        cbAll.addEventListener('change', () => {
+            isUpdating = true; // mark programmatic update
+            const checked = cbAll.checked;
+            cbSingleList.forEach(cb => cb.checked = checked);
+            isUpdating = false; // reset flag
+        });
+
+        // When any single checkbox changes, update "All"
+        cbSingleList.forEach(cb => {
+            cb.addEventListener('change', () => {
+                if (isUpdating) return; // skip if programmatic
+                cbAll.checked = cbSingleList.every(cb => cb.checked);
+            });
+        });
+    }
+
+    createSearchResultContainer(input) {
+        const parent = input.parent;
+        const div = Shared.createHTMLComponent({
+            class: 'base-mod-data-tree-result-outer',
+            parent,
+        });
+        // Empty for now; results will be added dynamically
+        return div;
     }
 }
 
