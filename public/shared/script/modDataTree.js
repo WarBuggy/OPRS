@@ -27,7 +27,7 @@ export class ModDataTree {
 
     constructor(input) {
         this.divOuter = Shared.createHTMLComponent({ class: 'base-mod-data-tree-outer', });
-        this.divInner = Shared.createHTMLComponent({ class: 'base-mod-data-tree-inner', parent: this.divOuter, });
+        const divInner = Shared.createHTMLComponent({ class: 'base-mod-data-tree-inner', parent: this.divOuter, });
 
         // Add an outer div to solve the row expanding to grid height issue
         const divInfoPanelOuter = Shared.createHTMLComponent({
@@ -63,7 +63,7 @@ export class ModDataTree {
 
         // Render the modHistory tree
         if (input.modHistory) {
-            this.renderTree({ modHistory: input.modHistory, divParent: this.divInner, modData: input.modData, });
+            this.renderTree({ modHistory: input.modHistory, divParent: divInner, modData: input.modData, });
         }
     }
 
@@ -213,12 +213,12 @@ export class ModDataTree {
             class: 'base-mod-data-tree-search-outer',
             parent,
         });
-        Shared.createHTMLComponent({
+        this.inputSearch = Shared.createHTMLComponent({
             tag: 'input',
             class: 'base-mod-data-tree-search-input',
             parent: div,
-            placeholder: 'Search...',
         });
+        this.inputSearch.placeholder = 'Search...';
         return div;
     }
 
@@ -257,6 +257,7 @@ export class ModDataTree {
     }
 
     setupSearchCheckboxes(input) {
+        const initState = true;
         const { cbAll, cbSingleList } = input;
         let isUpdating = false; // <-- flag
 
@@ -270,11 +271,13 @@ export class ModDataTree {
 
         // When any single checkbox changes, update "All"
         cbSingleList.forEach(cb => {
+            cb.checked = initState;
             cb.addEventListener('change', () => {
                 if (isUpdating) return; // skip if programmatic
                 cbAll.checked = cbSingleList.every(cb => cb.checked);
             });
         });
+        cbAll.checked = initState;
     }
 
     createSearchResultContainer(input) {
