@@ -58,6 +58,7 @@ export class ModDataTree {
 
         // Closing logic
         closeBtn.addEventListener('click', () => {
+            this.opened = false;
             input.overlay.hide();
         });
 
@@ -65,6 +66,8 @@ export class ModDataTree {
         if (input.modHistory) {
             this.renderTree({ modHistory: input.modHistory, divParent: divInner, modData: input.modData, });
         }
+
+        this.opened = false;
     }
 
     addInfoRow(input) {
@@ -288,6 +291,14 @@ export class ModDataTree {
         });
         // Empty for now; results will be added dynamically
         return div;
+    }
+
+    show(input) {
+        if (this.opened) {
+            return;
+        }
+        input.overlay.show({ divChild: this.divOuter, });
+        this.opened = true;
     }
 }
 

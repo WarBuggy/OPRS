@@ -1,5 +1,6 @@
 window.translatableTexts = {
     en: {
+        generalImplementInSubClass: `{functionName} must be implemented in subclass.`,
         invalidDisplayMode: `Invalide display mode "{mode}".`,
         noDefaultZoomLevelFound: `No default zoom level found for display mode "{mode}".`,
         noDefaultZoomLevelDataFound: `Default zoom level contains no data for display mode "{mode}".`,

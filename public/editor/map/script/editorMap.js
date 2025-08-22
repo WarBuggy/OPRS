@@ -1,18 +1,6 @@
-export class EditorMap {
+export class EditorMap extends window.OPRSClasses.MainApp {
     constructor(input) {
-        this.modifyStaticProperty(input);
-
-        // allow mods to import data, or modify other mods' data if needed.
-        this.modData = {};
-        this.modHistory = {};
-        this.modDataTree = null;
-        this.loadModData({
-            savedModData: input.savedModData,
-            modData: this.modData,
-            modHistory: this.modHistory,
-        });
-
-        this.createPageHTMLComponent();
+        super(input);
 
         this.managerMap = new window.OPRSClasses.ManagerMap({
             parchment: {
@@ -76,31 +64,5 @@ export class EditorMap {
             parent: divMain,
             class: 'bottomBar',
         });
-
-        this.overlay = new window.OPRSClasses.Overlay();
-    }
-
-    modifyStaticProperty(input) {
-        // for modders
-        // intentionally left empty 
-    }
-
-    loadModData(input) {
-        let { savedModData, modData, modHistory } = input;
-        for (let i = 0; i < savedModData.length; i++) {
-            const { modName, item } = savedModData[i];
-            window.OPRSClasses.DataLoader.processModItem({ modName, item, modData, modHistory, });
-        }
-    }
-
-    showModDataTree(input) {
-        if (!this.modDataTree) {
-            this.modDataTree = new window.OPRSClasses.ModDataTree({
-                modData: this.modData,
-                modHistory: this.modHistory,
-                overlay: this.overlay,
-            });
-        }
-        this.overlay.show({ divChild: this.modDataTree.divOuter, });
     }
 };

@@ -1,6 +1,11 @@
 window.addEventListener('load', async function () {
     window.scriptLoader = new ScriptLoader();
-    const modList = await window.scriptLoader.getModList();
-    const { savedModData } = await scriptLoader.loadScriptMod(modList);
+    const modList = await window.scriptLoader.getModList({
+        modDirLocation: Shared.MOD_STRING.MOD_DIR_LOCATION.EDITOR_MAP,
+    });
+    const { savedModData } = await scriptLoader.loadScriptMod({
+        modList,
+        modDirLocation: Shared.MOD_STRING.MOD_DIR_LOCATION.EDITOR_MAP,
+    });
     window.editorMap = new window.OPRSClasses.EditorMap({ savedModData });
 });

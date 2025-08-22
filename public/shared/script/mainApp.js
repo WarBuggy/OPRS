@@ -1,0 +1,59 @@
+export class MainApp {
+    constructor(input) {
+        this.modifyStaticProperty(input);
+
+        // allow mods to import data, or modify other mods' data if needed.
+        this.modData = {};
+        this.modHistory = {};
+        this.modDataTree = null;
+        this.loadModData({
+            savedModData: input.savedModData,
+            modData: this.modData,
+            modHistory: this.modHistory,
+        });
+
+        this.overlay = new window.OPRSClasses.Overlay();
+        this.createPageHTMLComponent();
+
+        this.setupKeyBinding();
+    };
+
+    loadModData(input) {
+        let { savedModData, modData, modHistory } = input;
+        for (let i = 0; i < savedModData.length; i++) {
+            const { modName, item } = savedModData[i];
+            window.OPRSClasses.DataLoader.processModItem({ modName, item, modData, modHistory, });
+        }
+    }
+
+    showModDataTree(input) {
+        if (!this.modDataTree) {
+            this.modDataTree = new window.OPRSClasses.ModDataTree({
+                modData: this.modData,
+                modHistory: this.modHistory,
+                overlay: this.overlay,
+            });
+        }
+        this.modDataTree.show({ overlay: this.overlay, });
+    }
+
+    modifyStaticProperty(input) {
+        // for modders
+        // intentionally left empty 
+    }
+
+    createPageHTMLComponent(input) {
+        throw new Error(`${taggedString.generalImplementInSubClass('createPageHTMLComponent')}`);
+    }
+
+
+    setupKeyBinding(input) {
+        document.addEventListener('keydown', (event) => {
+            // Check for Ctrl + Shift + D, open Mod Data Tree popup
+            if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'd') {
+                event.preventDefault(); // prevent accidental browser behavior
+                this.showModDataTree();
+            }
+        });
+    }
+};

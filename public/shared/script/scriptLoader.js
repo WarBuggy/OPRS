@@ -2,24 +2,25 @@ class ScriptLoader {
     static OPRSClasses = window.OPRSClasses = window.OPRSClasses || {};
     static modHooksSymbol = Symbol.for('modHooks');
 
-    async getModList() {
+    async getModList(input) {
         const modList = await ScriptLoader.parseModSettingXML({
-            modDirLocation: Shared.MOD_STRING.MOD_DIR_LOCATION.EDITOR_MAP,
+            modDirLocation: input.modDirLocation,
         });
         this.removeReservedNameFromModList(modList.list);
         this.addBaseModToModList(modList.list);
         return modList;
     }
 
-    async loadScriptMod(modList) {
+    async loadScriptMod(input) {
+        const { modList, modDirLocation } = input;
         const savedModData = [];
         for (let h = 0; h < modList.list.length; h++) {
             const modMetaData = modList.list[h];
             const modData = await ScriptLoader.parseModAboutXML({
-                modDirLocation: Shared.MOD_STRING.MOD_DIR_LOCATION.EDITOR_MAP,
+                modDirLocation,
                 dirName: modMetaData.dirName,
             });
-            const dirPath = `${Shared.MOD_STRING.MOD_DIR_LOCATION.EDITOR_MAP}${modMetaData.dirName}/`;
+            const dirPath = `${modDirLocation}${modMetaData.dirName}/`;
             for (let i = 0; i < modData.hooks.length; i++) {
                 const modFile = modData.hooks[i];
                 const modPath = `${dirPath}${modFile}`;

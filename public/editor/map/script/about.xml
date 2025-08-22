@@ -8,6 +8,7 @@
     <hook>../../../shared/script/overlay.js</hook>
     <hook>../../../shared/script/modDataTree.js</hook>
     <hook>../../../shared/script/dataLoader.js</hook>
+    <hook>../../../shared/script/mainApp.js</hook>
     <hook>../../../shared/script/hex.js</hook>
     <hook>../../../shared/script/eventEmitter.js</hook>
     <hook>../../../shared/script/baseMainSurface.js</hook>
