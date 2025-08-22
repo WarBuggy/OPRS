@@ -5,6 +5,7 @@ export class EditorMap {
         // allow mods to import data, or modify other mods' data if needed.
         this.modData = {};
         this.modHistory = {};
+        this.modDataTree = null;
         this.loadModData({
             savedModData: input.savedModData,
             modData: this.modData,
@@ -93,7 +94,13 @@ export class EditorMap {
     }
 
     showModDataTree(input) {
-        const modDataTree = new window.OPRSClasses.ModDataTree({ modData: this.modData, modHistory: this.modHistory, overlay: this.overlay, });
-        this.overlay.show({ divChild: modDataTree.divOuter, });
+        if (!this.modDataTree) {
+            this.modDataTree = new window.OPRSClasses.ModDataTree({
+                modData: this.modData,
+                modHistory: this.modHistory,
+                overlay: this.overlay,
+            });
+        }
+        this.overlay.show({ divChild: this.modDataTree.divOuter, });
     }
 };

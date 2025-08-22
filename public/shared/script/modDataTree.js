@@ -25,8 +25,6 @@ export class ModDataTree {
         ModDataTree.CRITERIA_LABEL.PATH,
     ];
 
-    static expandedNodeSet = new Set();
-
     constructor(input) {
         this.divOuter = Shared.createHTMLComponent({ class: 'base-mod-data-tree-outer', });
         this.divInner = Shared.createHTMLComponent({ class: 'base-mod-data-tree-inner', parent: this.divOuter, });
@@ -148,9 +146,6 @@ export class ModDataTree {
                     modifiers.length ? summary.dataset.modifiers : taggedString.modDataTreeNoModifier();
                 this.infoRowList[ModDataTree.INFO_KEY_LIST.NODE_VALUE.key].innerText = summary.dataset.value;
                 this.infoRowList[ModDataTree.INFO_KEY_LIST.NODE_PATH.key].innerText = summary.dataset.fullPath;
-
-                if (details.open) ModDataTree.expandedNodeSet.add(summary.dataset.fullPath);
-                else ModDataTree.expandedNodeSet.delete(summary.dataset.fullPath);
             }, 200);
         });
         summary.addEventListener("dblclick", (e) => {
@@ -159,7 +154,6 @@ export class ModDataTree {
             clickTimer = null;
 
             const expand = !details.open;
-            this.updateExpandedSet({ details, expand, });
             this.toggleRecursive({ details, expand, });
         });
 
@@ -193,10 +187,6 @@ export class ModDataTree {
                 }));
             }
         }
-
-        // Restore expanded state
-        if (ModDataTree.expandedNodeSet.has(pathSoFar)) details.open = true;
-
         return details;
     }
 
@@ -207,18 +197,6 @@ export class ModDataTree {
         // Recursively apply to all child <details>
         details.querySelectorAll("details").forEach(child => {
             child.open = expand;
-        });
-    }
-
-    // Recursively update the expandedNodeSet
-    updateExpandedSet(input) {
-        const { details, expand, } = input;
-        const path = details.querySelector('summary').dataset.fullPath;
-        if (expand) ModDataTree.expandedNodeSet.add(path);
-        else ModDataTree.expandedNodeSet.delete(path);
-
-        details.querySelectorAll('details').forEach(child => {
-            this.updateExpandedSet({ details: child, expand, });
         });
     }
 
