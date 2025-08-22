@@ -85,6 +85,9 @@ class Shared {
     if (input.class) {
       comp.className = input.class;
     }
+    if (input.type) {
+      comp.type = input.type;
+    }
     return comp;
   }
 };
