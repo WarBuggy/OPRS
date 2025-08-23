@@ -1,7 +1,7 @@
 export class DataLoader {
     // Main function to process one mod item
     static processModItem(input) {
-        const { modName, item, modData, modHistory } = input || {};
+        const { modName, item, modData, modHistory, } = input || {};
         const { dataType, name, addPayloadToArray, payload } = item || {};
 
         try {
@@ -57,7 +57,8 @@ export class DataLoader {
     }
 
     // Utility to set nested value in modData
-    static setNested({ modData, pathArray, value }) {
+    static setNested(input) {
+        const { modData, pathArray, value, } = input;
         let current = modData;
         for (let i = 0; i < pathArray.length - 1; i++) {
             const nodeName = pathArray[i];
@@ -78,7 +79,8 @@ export class DataLoader {
     }
 
     // Ensure intermediate nodes exist in modHistory and add modName to history
-    static ensureNodePath({ node, pathArray, modName }) {
+    static ensureNodePath(input) {
+        const { node, pathArray, modName, } = input;
         let current = node;
         for (const key of pathArray) {
             if (!(key in current)) current[key] = { history: [], children: {} };
@@ -91,7 +93,8 @@ export class DataLoader {
     }
 
     // Validate that required properties exist and are of correct type
-    static validateModItem({ item }) {
+    static validateModItem(input) {
+        const { item, } = input;
         const requiredKeys = ["dataType", "name", "payload"];
         const missingKeyList = requiredKeys.filter((key) => !(key in item));
         if (missingKeyList.length > 0) {
@@ -122,7 +125,8 @@ export class DataLoader {
         }
     }
 
-    static getModDataValue({ modData, pathString }) {
+    static getModDataValue(input) {
+        const { modData, pathString, } = input;
         if (!modData || !pathString) return undefined;
 
         const keys = pathString.split('.');

@@ -82,7 +82,7 @@ export class ModDataTree {
             // Save reference for later update
             this.infoRowList[key] = infoValue;
         });
-    };
+    }
 
     renderTree(input) {
         const { divParent, modHistory, modData } = input;

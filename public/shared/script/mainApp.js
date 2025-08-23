@@ -17,7 +17,7 @@ export class MainApp {
         this.createPageHTMLComponent();
 
         this.setupKeyBinding();
-    };
+    }
 
     loadModData(input) {
         let { savedModData, modData, modHistory } = input;
@@ -57,4 +57,4 @@ export class MainApp {
             }
         });
     }
-};
+}

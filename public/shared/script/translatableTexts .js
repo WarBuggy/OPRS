@@ -56,4 +56,4 @@ window.translatableTexts = {
         modDataTreeCloseButtonText: 'Close',
         modDataTreeSearchPlaceholder: 'Search...',
     },
-}
+};

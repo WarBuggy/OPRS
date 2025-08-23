@@ -70,7 +70,7 @@ export class BaseMainSurface {
         this.emitter = input.emitter;
         this.declareZoomSettings();
         this.setup();
-    };
+    }
 
     /**
      * Retrieves the pre-cached zoom level data for a given display mode, using a value stored in localStorage,
@@ -110,7 +110,7 @@ export class BaseMainSurface {
             cachedData: input.cachedData
         });
         return preCachedData;
-    };
+    }
 
     /**
      * Retrieves pre-cached data for a specific zoom level within a given display mode.
@@ -135,7 +135,7 @@ export class BaseMainSurface {
             throw new Error(`[BaseMainSurface] ${window.taggedString.noPreCachedZoomLevelDataFound(input.mode, input.parsed)}`);
         }
         return preCachedData;
-    };
+    }
 
     /**
      * Retrieves zoom setting data for a specific display mode from internal configuration.
@@ -153,7 +153,7 @@ export class BaseMainSurface {
             throw new Error(`[BaseMainSurface] ${window.taggedString.invalidDisplayMode(input.mode)}`);
         }
         return modeData;
-    };
+    }
 
     /**
      * Calculates core geometric parameters for hex tiles based on the canvas size,
@@ -197,7 +197,7 @@ export class BaseMainSurface {
             height,
             coordFontSize,
         };
-    };
+    }
 
     /**
      * Determines the map's width and height based on user input,
@@ -218,7 +218,7 @@ export class BaseMainSurface {
             height = input.userInputWidth;
         }
         return { width, height, };
-    };
+    }
 
     /**
      * Calculates map layout and hex grid parameters based on physical map size,
@@ -345,7 +345,7 @@ export class BaseMainSurface {
             mapWidth: maxX,
         });
         return result;
-    };
+    }
 
     /**
      * Calculates initial camera parameters including offset bounds, centered position, and movement speed.
@@ -395,7 +395,7 @@ export class BaseMainSurface {
             moveSpeed,
             zoomLevel: input.zoomLevel,
         };
-    };
+    }
 
     /**
      * Computes all key rendering and interaction parameters based on zoom-level configuration and canvas settings.
@@ -454,7 +454,7 @@ export class BaseMainSurface {
             gridParam: metaData.gridParam,
             cameraParam,
         };
-    };
+    }
 
     /**
      * Precomputes and caches all rendering parameters for every zoom level across all display modes.
@@ -495,7 +495,7 @@ export class BaseMainSurface {
             }
         };
         return result;
-    };
+    }
 
     /**
      * Clamps the camera offset values to ensure they stay within allowed bounds.
@@ -520,7 +520,7 @@ export class BaseMainSurface {
         cameraParam.offsetY = Shared.clamp({
             max: cameraParam.maxOffsetY, min: cameraParam.minOffsetY, value: input.valueY,
         });
-    };
+    }
 
     /**
      * Updates the mouse position relative to the map (world coordinates) based on current camera offset,
@@ -568,7 +568,7 @@ export class BaseMainSurface {
                 console.debug('Out of bound');
             }
         }
-    };
+    }
 
     /**
      * Determines and returns all hex tiles visible within the current camera viewport,
@@ -653,7 +653,7 @@ export class BaseMainSurface {
             currentS = transverseBottomRightData.s;
         }
         return result;
-    };
+    }
 
     /**
      * Set horizontal flip coord to be the draw coord for every hex in the provided hex list.
@@ -665,7 +665,7 @@ export class BaseMainSurface {
         for (const [key, hex] of Object.entries(input.hexList)) {
             hex.setFlipCoord({ mapWidth: input.mapWidth, });
         }
-    };
+    }
 
     /**
      * Updates the drawing X coordinates for each hex in the provided hex list.
@@ -679,7 +679,7 @@ export class BaseMainSurface {
         for (const [key, hex] of Object.entries(input.hexList)) {
             hex.flip({ flipped: input.flipped, });
         }
-    };
+    }
 
     // For debug purpose
     flipMap(input) {
@@ -695,7 +695,7 @@ export class BaseMainSurface {
         for (const [key, hex] of Object.entries(input.hexList)) {
             hex.flip({ flipped: this.flipped, });
         }
-    };
+    }
 
     // CONSIDER TO REMOVE
     // calculateRowMinMaxQS(input) {
@@ -715,5 +715,5 @@ export class BaseMainSurface {
 
     setup() {
         throw new Error(`[BaseMainSurface] ${taggedString.generalImplementInSubClass('setup')}`);
-    };
-};
+    }
+}

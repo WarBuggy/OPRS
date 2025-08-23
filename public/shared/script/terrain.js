@@ -15,5 +15,5 @@ class Terrain {
         this.elevationValue = 0;
 
         this.name = input.name;
-    };
-};
+    }
+}

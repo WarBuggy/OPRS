@@ -84,7 +84,7 @@ export class Hex {
             r: this.r,
             s: this.s,
         });
-    };
+    }
 
     /**
      * Creates a closed path outlining the hex shape on the canvas, adjusted for camera offset.
@@ -102,7 +102,7 @@ export class Hex {
         input.canvasCtx.lineTo(this.drawLeftX - input.cameraOffsetX, this.lowerY - input.cameraOffsetY);
         input.canvasCtx.lineTo(this.drawLeftX - input.cameraOffsetX, this.upperY - input.cameraOffsetY);
         input.canvasCtx.lineTo(this.drawCenterX - input.cameraOffsetX, this.topY - input.cameraOffsetY);
-    };
+    }
 
     /**
      * Draws the cube coordinates (q, r, s) of the hex tile on the canvas at their respective label positions,
@@ -117,7 +117,7 @@ export class Hex {
         input.canvasCtx.fillText(this.q, this.drawQx - input.cameraOffsetX, this.qY - input.cameraOffsetY);
         input.canvasCtx.fillText(this.r, this.drawRx - input.cameraOffsetX, this.rY - input.cameraOffsetY);
         input.canvasCtx.fillText(this.s, this.drawSx - input.cameraOffsetX, this.sY - input.cameraOffsetY);
-    };
+    }
 
     /**
      * Rounds fractional cube coordinates to the nearest valid hex tile coordinate.
@@ -151,7 +151,7 @@ export class Hex {
             s = -q - r;
         }
         return { q, r, s };
-    };
+    }
 
     /**
      * Converts a 2D canvas pixel coordinate to a cube-coordinate of a hex tile.
@@ -178,7 +178,7 @@ export class Hex {
         let r = 2.0 / 3 * y;
         let s = 0 - (q + r);
         return Hex.cubeRound({ fracQ: q, fracR: r, fracS: s, });
-    };
+    }
 
     /**
      * Creates a unique string key from cube coordinates.
@@ -192,7 +192,7 @@ export class Hex {
      */
     static createListKey(input) {
         return `${input.q},${input.r},${input.s}`;
-    };
+    }
 
     /**
      * Retrieves a hex tile object from a list based on a pixel coordinate lookup.
@@ -214,7 +214,7 @@ export class Hex {
         });
         let listKey = window.OPRSClasses.Hex.createListKey({ q: hexCoord.q, r: hexCoord.r, s: hexCoord.s, });
         return input.hexList[listKey];
-    };
+    }
 
     /**
      * Finds the hex tile located a specified distance away in a given direction from a starting hex.
@@ -256,7 +256,7 @@ export class Hex {
             qMod: modData.qMod, rMod: modData.rMod, sMod: modData.sMod,
         });
         return result;
-    };
+    }
 
     /**
      * Traverses a sequence of hexes in a specified direction and distance starting from a given hex.
@@ -308,7 +308,7 @@ export class Hex {
             transversedHexes[newHexListKey] = aHex;
         }
         return { q, r, s, hexListKey, transversedHexes, };
-    };
+    }
 
     /**
      * Updates x coordinates used for drawing when the map is flipped (mirror image)
@@ -325,7 +325,7 @@ export class Hex {
         this.flippedRx = Math.round(input.mapWidth - this.rX);
         this.flippedSx = Math.round(input.mapWidth - this.sX);
 
-    };
+    }
 
     /**
      * Sets the drawing coordinates of the hex depending on the flip state.
@@ -351,7 +351,7 @@ export class Hex {
         this.drawQx = this.qX;
         this.drawRx = this.rX;
         this.drawSx = this.sX;
-    };
+    }
 
     // CONSIDER TO REMOVE
     // static getRowMinMaxQS(input) {
@@ -365,4 +365,4 @@ export class Hex {
     //         minS: rowMinS, maxS: rowMaxS,
     //     };
     // };
-};
+}

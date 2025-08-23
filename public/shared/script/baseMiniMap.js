@@ -22,7 +22,7 @@ export class BaseMiniMap {
         if (!this.canvas) throw new Error(`[BaseMiniMap] Mini-map canvas not found`);
         this.ctx = this.canvas.getContext(`2d`);
         this.emitter = input.emitter;
-    };
+    }
 
     /**
      * Precomputes scaled layout and camera dimensions for all zoom levels in all modes
@@ -70,7 +70,7 @@ export class BaseMiniMap {
             }
         };
         return result;
-    };
+    }
 
     /**
      * Retrieves pre-cached zoom-level data for a specific mode and zoom level.
@@ -103,7 +103,7 @@ export class BaseMiniMap {
             throw new Error(`[BaseMiniMap] ${window.taggedString.noPreCachedZoomLevelDataFound(input.mode, input.zoomLevel)}`);
         }
         return preCachedData;
-    };
+    }
 
     /**
      * Calculates scaling and centering offsets to fit a padded map into the mini-map canvas.
@@ -145,5 +145,5 @@ export class BaseMiniMap {
             widthWithPadding, heightWithPadding,
             withPaddingOffsetX, withPaddingOffsetY,
         };
-    };
-};
+    }
+}
