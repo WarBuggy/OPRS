@@ -22,7 +22,7 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
 
         // CONSIDER TO REMOVE
         this.addAnimationLoopKeyEvent();
-    };
+    }
 
     /**
      * Initializes the setup by pre-calculating zoom parameters and loading the default zoom data.
@@ -31,7 +31,7 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
      * Sets the current hex, map, grid, and camera parameters from the loaded data.
      * Note: Portrait mode is currently not supported.
      */
-    setup() {
+    setup(input) {
         this.canvas.width = this.canvas.parentElement.offsetWidth;
         this.canvas.height = this.canvas.parentElement.offsetHeight;
         const drawMapWidthAndHeight = this.setMapWidthAndHeight({
@@ -56,7 +56,7 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
         this.mapParam = preCachedZoomData.mapParam;
         this.gridParam = preCachedZoomData.gridParam;
         this.cameraParam = preCachedZoomData.cameraParam;
-    };
+    }
 
     /**
      * Runs the main animation loop to render the hex map.
@@ -179,7 +179,7 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
         //     this.totalTime += diff;
         // }
         // console.log(`Runtime: ${(end - start).toFixed(3)} ms. Max: ${this.maxDrawTime} ms. Avg: ${this.totalTime / this.totalFrame} ms.`);
-    };
+    }
 
     /**
      * Adds keyboard event listener for camera panning.
@@ -214,7 +214,7 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
             });
             this.emitter.emit(Shared.EMITTER_SIGNAL.PARCHMENT_PANNED);
         });
-    };
+    }
 
     addModDataTreeEmitterListener(input) {
         this.wasdEnabled = true;
@@ -224,14 +224,14 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
         this.emitter.on(Shared.EMITTER_SIGNAL.OVERLAY_CLOSED, () => {
             this.wasdEnabled = true;
         });
-    };
+    }
 
     /**
      * Adds mousemove event listener on the canvas.
      * Tracks the mouse position relative to the canvas.
      * Updates the mouse map position using current camera, hex, and grid parameters.
      */
-    addMouseMoveEvent() {
+    addMouseMoveEvent(input) {
         this.userInputParam.mousePos = { x: 0, y: 0 };
         this.userInputParam.mouseMapPos = { x: 0, y: 0 };
         const parent = this;
@@ -249,7 +249,7 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
                 logHexCoord: parent.option.visual.logHexCoord,
             });
         });
-    };
+    }
 
     /**
      * Adds mouse wheel event listener to handle zooming in and out on the map.
@@ -259,7 +259,7 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
      * Updates mouse map position accordingly.
      * Emits a zoom event when zoom level changes.
      */
-    addMouseWheelZoomEvent() {
+    addMouseWheelZoomEvent(input) {
         const mode = 'landscape';
         const parent = this;
         this.canvas.addEventListener('wheel', (e) => {
@@ -326,7 +326,7 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
             });
             parent.emitter.emit(Shared.EMITTER_SIGNAL.PARCHMENT_ZOOMED);
         }, { passive: false });
-    };
+    }
 
     /**
      * Adds mouse drag event listeners to enable dragging the map view.
@@ -334,7 +334,7 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
      * while enforcing drag threshold and clamping camera position within bounds.
      * Emits a signal when the map is panned via dragging.
      */
-    addMouseDragEvents() {
+    addMouseDragEvents(input) {
         this.userInputParam.isDragging = false;
         this.userInputParam.lastDragPos = { x: 0, y: 0 };
         this.userInputParam.dragStartPos = { x: 0, y: 0 };
@@ -401,7 +401,7 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
                 parent.userInputParam.isDragging = false;
             }
         });
-    };
+    }
 
     /**
      * Handles a click event on the mini-map by updating the main camera offset
@@ -418,7 +418,7 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
             cameraParam: this.cameraParam,
         });
         this.emitter.emit(Shared.EMITTER_SIGNAL.PARCHMENT_PANNED);
-    };
+    }
 
     /**
      * Runs the animation loop at a maximum of 30 frames per second.
@@ -437,14 +437,14 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
             this.animationLoop(timestamp);
         };
         requestAnimationFrame(this.loop);
-    };
+    }
 
     /**
      * Toggles the animation loop state between running and paused.
      * When resumed, starts the loop using requestAnimationFrame.
      * Logs the current state ('Resume' or 'Pause') to the console.
      */
-    toggleLoop() {
+    toggleLoop(input) {
         if (!this._isLooping) {
             this._isLooping = true;
             requestAnimationFrame(this.loop);
@@ -454,13 +454,13 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
         this._isLooping = false;
         this._lastFrameTime = null;
         console.log('Pause');
-    };
+    }
 
     /**
      * Initializes the zoomSettings property with predefined zoom levels and default zoom for supported modes.
      * Currently supports 'landscape' mode with specific zoom level mappings.
      */
-    declareZoomSettings() {
+    declareZoomSettings(input) {
         this.STORAGE_KEYS.ZOOM_LEVEL = Shared.STORAGE_KEYS.ZOOM_LEVEL_MAP_EDITOR_PARCHMENT;
         this.zoomSettings = {
             landscape: {
@@ -481,12 +481,12 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
             //     defaultZoomLevel: 1,
             // }
         };
-    };
+    }
 
     /**
      * Adds a global keyboard event listener to toggle the animation loop on Ctrl + 'P' key press.
      */
-    addAnimationLoopKeyEvent() {
+    addAnimationLoopKeyEvent(input) {
         const parent = this;
         window.addEventListener('keydown', function (e) {
             if (e.ctrlKey && e.key.toLowerCase() === 'p') {
@@ -494,7 +494,7 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
                 parent.toggleLoop();
             }
         });
-    };
+    }
 
     /**
      * Adds global keyboard event listeners to toggle visual options:
@@ -502,7 +502,7 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
      * - Ctrl + '.' toggles visibility of the hex grid.
      * - Ctrl + ',' toggles logging of hex coordinates to debug console.
      */
-    addToggleOptionKeyEvent() {
+    addToggleOptionKeyEvent(input) {
         const parent = this;
         window.addEventListener('keydown', function (e) {
             if (e.ctrlKey && e.key.toLowerCase() === '.') {
@@ -520,5 +520,5 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
                 return;
             }
         });
-    };
-};
+    }
+}

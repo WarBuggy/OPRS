@@ -66,4 +66,4 @@ export class EditorMap extends window.OPRSClasses.MainApp {
             class: 'bottomBar',
         });
     }
-};
+}

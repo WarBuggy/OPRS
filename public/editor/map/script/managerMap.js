@@ -21,17 +21,17 @@ export class ManagerMap {
 
         const parent = this;
         this.emitter.on(Shared.EMITTER_SIGNAL.PARCHMENT_PANNED, function () {
-            parent.handleParchmentPanned(parent);
+            parent.handleParchmentPanned({ parent, });
         });
         this.emitter.on(Shared.EMITTER_SIGNAL.PARCHMENT_ZOOMED, function () {
-            parent.handleParchmentZoomed(parent);
+            parent.handleParchmentZoomed({ parent, });
         });
         this.emitter.on(Shared.EMITTER_SIGNAL.MINI_MAP_CLICKED, function () {
-            parent.handleMiniMapClicked(parent);
+            parent.handleMiniMapClicked({ parent, });
         });
 
         requestAnimationFrame(this.parchment.loop);
-    };
+    }
 
     setup(input) {
         this.parchment.setup();
@@ -50,27 +50,27 @@ export class ManagerMap {
             scaledCameraParam: this.miniMap.scaledCameraParam,
             ctx: this.miniMap.ctx,
         });
-    };
+    }
 
-    handleParchmentPanned(parent) {
-        parent.miniMap.onCameraPanned({
-            cameraOffsetX: parent.parchment.cameraParam.offsetX,
-            cameraOffsetY: parent.parchment.cameraParam.offsetY,
+    handleParchmentPanned(input) {
+        input.parent.miniMap.onCameraPanned({
+            cameraOffsetX: input.parent.parchment.cameraParam.offsetX,
+            cameraOffsetY: input.parent.parchment.cameraParam.offsetY,
         });
-    };
+    }
 
-    handleParchmentZoomed(parent) {
-        parent.miniMap.onCameraZoomed({
-            zoomLevel: parent.parchment.cameraParam.zoomLevel,
-            cameraOffsetX: parent.parchment.cameraParam.offsetX,
-            cameraOffsetY: parent.parchment.cameraParam.offsetY,
+    handleParchmentZoomed(input) {
+        input.parent.miniMap.onCameraZoomed({
+            zoomLevel: input.parent.parchment.cameraParam.zoomLevel,
+            cameraOffsetX: input.parent.parchment.cameraParam.offsetX,
+            cameraOffsetY: input.parent.parchment.cameraParam.offsetY,
         });
-    };
+    }
 
-    handleMiniMapClicked(parent) {
-        parent.parchment.onMiniMapClicked({
-            miniMapScaledClickOffsetX: parent.miniMap.userInputParam.scaledClickOffsetX,
-            miniMapScaledClickOffsetY: parent.miniMap.userInputParam.scaledClickOffsetY,
+    handleMiniMapClicked(input) {
+        input.parent.parchment.onMiniMapClicked({
+            miniMapScaledClickOffsetX: input.parent.miniMap.userInputParam.scaledClickOffsetX,
+            miniMapScaledClickOffsetY: input.parent.miniMap.userInputParam.scaledClickOffsetY,
         });
-    };
-};
+    }
+}

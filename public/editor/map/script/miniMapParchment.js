@@ -34,7 +34,7 @@ export class MiniMapParchment extends OPRSClasses.BaseMiniMap {
             scaledCameraParam: this.scaledCameraParam,
             ctx: this.ctx,
         });
-    };
+    }
 
     /**
      * Initializes zoom cached data and sets parameters for the current zoom level and camera offsets.
@@ -60,7 +60,7 @@ export class MiniMapParchment extends OPRSClasses.BaseMiniMap {
             cameraOffsetX: input.cameraOffsetX,
             cameraOffsetY: input.cameraOffsetY,
         });
-    };
+    }
 
     /**
      * Clears the provided canvas context and draws the mini-map boundaries and camera viewport.
@@ -98,7 +98,7 @@ export class MiniMapParchment extends OPRSClasses.BaseMiniMap {
         input.ctx.strokeStyle = 'green';
         input.ctx.strokeRect(cameraX, cameraY,
             input.scaledCameraParam.width, input.scaledCameraParam.height);
-    };
+    }
 
     /**
      * Updates the camera offset based on pan input and triggers a redraw of the mini-map.
@@ -115,7 +115,7 @@ export class MiniMapParchment extends OPRSClasses.BaseMiniMap {
             scaledCameraParam: this.scaledCameraParam,
             ctx: this.ctx,
         });
-    };
+    }
 
     /**
      * Updates the scaled camera offsets by applying the current map scale to raw camera offsets.
@@ -126,7 +126,7 @@ export class MiniMapParchment extends OPRSClasses.BaseMiniMap {
     setNewCameraOffset(input) {
         this.scaledCameraParam.offsetX = input.cameraOffsetX * this.scaledMapParam.scale;
         this.scaledCameraParam.offsetY = input.cameraOffsetY * this.scaledMapParam.scale;
-    };
+    }
 
     /**
      * Updates internal scaled map and camera parameters based on the given zoom level
@@ -148,7 +148,7 @@ export class MiniMapParchment extends OPRSClasses.BaseMiniMap {
         this.scaledCameraParam = zoomData.scaledCameraParam;
         this.scaledCameraParam.offsetX = input.cameraOffsetX * this.scaledMapParam.scale;
         this.scaledCameraParam.offsetY = input.cameraOffsetY * this.scaledMapParam.scale;
-    };
+    }
 
     /**
      * Updates mini-map parameters when the main camera is zoomed and triggers a redraw.
@@ -171,7 +171,7 @@ export class MiniMapParchment extends OPRSClasses.BaseMiniMap {
             scaledCameraParam: this.scaledCameraParam,
             ctx: this.ctx,
         });
-    };
+    }
 
     /**
      * Binds a 'click' event listener to the canvas to compute the scaled click offset
@@ -191,7 +191,7 @@ export class MiniMapParchment extends OPRSClasses.BaseMiniMap {
                 (parent.userInputParam.mouseY - parent.scaledMapParam.offsetY) / parent.scaledMapParam.scale;
             parent.emitter.emit(Shared.EMITTER_SIGNAL.MINI_MAP_CLICKED);
         });
-    };
+    }
 
     /**
      * Binds a 'mousemove' event listener to the canvas to track cursor position
@@ -212,5 +212,5 @@ export class MiniMapParchment extends OPRSClasses.BaseMiniMap {
                 mouseY >= parent.scaledMapParam.withPaddingOffsetY && mouseY <= parent.scaledMapParam.withPaddingOffsetY + parent.scaledMapParam.heightWithPadding
             parent.canvas.style.cursor = parent.userInputParam.cursorInsidePaddedMap ? 'pointer' : 'default';
         });
-    };
-};
+    }
+}
