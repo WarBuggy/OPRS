@@ -2,13 +2,15 @@ class Shared {
   static STORAGE_KEYS = {
     LANGUAGE: 'language',
     ZOOM_LEVEL_MAP_EDITOR_PARCHMENT: 'mapEditorZoomLevel',
-  }
+  };
 
   static EMITTER_SIGNAL = {
     PARCHMENT_PANNED: 'parchment_panned',
     PARCHMENT_ZOOMED: 'parchment_zoomed',
     MINI_MAP_CLICKED: 'miniMap_clicked',
-  }
+    OVERLAY_VISIBLE: 'overlay_visible',
+    OVERLAY_CLOSED: 'overlay_closed',
+  };
 
   static HEX_DIRECTION = {
     LEFT: "l",
@@ -17,7 +19,7 @@ class Shared {
     TOP_RIGHT: "tr",
     BOTTOM_LEFT: "bl",
     BOTTOM_RIGHT: "br",
-  }
+  };
 
   static MOD_STRING = {
     REGISTRATION_MODE: {
@@ -46,7 +48,7 @@ class Shared {
       MOD_NAME: 'modName',
       DIR_NAME: 'dirName',
     },
-  }
+  };
 
   /**
    * Clamps a numeric value between a minimum and maximum bound.
@@ -90,4 +92,4 @@ class Shared {
     }
     return comp;
   }
-};
+}

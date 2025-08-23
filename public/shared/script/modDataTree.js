@@ -58,7 +58,6 @@ export class ModDataTree {
 
         // Closing logic
         closeBtn.addEventListener('click', () => {
-            this.opened = false;
             input.overlay.hide();
         });
 
@@ -66,8 +65,6 @@ export class ModDataTree {
         if (input.modHistory) {
             this.renderTree({ modHistory: input.modHistory, divParent: divInner, modData: input.modData, });
         }
-
-        this.opened = false;
     }
 
     addInfoRow(input) {
@@ -219,6 +216,7 @@ export class ModDataTree {
         this.inputSearch = Shared.createHTMLComponent({
             tag: 'input',
             class: 'base-mod-data-tree-search-input',
+            id: 'inputSearch',
             parent: div,
         });
         this.inputSearch.placeholder = 'Search...';
@@ -291,14 +289,6 @@ export class ModDataTree {
         });
         // Empty for now; results will be added dynamically
         return div;
-    }
-
-    show(input) {
-        if (this.opened) {
-            return;
-        }
-        input.overlay.show({ divChild: this.divOuter, });
-        this.opened = true;
     }
 }
 

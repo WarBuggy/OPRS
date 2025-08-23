@@ -3,6 +3,7 @@ export class EditorMap extends window.OPRSClasses.MainApp {
         super(input);
 
         this.managerMap = new window.OPRSClasses.ManagerMap({
+            emitter: this.emitter,
             parchment: {
                 canvasId: 'canvasParchment',
             },

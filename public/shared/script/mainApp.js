@@ -2,6 +2,7 @@ export class MainApp {
     constructor(input) {
         this.modifyStaticProperty(input);
 
+        this.emitter = new window.OPRSClasses.EventEmitter();
         // allow mods to import data, or modify other mods' data if needed.
         this.modData = {};
         this.modHistory = {};
@@ -12,7 +13,7 @@ export class MainApp {
             modHistory: this.modHistory,
         });
 
-        this.overlay = new window.OPRSClasses.Overlay();
+        this.overlay = new window.OPRSClasses.Overlay({ emitter: this.emitter, });
         this.createPageHTMLComponent();
 
         this.setupKeyBinding();
@@ -27,6 +28,7 @@ export class MainApp {
     }
 
     showModDataTree(input) {
+        if (this.overlay.visible) return;
         if (!this.modDataTree) {
             this.modDataTree = new window.OPRSClasses.ModDataTree({
                 modData: this.modData,
@@ -34,7 +36,7 @@ export class MainApp {
                 overlay: this.overlay,
             });
         }
-        this.modDataTree.show({ overlay: this.overlay, });
+        this.overlay.show({ divChild: this.modDataTree.divOuter, });
     }
 
     modifyStaticProperty(input) {
@@ -46,12 +48,11 @@ export class MainApp {
         throw new Error(`${taggedString.generalImplementInSubClass('createPageHTMLComponent')}`);
     }
 
-
     setupKeyBinding(input) {
-        document.addEventListener('keydown', (event) => {
+        document.addEventListener('keydown', (e) => {
             // Check for Ctrl + Shift + D, open Mod Data Tree popup
-            if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'd') {
-                event.preventDefault(); // prevent accidental browser behavior
+            if (e.shiftKey && e.key.toLowerCase() === 'p') {
+                e.preventDefault(); // prevent accidental browser behavior
                 this.showModDataTree();
             }
         });

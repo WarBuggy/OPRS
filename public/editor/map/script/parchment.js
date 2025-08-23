@@ -189,28 +189,40 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
      * Updates the mouse map position accordingly.
      * Emits a signal to notify that the parchment (map) has been panned.
      */
-    addKeyboardPanEvent() {
-        const parent = this;
+    addKeyboardPanEvent(input) {
+        this.addModDataTreeEmitterListener();
         document.addEventListener('keydown', (e) => {
+            if (!this.wasdEnabled) return; // skip if popup is open
+
             switch (e.key.toLowerCase()) {
-                case 'w': parent.cameraParam.offsetY -= parent.cameraParam.moveSpeed; break;
-                case 'a': parent.cameraParam.offsetX -= parent.cameraParam.moveSpeed; break;
-                case 's': parent.cameraParam.offsetY += parent.cameraParam.moveSpeed; break;
-                case 'd': parent.cameraParam.offsetX += parent.cameraParam.moveSpeed; break;
+                case 'w': this.cameraParam.offsetY -= this.cameraParam.moveSpeed; break;
+                case 'a': this.cameraParam.offsetX -= this.cameraParam.moveSpeed; break;
+                case 's': this.cameraParam.offsetY += this.cameraParam.moveSpeed; break;
+                case 'd': this.cameraParam.offsetX += this.cameraParam.moveSpeed; break;
             };
-            parent.clampCameraOffset({
-                cameraParam: parent.cameraParam,
+            this.clampCameraOffset({
+                cameraParam: this.cameraParam,
             });
-            parent.updateMouseMapPosition({
-                userInputParam: parent.userInputParam,
-                cameraParam: parent.cameraParam,
-                hexParam: parent.hexParam,
-                gridParam: parent.gridParam,
-                flipped: parent.flipped,
-                mapWidth: parent.mapParam.width,
-                logHexCoord: parent.option.visual.logHexCoord,
+            this.updateMouseMapPosition({
+                userInputParam: this.userInputParam,
+                cameraParam: this.cameraParam,
+                hexParam: this.hexParam,
+                gridParam: this.gridParam,
+                flipped: this.flipped,
+                mapWidth: this.mapParam.width,
+                logHexCoord: this.option.visual.logHexCoord,
             });
-            parent.emitter.emit(Shared.EMITTER_SIGNAL.PARCHMENT_PANNED);
+            this.emitter.emit(Shared.EMITTER_SIGNAL.PARCHMENT_PANNED);
+        });
+    };
+
+    addModDataTreeEmitterListener(input) {
+        this.wasdEnabled = true;
+        this.emitter.on(Shared.EMITTER_SIGNAL.OVERLAY_VISIBLE, () => {
+            this.wasdEnabled = false;
+        });
+        this.emitter.on(Shared.EMITTER_SIGNAL.OVERLAY_CLOSED, () => {
+            this.wasdEnabled = true;
         });
     };
 

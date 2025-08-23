@@ -18,11 +18,15 @@ export class Overlay {
             parent: input.parent,
             class: 'base-common-outer-overlay',
         });
+        this.visible = false;
+        this.emitter = input.emitter;
     }
 
     hide(input) {
         this.divOuter.style.display = 'none';
         this.divOuter.innerHTML = '';
+        this.visible = false;
+        this.emitter.emit(Shared.EMITTER_SIGNAL.OVERLAY_CLOSED);
     }
 
     show(input) {
@@ -30,5 +34,7 @@ export class Overlay {
             this.divOuter.appendChild(input.divChild);
         }
         this.divOuter.style.display = 'grid';
+        this.visible = true;
+        this.emitter.emit(Shared.EMITTER_SIGNAL.OVERLAY_VISIBLE);
     }
 }

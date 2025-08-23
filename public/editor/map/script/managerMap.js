@@ -1,7 +1,7 @@
 export class ManagerMap {
 
     constructor(input) {
-        this.emitter = new window.OPRSClasses.EventEmitter();
+        this.emitter = input.emitter;
 
         this.parchment = new window.OPRSClasses.Parchment({
             canvasId: input.parchment.canvasId,
