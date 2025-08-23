@@ -1,28 +1,60 @@
 export class ModDataTree {
 
-    static INFO_KEY_LIST = {
-        CREATOR: { key: 'creator', labelText: taggedString.modDataTreeCreator(), },
-        ALL_MODIFIER_LIST: { key: 'lastModifiers', labelText: taggedString.modDataTreeLastModifiers(), },
-        NODE_VALUE: { key: 'nodeValue', labelText: taggedString.modDataTreeNodeValue(), },
-        NODE_PATH: { key: 'nodePath', labelText: taggedString.modDataTreeNodePath(), },
-    };
-
     static HAS_CHILDREN_MARKER = '▸';
     static CHILDLESS_MARKER = '•';
 
     static CRITERIA_LABEL = {
         CB_CRITERIA_PREFIX: 'cbCriteria',
-        ALL: 'All',
-        NAME: 'Name',
-        CREATOR: 'Creator',
-        MODIFIER: 'Modifier',
-        PATH: 'Path',
+        SORT_CRITERIA_PREFIX: 'sort',
+        ALL: {
+            key: `All`,
+            labelText: taggedString.modDataTreeLabelAll(),
+        },
+        PATH: {
+            key: 'Path',
+            labelText: taggedString.modDataTreeLabelPath(),
+        },
+        CREATOR: {
+            key: 'Creator',
+            labelText: taggedString.modDataTreeLabelCreator(),
+        },
+        MODIFIER_LIST: {
+            key: 'Modifier',
+            labelText: taggedString.modDataTreeLabelModifier(),
+        },
+        VALUE: {
+            key: 'Value',
+            labelText: taggedString.modDataTreeLabelValue(),
+        },
+        MOD_COUNT: {
+            key: 'ModCount',
+            labelText: taggedString.modDataTreeLabelModCount(),
+        },
+        ORDER_DESC: '↓',
+        ORDER_ASC: '↑'
     };
-    static CRITERIA_SINGLE = [
-        ModDataTree.CRITERIA_LABEL.NAME,
+    static INFO_KEY_LIST = [
         ModDataTree.CRITERIA_LABEL.CREATOR,
-        ModDataTree.CRITERIA_LABEL.MODIFIER,
+        ModDataTree.CRITERIA_LABEL.MODIFIER_LIST,
+        ModDataTree.CRITERIA_LABEL.VALUE,
         ModDataTree.CRITERIA_LABEL.PATH,
+    ];
+    static CRITERIA_SINGLE = [
+        ModDataTree.CRITERIA_LABEL.PATH,
+        ModDataTree.CRITERIA_LABEL.CREATOR,
+        ModDataTree.CRITERIA_LABEL.MODIFIER_LIST,
+        ModDataTree.CRITERIA_LABEL.VALUE,
+    ];
+    static SORT_CRITERIA = [
+        ModDataTree.CRITERIA_LABEL.PATH,
+        ModDataTree.CRITERIA_LABEL.CREATOR,
+        ModDataTree.CRITERIA_LABEL.MODIFIER_LIST,
+        ModDataTree.CRITERIA_LABEL.VALUE,
+        ModDataTree.CRITERIA_LABEL.MOD_COUNT,
+    ];
+    static SORT_ORDER = [
+        ModDataTree.CRITERIA_LABEL.ORDER_DESC,
+        ModDataTree.CRITERIA_LABEL.ORDER_ASC,
     ];
 
     constructor(input) {
@@ -40,12 +72,10 @@ export class ModDataTree {
             class: 'base-mod-data-tree-info-panel',
             parent: divInfoPanelOuter,
         });
+        this.infoRowList = this.addInfoRow({ parent: divInfoPanel, });
 
         // --- Search UI ---
         this.createSearchUI({ parent: divInfoPanelOuter, });
-
-        this.infoRowList = {};
-        this.addInfoRow({ parent: divInfoPanel, });
 
         // Create a button container
         const buttonContainer = Shared.createHTMLComponent({
@@ -54,7 +84,7 @@ export class ModDataTree {
         });
         // Create close button
         const closeBtn = Shared.createHTMLComponent({ tag: 'button', class: 'base-mod-data-tree-close', parent: buttonContainer, });
-        closeBtn.textContent = taggedString.modDataTreeCloseButtonText();
+        closeBtn.textContent = taggedString.modDataTreeLabelCloseButton();
 
         // Closing logic
         closeBtn.addEventListener('click', () => {
@@ -68,20 +98,24 @@ export class ModDataTree {
     }
 
     addInfoRow(input) {
-        let infoKeyList = Object.keys(ModDataTree.INFO_KEY_LIST);
-        infoKeyList.forEach(item => {
-            const { key, labelText } = ModDataTree.INFO_KEY_LIST[item];
+        const infoRowList = {};
+        ModDataTree.INFO_KEY_LIST.forEach(item => {
+            const { key, labelText } = item;
             const infoRow = Shared.createHTMLComponent({ class: 'info-row', parent: input.parent });
 
             const infoLabel = Shared.createHTMLComponent({ class: 'info-label', parent: infoRow });
             infoLabel.innerText = labelText;
+            if (key == ModDataTree.CRITERIA_LABEL.MODIFIER_LIST.key) {
+                infoLabel.innerText = taggedString.modDataTreeLabelLastModifiers();
+            }
 
             const infoValue = Shared.createHTMLComponent({ class: 'info-value', parent: infoRow });
-            infoValue.innerText = ''; // empty initially
+            infoValue.innerHTML = input[key] || '';
 
             // Save reference for later update
-            this.infoRowList[key] = infoValue;
+            infoRowList[key] = infoValue;
         });
+        return infoRowList;
     }
 
     renderTree(input) {
@@ -99,7 +133,7 @@ export class ModDataTree {
 
     renderNode(input) {
         const { key, node, pathSoFar, modData, depth = 0, } = input;
-        const creator = node.history?.[0] ?? 'unknown';
+        const creator = node.history?.[0] ?? '';
         const modifiers = (node.history ?? []).slice(1).reverse();
         const hasChildren = node.children && Object.keys(node.children).length > 0;
 
@@ -111,10 +145,10 @@ export class ModDataTree {
 
         // Create summary
         const summary = Shared.createHTMLComponent({ tag: 'summary', parent: details });
-        summary.dataset.fullPath = pathSoFar;
-        summary.dataset.creator = creator;
-        summary.dataset.modifiers = modifiers.length ? modifiers.join(', ') : '';
-        summary.dataset.value = '';
+        summary.dataset[ModDataTree.CRITERIA_LABEL.PATH.key] = pathSoFar;
+        summary.dataset[ModDataTree.CRITERIA_LABEL.CREATOR.key] = creator;
+        summary.dataset[ModDataTree.CRITERIA_LABEL.MODIFIER_LIST.key] = modifiers.length ? modifiers.join(', ') : '';
+        summary.dataset[ModDataTree.CRITERIA_LABEL.VALUE.key] = '';
         if (!hasChildren) {
             const value =
                 window.OPRSClasses.DataLoader.getModDataValue({ modData, pathString: pathSoFar, });
@@ -128,7 +162,7 @@ export class ModDataTree {
             } else {
                 displayText = String(value); // converts numbers, booleans, etc. to string
             }
-            summary.dataset.value = displayText;
+            summary.dataset[ModDataTree.CRITERIA_LABEL.VALUE.key] = displayText;
         }
 
         // --- Add expand/collapse all by double-click ---
@@ -141,11 +175,17 @@ export class ModDataTree {
             clickTimer = setTimeout(() => {
                 clickTimer = null;
                 details.open = !details.open;
-                this.infoRowList[ModDataTree.INFO_KEY_LIST.CREATOR.key].innerText = summary.dataset.creator;
-                this.infoRowList[ModDataTree.INFO_KEY_LIST.ALL_MODIFIER_LIST.key].innerText =
-                    modifiers.length ? summary.dataset.modifiers : taggedString.modDataTreeNoModifier();
-                this.infoRowList[ModDataTree.INFO_KEY_LIST.NODE_VALUE.key].innerText = summary.dataset.value;
-                this.infoRowList[ModDataTree.INFO_KEY_LIST.NODE_PATH.key].innerText = summary.dataset.fullPath;
+
+                for (let i = 0; i < ModDataTree.INFO_KEY_LIST.length; i++) {
+                    let key = ModDataTree.INFO_KEY_LIST[i].key;
+                    this.infoRowList[key].innerText = summary.dataset[key];
+                    if (key == ModDataTree.CRITERIA_LABEL.MODIFIER_LIST.key) {
+                        const modifiers = summary.dataset[key].split(',');
+                        if (summary.dataset[key] == '' || modifiers.length < 1) {
+                            this.infoRowList[key].innerText = taggedString.modDataTreeLabelNoModifier();
+                        }
+                    }
+                }
             }, 200);
         });
         summary.addEventListener("dblclick", (e) => {
@@ -202,9 +242,11 @@ export class ModDataTree {
 
     createSearchUI(input) {
         const parent = input.parent;
-        this.divSearchOuter = this.createSearchInput({ parent });
-        this.divCriteriaOuter = this.createSearchCriteria({ parent });
-        this.divResultOuter = this.createSearchResultContainer({ parent });
+        this.createSearchInput({ parent });
+        this.createSearchCriteria({ parent });
+        this.createSortUI({ parent });
+        this.createSearchResultContainer({ parent });
+        this.setupSearchListeners();
     }
 
     createSearchInput(input) {
@@ -219,11 +261,12 @@ export class ModDataTree {
             id: 'inputSearch',
             parent: div,
         });
-        this.inputSearch.placeholder = taggedString.modDataTreeSearchPlaceholder();
+        this.inputSearch.placeholder = taggedString.modDataTreeLabelSearchPlaceholder();
         return div;
     }
 
     createSearchCriteria(input) {
+        this.cbSearchCriteria = {};
         const parent = input.parent;
         const div = Shared.createHTMLComponent({
             class: 'base-mod-data-tree-criteria-outer',
@@ -231,29 +274,32 @@ export class ModDataTree {
         });
 
         const rowAll = Shared.createHTMLComponent({ class: 'base-mod-data-tree-criteria-item-all', parent: div });
-        const cbAllId = `${ModDataTree.CRITERIA_LABEL.CB_CRITERIA_PREFIX}${ModDataTree.CRITERIA_LABEL.ALL}`;
-        this[cbAllId] = Shared.createHTMLComponent({
+        const cbAllId = this.createCbSearchCriteriaId({ key: ModDataTree.CRITERIA_LABEL.ALL.key, });
+        this.cbSearchCriteria[cbAllId] = Shared.createHTMLComponent({
             tag: 'input',
             type: 'checkbox',
             id: cbAllId,
             parent: rowAll
         });
         const allLabel = Shared.createHTMLComponent({ tag: 'label', parent: rowAll });
-        allLabel.textContent = ModDataTree.CRITERIA_LABEL.ALL;
+        allLabel.textContent = ModDataTree.CRITERIA_LABEL.ALL.labelText;
         allLabel.setAttribute('for', cbAllId);
 
         const cbSingleList = [];
-        ModDataTree.CRITERIA_SINGLE.forEach(name => {
-            const className = `base-mod-data-tree-criteria-item-${name.toLowerCase()}`;
-            const id = `${ModDataTree.CRITERIA_LABEL.CB_CRITERIA_PREFIX}${name}`;
+
+        ModDataTree.CRITERIA_SINGLE.forEach(item => {
+            const { key, labelText, } = item;
+            const className = `base-mod-data-tree-criteria-item-${key.toLowerCase()}`;
+            const id = this.createCbSearchCriteriaId({ key, })
             const rowGrid = Shared.createHTMLComponent({ class: className, parent: div });
-            this[id] = Shared.createHTMLComponent({ tag: 'input', type: 'checkbox', id, parent: rowGrid });
-            cbSingleList.push(this[id]);
+            const checkbox = Shared.createHTMLComponent({ tag: 'input', type: 'checkbox', id, parent: rowGrid });
+            this.cbSearchCriteria[id] = checkbox;
+            cbSingleList.push(checkbox);
             const label = Shared.createHTMLComponent({ tag: 'label', parent: rowGrid });
-            label.textContent = name;
+            label.textContent = labelText;
             label.setAttribute('for', id);
         });
-        this.setupSearchCheckboxes({ cbAll: this[cbAllId], cbSingleList, });
+        this.setupSearchCheckboxes({ cbAll: this.cbSearchCriteria[cbAllId], cbSingleList, });
         return div;
     }
 
@@ -283,16 +329,208 @@ export class ModDataTree {
 
     createSearchResultContainer(input) {
         const parent = input.parent;
-        const div = Shared.createHTMLComponent({
+        const divOuter = Shared.createHTMLComponent({
             class: 'base-mod-data-tree-result-outer',
             parent,
         });
-        // Empty for now; results will be added dynamically
-        return div;
+        this.divResultInner = Shared.createHTMLComponent({
+            class: 'base-mod-data-tree-result-inner',
+            parent: divOuter,
+        });
     }
+
+    createSortUI(input) {
+        const parent = input.parent;
+        const divSortOuter = Shared.createHTMLComponent({
+            class: 'base-mod-data-tree-sort-outer',
+            parent,
+        });
+
+        const labelSortBy = Shared.createHTMLComponent({
+            tag: 'label',
+            class: 'base-mod-data-tree-sort-label',
+            parent: divSortOuter,
+        });
+        labelSortBy.textContent = taggedString.modDataTreeLabelSortBy();
+
+        this.selectSortCriteria = Shared.createHTMLComponent({
+            tag: 'select',
+            class: 'base-mod-data-tree-sort-select',
+            parent: divSortOuter,
+        });
+
+        ModDataTree.SORT_CRITERIA.forEach(item => {
+            const { key, labelText, } = item;
+            const option = document.createElement('option');
+            option.value = `${ModDataTree.CRITERIA_LABEL.SORT_CRITERIA_PREFIX}${key}`;
+            option.textContent = labelText;
+            this.selectSortCriteria.appendChild(option);
+        });
+        this.selectSortCriteria.value = `${ModDataTree.CRITERIA_LABEL.SORT_CRITERIA_PREFIX}${ModDataTree.SORT_CRITERIA[0].key}`;
+
+        const labelOrder = Shared.createHTMLComponent({
+            tag: 'label',
+            class: 'base-mod-data-tree-sort-label',
+            parent: divSortOuter,
+        });
+        labelOrder.textContent = taggedString.modDataTreeLabelOrder();
+
+        this.selectSortOrder = Shared.createHTMLComponent({
+            tag: 'select',
+            class: 'base-mod-data-tree-sort-select',
+            parent: divSortOuter,
+        });
+        ModDataTree.SORT_ORDER.forEach(optText => {
+            const option = document.createElement('option');
+            option.value = optText.toLowerCase();
+            option.textContent = optText;
+            this.selectSortOrder.appendChild(option);
+        });
+        this.selectSortOrder.value = ModDataTree.SORT_ORDER[0];
+    }
+
+    createSearchResultRow(input) {
+        const { parent, result, } = input;
+        const divResult = Shared.createHTMLComponent({
+            class: 'base-mod-data-tree-info-panel',
+            parent,
+        });
+        const infoRowInput = { ...result, parent: divResult, };
+        this.addInfoRow(infoRowInput);
+        return divResult;
+    }
+
+    populateDivResult(input) {
+        const { parent, resultList, searchTerm } = input;
+        for (let i = 0; i < resultList.length; i++) {
+            this.createSearchResultRow({ parent, result: resultList[i], searchTerm });
+        }
+    }
+
+    highlightText(input) {
+        const { text, searchTerm, } = input;
+        if (!searchTerm) return text;
+        const escapeRegexTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`(${escapeRegexTerm})`, 'gi');
+        return text.replace(regex, '<span class="base-mod-data-tree-highlight-search">$1</span>');
+    }
+
+    highlightText(input) {
+        const { text, matchingTermList } = input;
+
+        // Escape regex special characters for each term
+        const escapedTermList = matchingTermList.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+
+        // Combine into a single regex pattern, match any term (OR)
+        const regex = new RegExp(`(${escapedTermList.join('|')})`, 'gi');
+
+        // Replace all matches with highlight span
+        return text.replace(regex, '<span class="base-mod-data-tree-highlight-search">$1</span>');
+    }
+
+    searchSummaryForTerm(input) {
+        const { summary, searchTerm, searchCriteria, } = input;
+        const terms = searchTerm.split(/\s+/);
+        const highlighted = {};
+        for (let i = 0; i < ModDataTree.INFO_KEY_LIST.length; i++) {
+            const key = ModDataTree.INFO_KEY_LIST[i].key;
+            highlighted[key] = summary.dataset[key];
+        }
+        let hasMatch = false;
+        for (const [key, text] of Object.entries(highlighted)) {
+            if (!searchCriteria[key]) continue;
+
+            const matchingTermList = terms.filter(term => text.toLowerCase().includes(term));
+            if (matchingTermList.length > 0) {
+                highlighted[key] = this.highlightText({ text, matchingTermList, });
+                hasMatch = true;
+            }
+        }
+        return { hasMatch, highlighted }; // no summary included
+    }
+
+    searchNodes(input) {
+        let searchTerm = input.searchTerm.toLowerCase();
+
+        const searchCriteria = {};
+        for (let i = 0; i < ModDataTree.CRITERIA_SINGLE.length; i++) {
+            const key = ModDataTree.CRITERIA_SINGLE[i].key;
+            const id = this.createCbSearchCriteriaId({ key, });
+            searchCriteria[key] = this.cbSearchCriteria[id].checked;
+        }
+        const results = [];
+        const summaries = this.divOuter.querySelectorAll('.base-mod-data-tree-inner summary');
+        summaries.forEach(summary => {
+            const searchSummaryResult = this.searchSummaryForTerm({ summary, searchTerm, searchCriteria });
+            if (searchSummaryResult.hasMatch) {
+                results.push(searchSummaryResult.highlighted);
+            }
+        });
+        return results;
+    }
+
+    // Handle search input (works for text input or checkboxes)
+    handleSearchInput(input) {
+        const searchTerm = this.inputSearch.value.trim();
+        if (!searchTerm || searchTerm.length < 3) return;
+
+        this.divResultInner.innerHTML = '';
+        const resultList = this.searchNodes({ searchTerm });
+        if (resultList.length === 0) {
+            const noResultDiv = Shared.createHTMLComponent({
+                class: 'base-mod-data-tree-no-result',
+                parent: this.divResultInner,
+            });
+            noResultDiv.textContent = taggedString.modDataTreeLabelNoResult();
+            return;
+        }
+
+        this.populateDivResult({
+            parent: this.divResultInner,
+            resultList,
+            searchTerm,
+        });
+    }
+
+    setupSearchListeners(input) {
+        const debounce = (func, wait) => {
+            let timeout;
+            return (...args) => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        };
+
+        // Attach debounced handler to search input
+        const debouncedHandler = debounce(this.handleSearchInput.bind(this), 300);
+        this.inputSearch.addEventListener('input', debouncedHandler);
+
+        // Attach to all search criteria checkboxes
+        ModDataTree.CRITERIA_SINGLE.forEach(item => {
+            const id = this.createCbSearchCriteriaId({ key: item.key, });
+            const checkbox = this.cbSearchCriteria[id];
+            if (checkbox) {
+                checkbox.addEventListener('change', () => this.handleSearchInput());
+            }
+
+        });
+        const allId = this.createCbSearchCriteriaId({ key: ModDataTree.CRITERIA_LABEL.ALL.key, });
+        this.cbSearchCriteria[allId].addEventListener('change', () => this.handleSearchInput());
+    }
+
+    createCbSearchCriteriaId(input) {
+        return `${ModDataTree.CRITERIA_LABEL.CB_CRITERIA_PREFIX}${input.key}`;
+    };
+
+    onVisible(input) {
+        this.inputSearch.focus();
+    };
 }
 
 /*
+
+Esc to close. Bind on visible. Unbind on close. Where to put this? Overlay or the popup itself?
+
 1. Search & Filter
 
 Add a search bar to filter nodes by key, creator, or modifier.

@@ -37,6 +37,7 @@ export class MainApp {
             });
         }
         this.overlay.show({ divChild: this.modDataTree.divOuter, });
+        this.modDataTree.onVisible();
     }
 
     modifyStaticProperty(input) {
