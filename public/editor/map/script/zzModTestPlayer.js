@@ -19,4 +19,4 @@ export class Player {
     static toBeReplace2(input) {
         console.log('This line should not show up either.');
     };
-};
+}

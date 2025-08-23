@@ -19,4 +19,4 @@ export default function ({ register }) {
             console.log(`The whole map explodes! Everything took ${Math.ceil(input.dmg * 0.1)} damange.`);
         },
     });
-};
+}

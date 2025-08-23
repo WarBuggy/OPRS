@@ -30,4 +30,4 @@ export default function ({ register }) {
             console.log('This line should not show up because it will be replaced.');
         },
     });
-};
+}

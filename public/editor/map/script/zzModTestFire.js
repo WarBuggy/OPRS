@@ -18,4 +18,4 @@ export default function ({ register }) {
             console.log(`Player feels much better.`);
         },
     });
-};
+}

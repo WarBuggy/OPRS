@@ -22,4 +22,4 @@ export default function ({ register }) {
             console.log('This line should show up because it is the last.');
         },
     });
-};
+}

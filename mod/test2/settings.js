@@ -39,4 +39,4 @@ export default {
             tooltip: "Enter a custom player name."
         },
     ],
-};
+}

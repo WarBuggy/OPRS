@@ -13,4 +13,4 @@ export class Player2 extends OPRSClasses.Player {
         kill();
         console.log(`${this.name} sit down.`);
     };
-};
+}
