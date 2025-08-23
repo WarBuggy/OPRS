@@ -219,7 +219,7 @@ export class ModDataTree {
             id: 'inputSearch',
             parent: div,
         });
-        this.inputSearch.placeholder = 'Search...';
+        this.inputSearch.placeholder = taggedString.modDataTreeSearchPlaceholder();
         return div;
     }
 
