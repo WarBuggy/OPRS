@@ -1,11 +1,11 @@
-function mod({ register }) {
-    register([
+export default {
+    modData: [
         {
+            dataType: 'biome',
             name: 'grassland',
-            description: 'A test biome.',
+            payload: {
+                description: 'A test biome.',
+            },
         }
-    ]);
-};
-
-mod.registrationType = Shared.MOD_STRING.REGISTRATION_TYPE.BIOME;
-export default mod;
+    ],
+}
