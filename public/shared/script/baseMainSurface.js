@@ -710,10 +710,10 @@ export class BaseMainSurface {
     // };
 
     declareZoomSettings() {
-        throw new Error("[BaseMainSurface] Zoom settings must be implemented in subclass!");
+        throw new Error(`[BaseMainSurface] ${taggedString.generalImplementInSubClass('declareZoomSettings')}`);
     };
 
     setup() {
-        throw new Error("BaseMainSurface] Setup must be implemented in subclass!");
+        throw new Error(`[BaseMainSurface] ${taggedString.generalImplementInSubClass('setup')}`);
     };
 };
