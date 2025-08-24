@@ -35,6 +35,7 @@ export class MainApp {
                 modHistory: this.modHistory,
                 overlay: this.overlay,
             });
+            delete this.modHistory;
         }
         this.overlay.show({ divChild: this.modDataTree.divOuter, });
         this.modDataTree.onVisible();
