@@ -428,13 +428,18 @@ export class ModDataTree {
     }
 
     createSearchResultRow(input) {
-        const { parent, result, } = input;
+        const { parent, result, path, } = input;
         const divResult = Shared.createHTMLComponent({
-            class: 'base-mod-data-tree-info-panel',
+            class: 'base-mod-data-tree-info-panel search-result',
             parent,
         });
         const infoRowInput = { ...result, parent: divResult, };
         this.addInfoRow(infoRowInput);
+        // Double-click handler 
+        divResult.addEventListener('dblclick', () => {
+            this.expandPathToNode({ path, });
+        });
+
         return divResult;
     }
 
@@ -446,7 +451,39 @@ export class ModDataTree {
         this.divResultSummary.style.display = 'block';
 
         for (let i = 0; i < resultList.length; i++) {
-            this.createSearchResultRow({ parent, result: resultList[i].highlighted, searchTerm });
+            this.createSearchResultRow({
+                parent,
+                result: resultList[i].highlighted,
+                path: resultList[i].rawData[ModDataTree.CRITERIA_LABEL.PATH.key],
+            });
+        }
+    }
+
+    expandPathToNode(input) {
+        const pathParts = input.path.split('.');
+        let currentDetails = this.divOuter.querySelector('.base-mod-data-tree-inner');
+
+        for (const part of pathParts) {
+            if (!currentDetails) break;
+
+            // Find the <li> containing a <summary> with this key
+            const summary = Array.from(currentDetails.querySelectorAll('summary'))
+                .find(s => s.querySelector('.label')?.textContent === part);
+
+            if (summary) {
+                const details = summary.closest('details');
+                if (details) details.open = true; // open this node
+                currentDetails = details; // descend into this node for next iteration
+            } else {
+                break; // path not found
+            }
+        }
+
+        // Scroll the last summary (target node) into view
+        const targetSummary = currentDetails?.querySelector('summary');
+        if (targetSummary) {
+            targetSummary.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            this.highlightNodeTemporarily({ node: targetSummary, });
         }
     }
 
@@ -585,11 +622,32 @@ export class ModDataTree {
         });
         return resultList;
     }
+
+    highlightNodeTemporarily(input) {
+        const { node, duration = 2500 } = input;
+        console.log(node);
+        // Remove previous highlight if exists
+        if (this.lastHighlightedNode) {
+            this.lastHighlightedNode.classList.remove('temp-highlight');
+        }
+        if (this._highlightTimer) {
+            clearTimeout(this._highlightTimer);
+            this._highlightTimer = null;
+        }
+
+        node.classList.add('temp-highlight');
+        this.lastHighlightedNode = node;
+
+        this._highlightTimer = setTimeout(() => {
+            node.classList.remove('temp-highlight');
+            this._highlightTimer = null;
+            this.lastHighlightedNode = null;
+        }, duration);
+    }
 }
 
 /*
 
-Esc to close. Bind on visible. Unbind on close. Where to put this? Overlay or the popup itself?
 
 1. Search & Filter
 

@@ -47,11 +47,15 @@
     align-items: center;
     justify-content: flex-start;
     gap: 6px;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s ease;
 }
 
 .base-mod-data-tree-inner summary:hover {
     background-color: #3a6ea5;
+}
+
+.base-mod-data-tree-inner summary.temp-highlight {
+    background-color: #3B4C7D;
 }
 
 /* Labels */
@@ -92,11 +96,6 @@
 .depth-bg-3>summary {
     background-color: rgba(50, 50, 50, 0.9);
     color: #fff;
-}
-
-/* Optional smooth transition for expanding/collapsing */
-.base-mod-data-tree-inner summary {
-    transition: background-color 0.2s ease;
 }
 
 /* Rotate arrow when open */
@@ -148,6 +147,15 @@
     overflow-y: auto;
     border: none;
     height: fit-content;
+    border-radius: 4px;
+}
+
+.base-mod-data-tree-info-panel.search-result {
+    cursor: pointer;
+}
+
+.base-mod-data-tree-info-panel.search-result:hover {
+    background-color: #3B4C7D;
 }
 
 .base-mod-data-tree-info-panel .info-row {
@@ -321,7 +329,6 @@
 
 .base-mod-data-tree-highlight-search {
     background-color: #add8e6;
-    /* soft orange */
     color: #222;
     border-radius: 2px;
     padding: 0 2px;
