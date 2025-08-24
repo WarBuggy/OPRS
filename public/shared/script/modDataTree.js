@@ -52,10 +52,6 @@ export class ModDataTree {
         ModDataTree.CRITERIA_LABEL.VALUE,
         ModDataTree.CRITERIA_LABEL.MOD_COUNT,
     ];
-    static SORT_ORDER = [
-        ModDataTree.CRITERIA_LABEL.ORDER_DESC,
-        ModDataTree.CRITERIA_LABEL.ORDER_ASC,
-    ];
 
     constructor(input) {
         this.divOuter = Shared.createHTMLComponent({ class: 'base-mod-data-tree-outer', });
@@ -242,18 +238,25 @@ export class ModDataTree {
 
     createSearchUI(input) {
         const parent = input.parent;
-        this.createSearchInput({ parent });
-        this.createSearchCriteria({ parent });
-        this.createSortUI({ parent });
-        this.createSearchResultContainer({ parent });
+        this.createSearchInput({ parent, });
+        this.createSearchCriteria({ parent, });
+        this.createSortUI({ parent, });
+        this.createSearchSummaryUI({ parent, });
+        this.createSearchResultContainer({ parent, });
         this.setupSearchListeners();
     }
 
+    createSearchSummaryUI(input) {
+        this.divResultSummary = Shared.createHTMLComponent({
+            class: 'base-mod-data-tree-result-summary',
+            parent: input.parent,
+        });
+    }
+
     createSearchInput(input) {
-        const parent = input.parent;
         const div = Shared.createHTMLComponent({
             class: 'base-mod-data-tree-search-outer',
-            parent,
+            parent: input.parent,
         });
         this.inputSearch = Shared.createHTMLComponent({
             tag: 'input',
@@ -267,10 +270,9 @@ export class ModDataTree {
 
     createSearchCriteria(input) {
         this.cbSearchCriteria = {};
-        const parent = input.parent;
         const div = Shared.createHTMLComponent({
             class: 'base-mod-data-tree-criteria-outer',
-            parent,
+            parent: input.parent,
         });
 
         const rowAll = Shared.createHTMLComponent({ class: 'base-mod-data-tree-criteria-item-all', parent: div });
@@ -362,11 +364,11 @@ export class ModDataTree {
         ModDataTree.SORT_CRITERIA.forEach(item => {
             const { key, labelText, } = item;
             const option = document.createElement('option');
-            option.value = `${ModDataTree.CRITERIA_LABEL.SORT_CRITERIA_PREFIX}${key}`;
+            option.value = this.createSelectSearchSortId({ key, });
             option.textContent = labelText;
             this.selectSortCriteria.appendChild(option);
         });
-        this.selectSortCriteria.value = `${ModDataTree.CRITERIA_LABEL.SORT_CRITERIA_PREFIX}${ModDataTree.SORT_CRITERIA[0].key}`;
+        this.selectSortCriteria.value = this.createSelectSearchSortId({ key: ModDataTree.SORT_CRITERIA[0].key, });
 
         const labelOrder = Shared.createHTMLComponent({
             tag: 'label',
@@ -380,13 +382,18 @@ export class ModDataTree {
             class: 'base-mod-data-tree-sort-select',
             parent: divSortOuter,
         });
-        ModDataTree.SORT_ORDER.forEach(optText => {
+
+        const sortOrderList = [
+            ModDataTree.CRITERIA_LABEL.ORDER_DESC,
+            ModDataTree.CRITERIA_LABEL.ORDER_ASC,
+        ];
+        sortOrderList.forEach(optText => {
             const option = document.createElement('option');
             option.value = optText.toLowerCase();
             option.textContent = optText;
             this.selectSortOrder.appendChild(option);
         });
-        this.selectSortOrder.value = ModDataTree.SORT_ORDER[0];
+        this.selectSortOrder.value = sortOrderList[0];
     }
 
     createSearchResultRow(input) {
@@ -402,28 +409,22 @@ export class ModDataTree {
 
     populateDivResult(input) {
         const { parent, resultList, searchTerm } = input;
+
+        const text = taggedString.modDataTreeLabelSearchSummary(resultList.length, searchTerm);
+        this.divResultSummary.textContent = text;
+        this.divResultSummary.style.display = 'block';
+
         for (let i = 0; i < resultList.length; i++) {
-            this.createSearchResultRow({ parent, result: resultList[i], searchTerm });
+            this.createSearchResultRow({ parent, result: resultList[i].highlighted, searchTerm });
         }
     }
 
     highlightText(input) {
-        const { text, searchTerm, } = input;
-        if (!searchTerm) return text;
-        const escapeRegexTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp(`(${escapeRegexTerm})`, 'gi');
-        return text.replace(regex, '<span class="base-mod-data-tree-highlight-search">$1</span>');
-    }
-
-    highlightText(input) {
         const { text, matchingTermList } = input;
-
         // Escape regex special characters for each term
         const escapedTermList = matchingTermList.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-
         // Combine into a single regex pattern, match any term (OR)
         const regex = new RegExp(`(${escapedTermList.join('|')})`, 'gi');
-
         // Replace all matches with highlight span
         return text.replace(regex, '<span class="base-mod-data-tree-highlight-search">$1</span>');
     }
@@ -432,9 +433,11 @@ export class ModDataTree {
         const { summary, searchTerm, searchCriteria, } = input;
         const terms = searchTerm.split(/\s+/);
         const highlighted = {};
+        const rawData = {};
         for (let i = 0; i < ModDataTree.INFO_KEY_LIST.length; i++) {
             const key = ModDataTree.INFO_KEY_LIST[i].key;
             highlighted[key] = summary.dataset[key];
+            rawData[key] = summary.dataset[key];
         }
         let hasMatch = false;
         for (const [key, text] of Object.entries(highlighted)) {
@@ -446,7 +449,7 @@ export class ModDataTree {
                 hasMatch = true;
             }
         }
-        return { hasMatch, highlighted }; // no summary included
+        return { hasMatch, highlighted, rawData }; // no summary included
     }
 
     searchNodes(input) {
@@ -463,7 +466,10 @@ export class ModDataTree {
         summaries.forEach(summary => {
             const searchSummaryResult = this.searchSummaryForTerm({ summary, searchTerm, searchCriteria });
             if (searchSummaryResult.hasMatch) {
-                results.push(searchSummaryResult.highlighted);
+                results.push({
+                    highlighted: searchSummaryResult.highlighted,
+                    rawData: searchSummaryResult.rawData,
+                });
             }
         });
         return results;
@@ -477,17 +483,15 @@ export class ModDataTree {
         this.divResultInner.innerHTML = '';
         const resultList = this.searchNodes({ searchTerm });
         if (resultList.length === 0) {
-            const noResultDiv = Shared.createHTMLComponent({
-                class: 'base-mod-data-tree-no-result',
-                parent: this.divResultInner,
-            });
-            noResultDiv.textContent = taggedString.modDataTreeLabelNoResult();
+            this.divResultSummary.textContent = taggedString.modDataTreeLabelNoResult(searchTerm);
+            this.divResultSummary.style.display = 'block';
             return;
         }
 
+        let sortedResults = this.sortResults({ resultList, });
         this.populateDivResult({
             parent: this.divResultInner,
-            resultList,
+            resultList: sortedResults,
             searchTerm,
         });
     }
@@ -516,15 +520,51 @@ export class ModDataTree {
         });
         const allId = this.createCbSearchCriteriaId({ key: ModDataTree.CRITERIA_LABEL.ALL.key, });
         this.cbSearchCriteria[allId].addEventListener('change', () => this.handleSearchInput());
+
+        this.selectSortCriteria.addEventListener('change', () => {
+            this.handleSearchInput();
+        });
+        this.selectSortOrder.addEventListener('change', () => {
+            this.handleSearchInput();
+        });
     }
 
     createCbSearchCriteriaId(input) {
         return `${ModDataTree.CRITERIA_LABEL.CB_CRITERIA_PREFIX}${input.key}`;
-    };
+    }
+
+    createSelectSearchSortId(input) {
+        return `${ModDataTree.CRITERIA_LABEL.SORT_CRITERIA_PREFIX}${input.key}`;
+    }
 
     onVisible(input) {
         this.inputSearch.focus();
-    };
+    }
+
+    sortResults(input) {
+        const { resultList, } = input;
+        const defaultSortCriteriaId = this.createSelectSearchSortId({ key: ModDataTree.CRITERIA_LABEL.PATH.key, });
+        const criteria = this.selectSortCriteria?.value || defaultSortCriteriaId;
+        const order = this.selectSortOrder?.value === ModDataTree.CRITERIA_LABEL.ORDER_DESC ? 'desc' : 'asc';
+        const sortCriteriaModCountId = this.createSelectSearchSortId({ key: ModDataTree.CRITERIA_LABEL.MOD_COUNT.key, });
+        const getFieldValue = (item, criteria) => {
+            const key = criteria.replace(ModDataTree.CRITERIA_LABEL.SORT_CRITERIA_PREFIX, '');
+            if (criteria == sortCriteriaModCountId) {
+                return parseInt(item[key]) || 0;
+            }
+            return item[key].toLowerCase() || '';
+        };
+
+        resultList.sort((a, b) => {
+            const valA = getFieldValue(a.rawData, criteria);
+            const valB = getFieldValue(b.rawData, criteria);
+
+            if (valA < valB) return order === 'asc' ? -1 : 1;
+            if (valA > valB) return order === 'asc' ? 1 : -1;
+            return 0;
+        });
+        return resultList;
+    }
 }
 
 /*

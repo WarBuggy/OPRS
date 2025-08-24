@@ -134,7 +134,7 @@
     overflow: auto;
     display: grid;
     grid-template-columns: 1fr;
-    grid-template-rows: min-content auto auto auto 1fr;
+    grid-template-rows: min-content auto auto auto auto 1fr;
 }
 
 /* Info panel grid */
@@ -331,4 +331,17 @@
     color: #ccc;
     font-style: italic;
     padding: 6px;
+}
+
+.base-mod-data-tree-result-summary {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #333;
+    margin: 0.5rem 6px;
+    padding: 0.4rem 0.6rem;
+    background-color: #b0b0b0;
+    border: 1px solid #999;
+    border-radius: 6px;
+    overflow: hidden;
+    display: none;
 }
