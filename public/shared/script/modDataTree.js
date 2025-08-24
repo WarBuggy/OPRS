@@ -4,30 +4,28 @@ export class ModDataTree {
     static CHILDLESS_MARKER = '•';
 
     static CRITERIA_LABEL = {
-        CB_CRITERIA_PREFIX: 'cbCriteria',
-        SORT_CRITERIA_PREFIX: 'sort',
         ALL: {
-            key: `All`,
+            key: `all`,
             labelText: taggedString.modDataTreeLabelAll(),
         },
         PATH: {
-            key: 'Path',
+            key: 'path',
             labelText: taggedString.modDataTreeLabelPath(),
         },
         CREATOR: {
-            key: 'Creator',
+            key: 'creator',
             labelText: taggedString.modDataTreeLabelCreator(),
         },
         MODIFIER_LIST: {
-            key: 'Modifier',
+            key: 'modifier',
             labelText: taggedString.modDataTreeLabelModifier(),
         },
         VALUE: {
-            key: 'Value',
+            key: 'value',
             labelText: taggedString.modDataTreeLabelValue(),
         },
         MOD_COUNT: {
-            key: 'ModCount',
+            key: 'modCount',
             labelText: taggedString.modDataTreeLabelModCount(),
         },
         ORDER_DESC: '↓',
@@ -129,72 +127,101 @@ export class ModDataTree {
 
     renderNode(input) {
         const { key, node, pathSoFar, modData, depth = 0, } = input;
+        const details = this.createNodeContainer({ depth, });
+        const { summary, hasChildren, modifiers, } = this.createSummary({ details, pathSoFar, node, modData, });
+        this.attachSummaryEvents({ summary, details, modifiers, });
+        this.createMarkerAndLabel({ summary, key, hasChildren, });
+        this.renderChildren({ details, node, pathSoFar, modData, depth });
+        return details;
+    }
+
+    createNodeContainer(input) {
+        const details = Shared.createHTMLComponent({ tag: 'details' });
+        details.classList.add(`depth-bg-${input.depth % 4}`);
+        return details;
+    }
+
+    createSummary(input) {
+        const { details, pathSoFar, node, modData } = input;
         const creator = node.history?.[0] ?? '';
         const modifiers = (node.history ?? []).slice(1).reverse();
         const hasChildren = node.children && Object.keys(node.children).length > 0;
 
-        // Create details element
-        const details = Shared.createHTMLComponent({ tag: 'details' });
-        // Add depth-based background class
-        const depthClass = `depth-bg-${depth % 4}`;
-        details.classList.add(depthClass);
-
-        // Create summary
         const summary = Shared.createHTMLComponent({ tag: 'summary', parent: details });
         summary.dataset[ModDataTree.CRITERIA_LABEL.PATH.key] = pathSoFar;
         summary.dataset[ModDataTree.CRITERIA_LABEL.CREATOR.key] = creator;
         summary.dataset[ModDataTree.CRITERIA_LABEL.MODIFIER_LIST.key] = modifiers.length ? modifiers.join(', ') : '';
         summary.dataset[ModDataTree.CRITERIA_LABEL.VALUE.key] = '';
+
         if (!hasChildren) {
-            const value =
-                window.OPRSClasses.DataLoader.getModDataValue({ modData, pathString: pathSoFar, });
+            const value = window.OPRSClasses.DataLoader.getModDataValue({ modData, pathString: pathSoFar });
             let displayText;
-            if (value === null || value === undefined) {
-                displayText = '';
-            } else if (Array.isArray(value)) {
-                displayText = `[${value.join(', ')}]`;
-            } else if (typeof value === 'object') {
-                displayText = '';
-            } else {
-                displayText = String(value); // converts numbers, booleans, etc. to string
-            }
+            if (value === null || value === undefined) displayText = '';
+            else if (Array.isArray(value)) displayText = `[${value.join(', ')}]`;
+            else if (typeof value === 'object') displayText = '';
+            else displayText = String(value);
+
             summary.dataset[ModDataTree.CRITERIA_LABEL.VALUE.key] = displayText;
         }
+        return { summary, hasChildren, modifiers, };
+    }
 
-        // --- Add expand/collapse all by double-click ---
-        let clickTimer = null;
+    updateInfoPanel(input) {
+        const { summary, modifiers, } = input;
+        for (let { key } of ModDataTree.INFO_KEY_LIST) {
+            this.infoRowList[key].innerText = summary.dataset[key];
+
+            if (key === ModDataTree.CRITERIA_LABEL.MODIFIER_LIST.key) {
+                if (modifiers.length < 1) {
+                    this.infoRowList[key].innerText = taggedString.modDataTreeLabelNoModifier();
+                }
+            }
+        }
+    }
+
+    addClickAndDblClick(input) {
+        const { summary, onClick, onDblClick, delay = 200 } = input;
+        let timer = null;
+
         summary.addEventListener('click', (e) => {
             e.stopPropagation();
-            e.preventDefault(); // stop native open/close
-            // Delay single click so it won't conflict with dblclick
-            if (clickTimer) return; // already waiting for dblclick
-            clickTimer = setTimeout(() => {
-                clickTimer = null;
-                details.open = !details.open;
+            e.preventDefault();
+            if (timer) return;
 
-                for (let i = 0; i < ModDataTree.INFO_KEY_LIST.length; i++) {
-                    let key = ModDataTree.INFO_KEY_LIST[i].key;
-                    this.infoRowList[key].innerText = summary.dataset[key];
-                    if (key == ModDataTree.CRITERIA_LABEL.MODIFIER_LIST.key) {
-                        const modifiers = summary.dataset[key].split(',');
-                        if (summary.dataset[key] == '' || modifiers.length < 1) {
-                            this.infoRowList[key].innerText = taggedString.modDataTreeLabelNoModifier();
-                        }
-                    }
-                }
-            }, 200);
+            timer = setTimeout(() => {
+                timer = null;
+                onClick(e);
+            }, delay);
         });
-        summary.addEventListener("dblclick", (e) => {
+
+        summary.addEventListener('dblclick', (e) => {
             e.stopPropagation();
-            clearTimeout(clickTimer);
-            clickTimer = null;
-
-            const expand = !details.open;
-            this.toggleRecursive({ details, expand, });
+            if (timer) {
+                clearTimeout(timer);
+                timer = null;
+            }
+            onDblClick(e);
         });
+    }
 
+    attachSummaryEvents(input) {
+        const { summary, details, modifiers } = input;
 
-        // Marker span (arrow for parent, bullet for leaf)
+        this.addClickAndDblClick({
+            summary,
+            onClick: () => {
+                details.open = !details.open;
+                this.updateInfoPanel({ summary, modifiers });
+            },
+            onDblClick: () => {
+                const expand = !details.open;
+                this.toggleRecursive({ details, expand });
+            }
+        });
+    }
+
+    createMarkerAndLabel(input) {
+        const { summary, key, hasChildren, } = input;
         const markerSpan = Shared.createHTMLComponent({
             tag: 'span',
             parent: summary,
@@ -202,28 +229,32 @@ export class ModDataTree {
         });
         markerSpan.textContent = hasChildren ? ModDataTree.HAS_CHILDREN_MARKER : ModDataTree.CHILDLESS_MARKER;
         markerSpan.style.marginRight = '6px';
-        markerSpan.style.display = 'inline-block'; // required for rotate
+        markerSpan.style.display = 'inline-block';
 
-        // Label span
-        const labelSpan = Shared.createHTMLComponent({ tag: 'span', parent: summary, class: 'label' });
+        const labelSpan = Shared.createHTMLComponent({
+            tag: 'span',
+            parent: summary,
+            class: 'label'
+        });
         labelSpan.textContent = key;
+    }
 
-        // Recursively add children
-        if (hasChildren) {
-            const ul = Shared.createHTMLComponent({ tag: 'ul', parent: details });
-            for (const childKey of Object.keys(node.children)) {
-                const li = Shared.createHTMLComponent({ tag: 'li', parent: ul });
-                const childPath = `${pathSoFar}.${childKey}`;
-                li.appendChild(this.renderNode({
-                    key: childKey,
-                    node: node.children[childKey],
-                    pathSoFar: childPath,
-                    modData,
-                    depth: depth + 1,
-                }));
-            }
+    renderChildren(input) {
+        const { details, node, pathSoFar, modData, depth, } = input;
+        if (!node.children || Object.keys(node.children).length === 0) return;
+
+        const ul = Shared.createHTMLComponent({ tag: 'ul', parent: details });
+        for (const childKey of Object.keys(node.children)) {
+            const li = Shared.createHTMLComponent({ tag: 'li', parent: ul });
+            const childPath = `${pathSoFar}.${childKey}`;
+            li.appendChild(this.renderNode({
+                key: childKey,
+                node: node.children[childKey],
+                pathSoFar: childPath,
+                modData,
+                depth: depth + 1,
+            }));
         }
-        return details;
     }
 
     toggleRecursive(input) {
@@ -276,7 +307,7 @@ export class ModDataTree {
         });
 
         const rowAll = Shared.createHTMLComponent({ class: 'base-mod-data-tree-criteria-item-all', parent: div });
-        const cbAllId = this.createCbSearchCriteriaId({ key: ModDataTree.CRITERIA_LABEL.ALL.key, });
+        const cbAllId = ModDataTree.CRITERIA_LABEL.ALL.key;
         this.cbSearchCriteria[cbAllId] = Shared.createHTMLComponent({
             tag: 'input',
             type: 'checkbox',
@@ -292,10 +323,10 @@ export class ModDataTree {
         ModDataTree.CRITERIA_SINGLE.forEach(item => {
             const { key, labelText, } = item;
             const className = `base-mod-data-tree-criteria-item-${key.toLowerCase()}`;
-            const id = this.createCbSearchCriteriaId({ key, })
             const rowGrid = Shared.createHTMLComponent({ class: className, parent: div });
+            const id = `cbSearch${key}`;
             const checkbox = Shared.createHTMLComponent({ tag: 'input', type: 'checkbox', id, parent: rowGrid });
-            this.cbSearchCriteria[id] = checkbox;
+            this.cbSearchCriteria[key] = checkbox;
             cbSingleList.push(checkbox);
             const label = Shared.createHTMLComponent({ tag: 'label', parent: rowGrid });
             label.textContent = labelText;
@@ -364,11 +395,11 @@ export class ModDataTree {
         ModDataTree.SORT_CRITERIA.forEach(item => {
             const { key, labelText, } = item;
             const option = document.createElement('option');
-            option.value = this.createSelectSearchSortId({ key, });
+            option.value = key;
             option.textContent = labelText;
             this.selectSortCriteria.appendChild(option);
         });
-        this.selectSortCriteria.value = this.createSelectSearchSortId({ key: ModDataTree.SORT_CRITERIA[0].key, });
+        this.selectSortCriteria.value = ModDataTree.SORT_CRITERIA[0].key;
 
         const labelOrder = Shared.createHTMLComponent({
             tag: 'label',
@@ -458,8 +489,7 @@ export class ModDataTree {
         const searchCriteria = {};
         for (let i = 0; i < ModDataTree.CRITERIA_SINGLE.length; i++) {
             const key = ModDataTree.CRITERIA_SINGLE[i].key;
-            const id = this.createCbSearchCriteriaId({ key, });
-            searchCriteria[key] = this.cbSearchCriteria[id].checked;
+            searchCriteria[key] = this.cbSearchCriteria[key].checked;
         }
         const results = [];
         const summaries = this.divOuter.querySelectorAll('.base-mod-data-tree-inner summary');
@@ -511,15 +541,13 @@ export class ModDataTree {
 
         // Attach to all search criteria checkboxes
         ModDataTree.CRITERIA_SINGLE.forEach(item => {
-            const id = this.createCbSearchCriteriaId({ key: item.key, });
-            const checkbox = this.cbSearchCriteria[id];
+            const checkbox = this.cbSearchCriteria[item.key];
             if (checkbox) {
                 checkbox.addEventListener('change', () => this.handleSearchInput());
             }
 
         });
-        const allId = this.createCbSearchCriteriaId({ key: ModDataTree.CRITERIA_LABEL.ALL.key, });
-        this.cbSearchCriteria[allId].addEventListener('change', () => this.handleSearchInput());
+        this.cbSearchCriteria[ModDataTree.CRITERIA_LABEL.ALL.key].addEventListener('change', () => this.handleSearchInput());
 
         this.selectSortCriteria.addEventListener('change', () => {
             this.handleSearchInput();
@@ -529,30 +557,22 @@ export class ModDataTree {
         });
     }
 
-    createCbSearchCriteriaId(input) {
-        return `${ModDataTree.CRITERIA_LABEL.CB_CRITERIA_PREFIX}${input.key}`;
-    }
-
-    createSelectSearchSortId(input) {
-        return `${ModDataTree.CRITERIA_LABEL.SORT_CRITERIA_PREFIX}${input.key}`;
-    }
-
     onVisible(input) {
         this.inputSearch.focus();
     }
 
     sortResults(input) {
         const { resultList, } = input;
-        const defaultSortCriteriaId = this.createSelectSearchSortId({ key: ModDataTree.CRITERIA_LABEL.PATH.key, });
+        const defaultSortCriteriaId = ModDataTree.CRITERIA_LABEL.PATH.key;
         const criteria = this.selectSortCriteria?.value || defaultSortCriteriaId;
         const order = this.selectSortOrder?.value === ModDataTree.CRITERIA_LABEL.ORDER_DESC ? 'desc' : 'asc';
-        const sortCriteriaModCountId = this.createSelectSearchSortId({ key: ModDataTree.CRITERIA_LABEL.MOD_COUNT.key, });
+        const specialSortCriteriaId = ModDataTree.CRITERIA_LABEL.MOD_COUNT.key;
         const getFieldValue = (item, criteria) => {
             const key = criteria.replace(ModDataTree.CRITERIA_LABEL.SORT_CRITERIA_PREFIX, '');
-            if (criteria == sortCriteriaModCountId) {
+            if (criteria == specialSortCriteriaId) {
                 return parseInt(item[key]) || 0;
             }
-            return item[key].toLowerCase() || '';
+            return (item[key] ? String(item[key]).toLowerCase() : '');
         };
 
         resultList.sort((a, b) => {
