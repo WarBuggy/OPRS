@@ -1,6 +1,6 @@
 export class MainApp {
     constructor(input) {
-        this.modifyStaticProperty(input);
+        this.modifyClassProperty(input);
 
         this.emitter = new window.OPRSClasses.EventEmitter();
         // allow mods to import data, or modify other mods' data if needed.
@@ -41,7 +41,7 @@ export class MainApp {
         this.modDataTree.onVisible();
     }
 
-    modifyStaticProperty(input) {
+    modifyClassProperty(input) {
         // for modders
         // intentionally left empty 
     }
