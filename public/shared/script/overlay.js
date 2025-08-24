@@ -20,12 +20,19 @@ export class Overlay {
         });
         this.visible = false;
         this.emitter = input.emitter;
+
+        this._escListener = (e) => {
+            if (e.key === 'Escape') {
+                this.hide();
+            }
+        };
     }
 
     hide(input) {
         this.divOuter.style.display = 'none';
         this.divOuter.innerHTML = '';
         this.visible = false;
+        document.removeEventListener('keydown', this._escListener);
         this.emitter.emit(Shared.EMITTER_SIGNAL.OVERLAY_CLOSED);
     }
 
@@ -35,6 +42,7 @@ export class Overlay {
         }
         this.divOuter.style.display = 'grid';
         this.visible = true;
+        document.addEventListener('keydown', this._escListener);
         this.emitter.emit(Shared.EMITTER_SIGNAL.OVERLAY_VISIBLE);
     }
 }
