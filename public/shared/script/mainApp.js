@@ -1,7 +1,5 @@
 export class MainApp {
     constructor(input) {
-        this.modifyClassProperty(input);
-
         this.emitter = new window.OPRSClasses.EventEmitter();
         // allow mods to import data, or modify other mods' data if needed.
         this.modData = {};
@@ -41,11 +39,6 @@ export class MainApp {
         this.modDataTree.onVisible();
     }
 
-    modifyClassProperty(input) {
-        // for modders
-        // intentionally left empty 
-    }
-
     createPageHTMLComponent(input) {
         throw new Error(`${taggedString.generalImplementInSubClass('createPageHTMLComponent')}`);
     }
@@ -58,5 +51,10 @@ export class MainApp {
                 this.showModDataTree();
             }
         });
+    }
+
+    static modifyClassProperty(input) {
+        // for modders
+        // intentionally left empty 
     }
 }

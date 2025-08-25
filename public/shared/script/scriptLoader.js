@@ -379,4 +379,129 @@ class ScriptLoader {
             console.error(`[ScriptLoader] ${taggedString.scriptLoaderImportedCssFailed(input.modPath, input.modName, e)}`);
         }
     }
+
+    // Helper function: allows adding default properties to any existing class
+    // Example usage: Person = addDefaultProperty(Person, "location", "Unknown");
+    static addDefaultProperty(ClassRef, propName, defaultValue) {
+
+        // Step 1: Keep track of all default properties added by mods
+        // __defaults is an object stored on the class itself
+        // Each key is a property name, value is the default value
+        // If this is the first time a default is added, create the __defaults object
+        if (!ClassRef.__defaults) {
+            ClassRef.__defaults = {};
+        }
+
+        // Add or update the default for this property
+        ClassRef.__defaults[propName] = defaultValue;
+
+        // Step 2: Wrap the class constructor only once
+        // We need to make sure that whenever someone creates a new instance (new ClassRef(...)),
+        // the defaults are automatically assigned to the instance
+        if (!ClassRef.__defaultsWrapped) {
+            // Save the original class so we can extend it
+            const OriginalClass = ClassRef;
+
+            // Step 2a: Create a new class that extends the original
+            // This is a "wrapper" class that adds default property behavior
+            const Wrapped = class extends OriginalClass {
+                constructor(...args) {
+                    // Call the original constructor first to initialize original properties
+                    super(...args);
+
+                    // Step 2b: Assign all default properties to this instance
+                    // Wrapped.__defaults contains all defaults added by mods
+                    const defs = Wrapped.__defaults || {};
+
+                    // Loop through each default property
+                    for (const [key, value] of Object.entries(defs)) {
+                        // Only assign the property if it doesn't already exist on this instance
+                        if (!Object.prototype.hasOwnProperty.call(this, key)) {
+                            // If the default value is a function, call it to compute the value
+                            // Otherwise, just assign the value directly
+                            this[key] = (typeof value === "function") ? value(this) : value;
+                        }
+                    }
+                }
+            };
+
+            // Step 2c: Copy static members (like ClassRef.someStaticMethod) to the Wrapped class
+            // We skip "prototype", "name", and "length" because they are special built-ins
+            Object.getOwnPropertyNames(OriginalClass).forEach(name => {
+                if (!["prototype", "name", "length"].includes(name)) {
+                    Object.defineProperty(
+                        Wrapped,
+                        name,
+                        Object.getOwnPropertyDescriptor(OriginalClass, name)
+                    );
+                }
+            });
+
+            // Step 2d: Store the defaults on the wrapped class too
+            Wrapped.__defaults = ClassRef.__defaults;
+
+            // Step 2e: Mark the class as wrapped so we don't wrap it again
+            Wrapped.__defaultsWrapped = true;
+
+            // Step 2f: Return the wrapped class
+            // IMPORTANT: The caller must reassign the class reference
+            // Example: Person = addDefaultProperty(Person, "location", "Unknown");
+            return Wrapped;
+        }
+
+        // If the class was already wrapped, just return it
+        return ClassRef;
+    }
+    /*
+    Key Concepts for Beginners
+
+        ClassRef – this is the reference to the class we’re modifying. It could be Person, Tile, or any other class.
+
+        Extending a class – class Wrapped extends OriginalClass creates a new class that inherits everything from the original class.
+
+        super(...args) – calls the original constructor to make sure all normal properties are set.
+
+        Own properties – this[key] = value creates a property directly on the instance. These show up in JSON.stringify and Object.keys.
+
+        Static members – methods like Person.someStaticMethod are not on the prototype. We copy them over so the wrapped class behaves exactly like the original.
+
+        Wrapping once – __defaultsWrapped ensures we don’t wrap the same class multiple times, which would break inheritance.
+
+        Why reassign the class – JavaScript doesn’t allow changing the constructor of a class after it’s defined, so we return a new wrapped class and ask the caller to replace the original reference.
+    
+
+    Drawbacks
+        1️⃣ Must reassign the class reference
+            Every time a mod calls addDefaultProperty, it returns a new wrapped class.
+            You must reassign the class, e.g., Person = addDefaultProperty(Person, "location", "Unknown").
+            Forgetting to reassign can break everything, because new instances won’t get defaults.
+
+        2️⃣ Only future instances get defaults
+            Instances created before wrapping do not receive the added properties automatically.
+            You’d have to call setDefaults() manually on old instances if you want them updated.
+
+        3️⃣ Slightly more memory usage per instance
+            Defaults are copied to each instance as own properties.
+            For very large objects or thousands of instances, this can use more memory than storing defaults on the prototype.
+
+        4️⃣ Wrapping may confuse debugging
+            Your wrapped class is technically a different class than the original.
+            alice instanceof Person will still work, but the constructor is now a subclass, which can confuse stack traces or class comparisons in some tools.
+
+        5️⃣ Static members have to be manually copied
+            The code copies static properties, but some rare symbols or non-enumerable statics may not copy correctly.
+            This is usually fine, but for very complex classes it can be a limitation.
+        
+        6️⃣ Order of mod loading matters
+            If multiple mods add defaults, the latest mod overwrites the same property name in __defaults.
+            So you need to be careful if two mods want different default values for the same property.
+
+        7️⃣ Functions as defaults are evaluated once per instance
+            If a default is a function, it’s called every time a new instance is created.
+            That’s usually fine, but if the function has side effects, it could cause unexpected behavior.
+
+        8️⃣ Prototype methods are not affected
+            Only properties are automatically added.
+            If a mod wants to add methods, they still need to modify ClassRef.prototype directly.
+    */
 }

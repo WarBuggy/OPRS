@@ -7,5 +7,6 @@ window.addEventListener('load', async function () {
         modList,
         modDirLocation: Shared.MOD_STRING.MOD_DIR_LOCATION.EDITOR_MAP,
     });
+    window.OPRSClasses.MainApp.modifyClassProperty();
     window.editorMap = new window.OPRSClasses.EditorMap({ savedModData });
 });
