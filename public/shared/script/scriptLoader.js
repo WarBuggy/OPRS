@@ -504,4 +504,62 @@ class ScriptLoader {
             Only properties are automatically added.
             If a mod wants to add methods, they still need to modify ClassRef.prototype directly.
     */
+
+    /**
+     * Safely adds a new property to a class constructor.
+     * Automatically assigns the property to all future instances.
+     * Properties are own and enumerable, so they work with JSON.stringify and Object.keys.
+     *
+     * @param {class} ClassRef - The class to modify
+     * @param {string} propName - Name of the property to add
+     * @param {*} defaultValue - Default value, can also be a function for per-instance computation
+     * @returns {class} - The wrapped class; caller must reassign the reference
+     */
+    static addConstructorProperty(ClassRef, propName, defaultValue) {
+        // Initialize registry of added properties on the class
+        if (!ClassRef.__constructorDefaults) {
+            ClassRef.__constructorDefaults = {};
+        }
+        // Store or overwrite the property default
+        ClassRef.__constructorDefaults[propName] = defaultValue;
+
+        // Wrap the class constructor only once
+        if (!ClassRef.__constructorWrapped) {
+            const OriginalClass = ClassRef;
+
+            const Wrapped = class extends OriginalClass {
+                constructor(...args) {
+                    super(...args);
+
+                    // Assign all registered properties to this instance
+                    const defs = Wrapped.__constructorDefaults || {};
+                    for (const [key, value] of Object.entries(defs)) {
+                        if (!Object.prototype.hasOwnProperty.call(this, key)) {
+                            this[key] = (typeof value === "function") ? value(this) : value;
+                        }
+                    }
+                }
+            };
+
+            // Copy static members
+            Object.getOwnPropertyNames(OriginalClass).forEach(name => {
+                if (!["prototype", "name", "length"].includes(name)) {
+                    Object.defineProperty(
+                        Wrapped,
+                        name,
+                        Object.getOwnPropertyDescriptor(OriginalClass, name)
+                    );
+                }
+            });
+
+            // Copy registry and mark as wrapped
+            Wrapped.__constructorDefaults = ClassRef.__constructorDefaults;
+            Wrapped.__constructorWrapped = true;
+
+            return Wrapped;
+        }
+
+        // Already wrapped, just return the class
+        return ClassRef;
+    }
 }
