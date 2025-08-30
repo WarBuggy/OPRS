@@ -78,12 +78,12 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
         this.ctx.strokeRect(-this.cameraParam.offsetX, -this.cameraParam.offsetY,
             this.mapParam.width, this.mapParam.height);
 
-        const visibleHexes = this.getVisibleHexes({
+        const { visibleHexes, } = this.getVisibleHexes({
             hexSide: this.hexParam.side,
             hexHalfWidth: this.hexParam.halfWidth,
             cameraOffsetX: this.cameraParam.offsetX,
             cameraOffsetY: this.cameraParam.offsetY,
-            hexList: this.gridParam.hexList,
+            hexArray: this.gridParam.hexArray,
             canvasWidth: this.canvas.width,
             canvasHeight: this.canvas.height,
             estimateHexPerWidth: this.gridParam.estimateHexPerWidth,
@@ -94,7 +94,7 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
         // highlight current mouse over hex
         const mouseOverHex = this.userInputParam.currentMouseOverHex;
         if (mouseOverHex != null) {
-            delete visibleHexes[mouseOverHex.key];
+            visibleHexes.delete(mouseOverHex.key);
             this.ctx.beginPath();
             mouseOverHex.createPath({
                 canvasCtx: this.ctx,
@@ -114,25 +114,11 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
                 });
             }
         }
-        // draw hexes
-        // CONSIDER TO REMOVE
-        // this.ctx.strokeStyle = 'red';
-        // this.ctx.beginPath();
-        // for (let key in this.gridParam.hexList) {
-        //     let aHex = this.gridParam.hexList[key];
-        //     aHex.createPath({
-        //         canvasCtx: this.ctx,
-        //         cameraOffsetX: this.cameraParam.offsetX,
-        //         cameraOffsetY: this.cameraParam.offsetY,
-        //     });
-        // }
-        // this.ctx.stroke();
 
         if (this.option.visual.showHexGrid) {
             this.ctx.strokeStyle = '#555';
             this.ctx.beginPath();
-            for (let key in visibleHexes) {
-                let aHex = visibleHexes[key];
+            for (const [_, aHex] of visibleHexes) {
                 aHex.createPath({
                     canvasCtx: this.ctx,
                     cameraOffsetX: this.cameraParam.offsetX,
@@ -156,8 +142,7 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
             //         cameraOffsetY: this.cameraParam.offsetY,
             //     });
             // };
-            for (let key in visibleHexes) {
-                let aHex = visibleHexes[key];
+            for (const [_, aHex] of visibleHexes) {
                 aHex.drawCoord({
                     canvasCtx: this.ctx,
                     cameraOffsetX: this.cameraParam.offsetX,
@@ -297,7 +282,7 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
             parent.hexParam = preCachedZoomData.hexParam;
             parent.mapParam = preCachedZoomData.mapParam;
             parent.gridParam = preCachedZoomData.gridParam;
-            parent.setHexDrawXCoord({ hexList: parent.gridParam.hexList, flipped: parent.flipped, });
+            parent.setHexDrawXCoord({ HexArray: parent.gridParam.HexArray, flipped: parent.flipped, });
             parent.cameraParam = preCachedZoomData.cameraParam;
             localStorage.setItem(parent.STORAGE_KEYS.ZOOM_LEVEL, newZoom);
 

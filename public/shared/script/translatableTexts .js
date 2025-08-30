@@ -1,6 +1,11 @@
 window.translatableTexts = {
     en: {
         generalImplementInSubClass: `{functionName} must be implemented in subclass.`,
+        generalClassIsAbstract: 'This is an abstract class. You must extend it with a subclass.',
+        generalMissingProperty: 'Property "{name}" is required.',
+        hexArrayFailedToCreate: 'Fail to create hex array: {e}.',
+        hexArrayFailedToGet: 'Fail to get hex with coord ({q}, {r}): {e}.',
+        hexArrayFailedToGetByKey: 'Fail to get hex with key ({key}): {e}.',
         invalidDisplayMode: `Invalide display mode "{mode}".`,
         noDefaultZoomLevelFound: `No default zoom level found for display mode "{mode}".`,
         noDefaultZoomLevelDataFound: `Default zoom level contains no data for display mode "{mode}".`,
@@ -62,5 +67,7 @@ window.translatableTexts = {
         modDataTreeLabelModCount: 'Mod count',
         modDataTreeLabelNoResult: 'No results found for search term "{term}".',
         modDataTreeLabelSearchSummary: '{count} results found for search term "{term}".',
+        modAssetMissingDataType: 'Subclasses of ModAsset must define static DataType!',
+
     },
 };

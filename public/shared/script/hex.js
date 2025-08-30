@@ -1,4 +1,9 @@
 export class Hex {
+    static ENCODE_PARAM = {
+        OFFSET: 1000,// shift negatives
+        MASK: 0x7FF,
+        BITS: 11,// 2^11 = 2048 > 2000 value
+    };
     static FLIPMODE_STANDARD = 'standard';
     static FLIPMODE_FLIPPED = 'flipped';
     static TRANSVERSE_MOD_PARAM = {
@@ -79,11 +84,7 @@ export class Hex {
         this.flippedRx = null;
         this.flippedSx = null;
 
-        this.key = window.OPRSClasses.Hex.createListKey({
-            q: this.q,
-            r: this.r,
-            s: this.s,
-        });
+        this.key = window.OPRSClasses.Hex.encode({ q: this.q, r: this.r, });
     }
 
     /**
@@ -181,39 +182,24 @@ export class Hex {
     }
 
     /**
-     * Creates a unique string key from cube coordinates.
-     *
-     * @param {Object} input - Cube coordinates.
-     * @param {number} input.q - Cube coordinate q.
-     * @param {number} input.r - Cube coordinate r.
-     * @param {number} input.s - Cube coordinate s (should satisfy q + r + s = 0).
-     *
-     * @returns {string} - A string key in the format "q,r,s", used for indexing or storing hexes in maps or sets.
-     */
-    static createListKey(input) {
-        return `${input.q},${input.r},${input.s}`;
-    }
-
-    /**
      * Retrieves a hex tile object from a list based on a pixel coordinate lookup.
      *
      * @param {number} input.pointX - The X position in pixels.
      * @param {number} input.pointY - The Y position in pixels.
      * @param {number} input.side - The outer radius of a hex (distance from center to corner).
      * @param {number} input.hexHalfWidth - Half the width of a hex tile in pixels.
-     * @param {Object} input.hexList - A map of hexes keyed by "q,r,s" string keys.
+     * @param {Object} input.hexArray - Array contains all the grid's hexes.
      *
      * @returns {Hex} - The hex object corresponding to the pixel location, or undefined if not found.
      */
     static getHexFromCoord(input) {
-        let hexCoord = window.OPRSClasses.Hex.pixelToHexCoord({
+        const { q, r, } = window.OPRSClasses.Hex.pixelToHexCoord({
             pointX: input.pointX,
             pointY: input.pointY,
             side: input.side,
             hexHalfWidth: input.hexHalfWidth,
         });
-        let listKey = window.OPRSClasses.Hex.createListKey({ q: hexCoord.q, r: hexCoord.r, s: hexCoord.s, });
-        return input.hexList[listKey];
+        return input.hexArray.get({ q, r, });
     }
 
     /**
@@ -225,15 +211,14 @@ export class Hex {
      * @param {number} input.s - Cube coordinate s of the starting hex.
      * @param {string} input.direction - Direction to move in (must be a valid key in TRANSVERSE_MOD_PARAM).
      * @param {number} [input.distance=1] - Number of hexes to move in the specified direction; defaults to 1 if missing or invalid.
-     * @param {Object} input.hexList - A map of hex tiles keyed by "q,r,s" strings.
+     * @param {Object} input.hexArray - Array contains all the grid's hexes.
      * @param {boolean} input.flipped - Is this map flipped (mirror image)?
      *
      * @returns {Object} - The object returned by `transverseHex`, containing:
      *   @property {number} q - The q coordinate of the resulting hex.
      *   @property {number} r - The r coordinate of the resulting hex.
      *   @property {number} s - The s coordinate of the resulting hex.
-     *   @property {string} hexListKey - The key string "q,r,s" of the resulting hex.
-     *   @property {Object} transversedHexes - Map of all hexes traversed, keyed by their "q,r,s" string.
+     *   @property {Map} transversedHexes - A map of all transversed hex, using a hex's key as key.
      *
      * Throws:
      *   An error if the given direction is invalid (not found in TRANSVERSE_MOD_PARAM).
@@ -252,7 +237,7 @@ export class Hex {
         }
         const result = this.transverseHex({
             r: input.r, q: input.q, s: input.s,
-            distance: input.distance, hexList: input.hexList,
+            distance: input.distance, hexArray: input.hexArray,
             qMod: modData.qMod, rMod: modData.rMod, sMod: modData.sMod,
         });
         return result;
@@ -268,52 +253,46 @@ export class Hex {
      * @param {number} input.qMod - Increment to apply to q coordinate per step.
      * @param {number} input.rMod - Increment to apply to r coordinate per step.
      * @param {number} input.sMod - Increment to apply to s coordinate per step.
-     * @param {Object} input.hexList - A map of hex tiles keyed by "q,r,s".
+     * @param {Object} input.hexArray - Array contains all the grid's hexes.
      *
      * @returns {Object} - An object containing:
      *   @property {number} q - The q coordinate of the last hex reached.
      *   @property {number} r - The r coordinate of the last hex reached.
      *   @property {number} s - The s coordinate of the last hex reached.
-     *   @property {string} hexListKey - The key string "q,r,s" of the last hex reached.
-     *   @property {Object} transversedHexes - Map of all hexes traversed, keyed by their "q,r,s" string.
+     *   @property {Map} transversedHexes - A map of all transversed hex, using a hex's key as key.
      *
      * Throws:
-     *   An error if the starting hex (q, r, s) is not found in hexList.
+     *   An error if the starting hex (q, r, s) is not found in hex array.
      */
     static transverseHex(input) {
         let q = input.q;
         let s = input.s;
         let r = input.r;
-        let hexListKey = window.OPRSClasses.Hex.createListKey({ q, r, s, });
-        const startingHex = input.hexList[hexListKey];
+        const startingHex = input.hexArray.get({ q, r, }).hex;
         if (!startingHex) {
             throw new Error(`[Hex] ${window.taggedString.hexTransverseInvalidStart(input.q, input.r, input.s)}`);
         }
-        const transversedHexes = {
-            [hexListKey]: startingHex,
-        };
+        const transversedHexes = new Map();
+        transversedHexes.set(startingHex.key, startingHex);
         for (let i = 1; i <= input.distance; i++) {
             const newQ = q + input.qMod;
             const newR = r + input.rMod;
             const newS = s + input.sMod;
-            const newHexListKey = window.OPRSClasses.Hex.createListKey({ q: newQ, r: newR, s: newS, });
-            const aHex = input.hexList[newHexListKey];
+            const aHex = input.hexArray.get({ q: newQ, r: newR, }).hex;
             if (!aHex) {
                 break;
             }
             q = newQ;
             r = newR;
             s = newS;
-            hexListKey = newHexListKey;
-            transversedHexes[newHexListKey] = aHex;
+            transversedHexes.set(aHex.key, aHex);
         }
-        return { q, r, s, hexListKey, transversedHexes, };
+        return { q, r, s, transversedHexes, };
     }
 
     /**
      * Updates x coordinates used for drawing when the map is flipped (mirror image)
      *
-     * @param {Object.<string, window.OPRSClasses.Hex>} input.hexList - A dictionary of hexes keyed by cube coordinates.
      * @param {number} input.mapWidth - Total pixel width of the map, used as the axis of reflection.
      */
     setFlipCoord(input) {
@@ -352,6 +331,40 @@ export class Hex {
         this.drawRx = this.rX;
         this.drawSx = this.sX;
     }
+
+    /**
+     * Creates a unique number as key from cube coordinates.
+     *
+     * @param {Object} input 
+     * @param {number} input.q - Cube coordinate q.
+     * @param {number} input.r - Cube coordinate r.
+     * @param {number} input.s - Cube coordinate s (should satisfy q + r + s = 0).
+     *
+     * @returns {number } - A number used for indexing or storing hexes in maps or sets.
+     */
+
+    static encode(input) {
+        const { q, r, } = input;
+        const qEnc = q + Hex.ENCODE_PARAM.OFFSET;
+        const rEnc = r + Hex.ENCODE_PARAM.OFFSET;
+        const key = (qEnc << Hex.ENCODE_PARAM.BITS) | rEnc; // packs both into a single number
+        return { key, };
+    }
+
+    /**
+     * Creates q and r coordinate from a number
+     * @param {Object} input 
+     * @param {number} input.key - The number that used as key
+     *
+     * @returns {number, number, } - Cube coordinate q and r
+     */
+    static decode(input) {
+        const { key, } = input;
+        const r = (key & Hex.ENCODE_PARAM.MASK) - Hex.ENCODE_PARAM.OFFSET;
+        const q = ((key >> Hex.ENCODE_PARAM.BITS) & Hex.ENCODE_PARAM.MASK) - Hex.ENCODE_PARAM.OFFSET;
+        return { q, r, };
+    }
+
 
     // CONSIDER TO REMOVE
     // static getRowMinMaxQS(input) {

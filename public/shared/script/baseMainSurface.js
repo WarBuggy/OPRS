@@ -30,7 +30,7 @@ export class BaseMainSurface {
             padVertical: 0,
         };
         this.gridParam = {
-            hexList: {},
+            hexArray: null,
             estimateHexPerWidth: 0,
             estimateHexPerHeight: 0,
             minQ: 0, maxQ: 0,
@@ -249,7 +249,7 @@ export class BaseMainSurface {
      *     @property {number} padVertical - Vertical padding in pixels (1 inch).
      *
      *   @property {Object} gridParam - Metadata and full list of placed hexes:
-     *     @property {Object<string, Hex>} hexList - Dictionary of all hexes, keyed by cube coordinates.
+     *     @property {HexArray} hexArray - A HexArray object to store all the hexes in the grid.
      *     @property {number} minQ - Minimum Q coordinate in the grid.
      *     @property {number} maxQ - Maximum Q coordinate.
      *     @property {number} minR - Minimum R coordinate (always 0).
@@ -278,12 +278,15 @@ export class BaseMainSurface {
         let s = 0;
         let xCoord = input.hexHalfWidth;
         const result = {
-            gridParam: { hexList: {}, },
+            gridParam: {},
             mapParam: {},
         };
         let maxX = -Infinity;
         let minQ = Infinity, maxQ = -Infinity;
         let minS = Infinity, maxS = -Infinity;
+        let aRowMinQ = Infinity;
+        const rowMinQ = new Map();
+        const hexList = [];
         for (let row = 0; row < rowNum; row++) {
             let maxHex = hexPerEvenRow;
             xCoord = input.hexHalfWidth;
@@ -301,8 +304,7 @@ export class BaseMainSurface {
                     side: input.side,
                     hexHalfWidth: input.hexHalfWidth,
                 });
-                let listKey = window.OPRSClasses.Hex.createListKey({ q, r, s, });
-                result.gridParam.hexList[listKey] = aHex;
+                hexList.push(aHex);
 
                 // Update maxX
                 const right = xCoord + input.hexHalfWidth;
@@ -313,11 +315,13 @@ export class BaseMainSurface {
                 maxQ = Math.max(maxQ, q);
                 minS = Math.min(minS, s);
                 maxS = Math.max(maxS, s);
+                aRowMinQ = Math.min(aRowMinQ, q);
 
                 xCoord = xCoord + input.hexWidth;
                 q = q + 1;
                 s = s - 1;
             }
+            rowMinQ.set(r, aRowMinQ);
             yCoord = yCoord + (input.side * 1.5);
             r = r + 1;
         }
@@ -341,9 +345,10 @@ export class BaseMainSurface {
         result.gridParam.estimateHexPerHeight = Math.floor(input.canvasHeight / input.side / 1.5) + 1;
         result.gridParam.hexPerEvenRow = hexPerEvenRow;
         this.setHexListFlipCoord({
-            hexList: result.gridParam.hexList,
+            hexList,
             mapWidth: maxX,
         });
+        result.gridParam.hexArray = new window.OPRSClasses.HexArray({ hexList, rowMinQ, minR: 0, });
         return result;
     }
 
@@ -550,8 +555,8 @@ export class BaseMainSurface {
             pointY: input.userInputParam.mouseMapPos.y,
             side: input.hexParam.side,
             hexHalfWidth: input.hexParam.halfWidth,
-            hexList: input.gridParam.hexList,
-        });
+            hexArray: input.gridParam.hexArray,
+        }).hex;
         input.userInputParam.currentMouseOverHex = currentMouseOverHex;
         // CONSIDER TO REMOVE
         // console.debug(parent.userInputParam.mouseMapPos);
@@ -582,13 +587,13 @@ export class BaseMainSurface {
      * @param {number} input.cameraOffsetY - Current vertical camera offset in pixels.
      * @param {number} input.hexHalfWidth - Half the width of a hex tile in pixels.
      * @param {number} input.hexSide - Outer radius (center to corner) of a hex tile.
-     * @param {Object<string, Hex>} input.hexList - Dictionary of all hex tiles keyed by cube coordinates.
+     * @param {HexArray} input.hexArray - Array that stores all the hexes in the grid.
      * @param {number} input.estimateHexPerWidth - Estimated number of hexes visible horizontally.
      * @param {number} input.estimateHexPerHeight - Estimated number of hexes visible vertically.
      * @param {boolean} input.flipped - Is this map flipped (mirror image)?
      *
-     * @returns {Object<string, Hex>} - An object containing all hex tiles visible within the viewport plus padding,
-     *   keyed by their cube coordinate keys.
+     * @returns {Object<string, Hex>} - An Map containing all hex tiles visible within the viewport plus padding,
+     *   keyed by hexes' keys.
      *
      * Throws:
      *   An error if it cannot find a valid starting hex at the camera position.
@@ -603,23 +608,23 @@ export class BaseMainSurface {
             startX = Math.min(input.mapWidth - input.cameraOffsetX, input.mapWidth - input.hexHalfWidth) - horizontalSafetyPad;
         }
         const startHex = window.OPRSClasses.Hex.getHexFromCoord({
-            pointX: startX, pointY: startY, hexList: input.hexList,
+            pointX: startX, pointY: startY, hexArray: input.hexArray,
             side: input.hexSide, hexHalfWidth: input.hexHalfWidth,
-        });
+        }).hex;
         if (!startHex) {
             throw new Error(`[BaseMainSurface] ${taggedString.failedToGetStartHex(input.cameraOffsetX, input.cameraOffsetY)}`);
         }
         const safeguardHexData = window.OPRSClasses.Hex.getHexDataDistanceOfHex({
             distance: safeguardHexDistance,
             direction: Shared.HEX_DIRECTION.TOP_LEFT,
-            hexList: input.hexList,
+            hexArray: input.hexArray,
             q: startHex.q, r: startHex.r, s: startHex.s,
             flipped: input.flipped,
         });
-        const safeGuardHex = safeguardHexData.transversedHexes[safeguardHexData.hexListKey];
+        const safeGuardHex = input.hexArray.get({ q: safeguardHexData.q, r: safeguardHexData.r, }).hex;
         const safeGuardHorizontalDistance = input.estimateHexPerWidth + (safeguardHexDistance * 2);
         const safeGuardVerticalDistance = input.estimateHexPerHeight + (safeguardHexDistance * 2);
-        let result = {};
+        const visibleHexes = new Map();
         let currentQ = safeGuardHex.q;
         let currentR = safeGuardHex.r;
         let currentS = safeGuardHex.s;
@@ -632,15 +637,15 @@ export class BaseMainSurface {
                 q: currentQ, r: currentR, s: currentS,
                 distance: safeGuardHorizontalDistance,
                 direction: Shared.HEX_DIRECTION.RIGHT,
-                hexList: input.hexList,
+                hexArray: input.hexArray,
                 flipped: input.flipped,
             });
-            result = { ...result, ...transverseLeftData.transversedHexes };
+            transverseLeftData.transversedHexes.forEach((value, key) => visibleHexes.set(key, value));
             const transverseBottomRightData = window.OPRSClasses.Hex.getHexDataDistanceOfHex({
                 q: currentQ, r: currentR, s: currentS,
                 distance: 1,
                 direction,
-                hexList: input.hexList,
+                hexArray: input.hexArray,
                 flipped: input.flipped,
             });
             if (transverseBottomRightData.q == currentQ &&
@@ -652,17 +657,17 @@ export class BaseMainSurface {
             currentR = transverseBottomRightData.r;
             currentS = transverseBottomRightData.s;
         }
-        return result;
+        return { visibleHexes, };
     }
 
     /**
      * Set horizontal flip coord to be the draw coord for every hex in the provided hex list.
      *
-     * @param {Object} input.hexList - A dictionary of hexes keyed by their cube coordinates.
+     * @param {Array} input.hexList - An array of hexes.
      * @param {number} input.mapWidth - Total pixel width of the map, used to calculate flipped positions.
      */
     setHexListFlipCoord(input) {
-        for (const [key, hex] of Object.entries(input.hexList)) {
+        for (const hex of input.hexList) {
             hex.setFlipCoord({ mapWidth: input.mapWidth, });
         }
     }
@@ -672,11 +677,11 @@ export class BaseMainSurface {
      * Delegates to each hex's `flip` method to set either the flipped or normal
      * X coordinates based on the `flipped` flag.
      *
-     * @param {Object} input.hexList - A map of hex keys to Hex instances.
+     * @param {Array} input.hexArray - An array of hexes.
      * @param {boolean} input.flipped - Whether to apply flipped X coordinates.
      */
     setHexDrawXCoord(input) {
-        for (const [key, hex] of Object.entries(input.hexList)) {
+        for (const hex of input.hexArray) {
             hex.flip({ flipped: input.flipped, });
         }
     }
@@ -686,13 +691,13 @@ export class BaseMainSurface {
         this.flipped = !this.flipped;
         if (!input) {
             input = {
-                hexList: this.gridParam.hexList,
+                hexArray: this.gridParam.hexArray,
             };
         }
-        if (!input.hexList) {
-            input.hexList = this.gridParam.hexList;
+        if (!input.hexArray) {
+            input.hexArray = this.gridParam.hexArray;
         }
-        for (const [key, hex] of Object.entries(input.hexList)) {
+        for (const hex of input.hexArray.toArray()) {
             hex.flip({ flipped: this.flipped, });
         }
     }
