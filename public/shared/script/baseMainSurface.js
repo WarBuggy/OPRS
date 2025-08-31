@@ -640,6 +640,7 @@ export class BaseMainSurface {
                 hexArray: input.hexArray,
                 flipped: input.flipped,
             });
+            // copy transversed hexes to visible hex map
             transverseLeftData.transversedHexes.forEach((value, key) => visibleHexes.set(key, value));
             const transverseBottomRightData = window.OPRSClasses.Hex.getHexDataDistanceOfHex({
                 q: currentQ, r: currentR, s: currentS,
