@@ -10,11 +10,11 @@ export class EditorMap extends window.OPRSClasses.MainApp {
             miniMap: {
                 canvasId: 'canvasMiniMap',
             },
+            modData: this.modData,
         });
-        let parent = this;
 
-        window.addEventListener('resize', function () {
-            parent.setup();
+        window.addEventListener('resize', () => {
+            this.setup();
         });
     }
 

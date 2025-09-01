@@ -27,8 +27,8 @@ export class HexArray {
     };
 
     get(input) {
+        const { q, r, } = input;
         try {
-            const { q, r, } = input;
             const rIndex = r - this.minR;
             const arrayOfR = this.array[rIndex];
             const aRowMinQ = this.rowMinQ.get(r);
@@ -36,7 +36,7 @@ export class HexArray {
             const hex = arrayOfR[qIndex];
             return { hex, };
         } catch (e) {
-            throw new Error(`[HexArray] ${taggedString.hexArrayFailedToGet(q, r, e)}`);
+            return { hex: null, };
         }
     };
 

@@ -48,6 +48,10 @@ class Shared {
       MOD_NAME: 'modName',
       DIR_NAME: 'dirName',
     },
+    MOD_DATA_TYPE: {
+      REGION: 'region',
+      BIOME: 'biome',
+    },
   };
 
   /**

@@ -282,7 +282,7 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
             parent.hexParam = preCachedZoomData.hexParam;
             parent.mapParam = preCachedZoomData.mapParam;
             parent.gridParam = preCachedZoomData.gridParam;
-            parent.setHexDrawXCoord({ HexArray: parent.gridParam.HexArray, flipped: parent.flipped, });
+            parent.setHexDrawXCoord({ hexArray: parent.gridParam.hexArray, flipped: parent.flipped, });
             parent.cameraParam = preCachedZoomData.cameraParam;
             localStorage.setItem(parent.STORAGE_KEYS.ZOOM_LEVEL, newZoom);
 

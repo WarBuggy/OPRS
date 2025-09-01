@@ -334,6 +334,7 @@ export class BaseMainSurface {
             height: yCoord - (input.side / 2),
             padHorizontal: pixelPerInch * 1,
             padVertical: pixelPerInch * 1,
+            pixelPerInch,
         };
         result.gridParam.minQ = minQ;
         result.gridParam.maxQ = maxQ;
@@ -682,7 +683,7 @@ export class BaseMainSurface {
      * @param {boolean} input.flipped - Whether to apply flipped X coordinates.
      */
     setHexDrawXCoord(input) {
-        for (const hex of input.hexArray) {
+        for (const hex of input.hexArray.toArray()) {
             hex.flip({ flipped: input.flipped, });
         }
     }

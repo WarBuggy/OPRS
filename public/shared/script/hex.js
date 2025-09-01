@@ -270,7 +270,7 @@ export class Hex {
         let r = input.r;
         const startingHex = input.hexArray.get({ q, r, }).hex;
         if (!startingHex) {
-            throw new Error(`[Hex] ${window.taggedString.hexTransverseInvalidStart(input.q, input.r, input.s)}`);
+            throw new Error(`[Hex] ${window.taggedString.hexTransverseInvalidStart(q, r, s)}`);
         }
         const transversedHexes = new Map();
         transversedHexes.set(startingHex.key, startingHex);

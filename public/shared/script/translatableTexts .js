@@ -68,6 +68,10 @@ window.translatableTexts = {
         modDataTreeLabelNoResult: 'No results found for search term "{term}".',
         modDataTreeLabelSearchSummary: '{count} results found for search term "{term}".',
         modAssetMissingDataType: 'Subclasses of ModAsset must define static DataType!',
-
+        regionNoCornerHexFound: 'Cannot find hex for corner {corner} at ({x}, {y})',
+        managerMapFailedToCreateRegion: 'Failed to create region {name}: {e}.',
+        managerMapCircularDependency: 'Circular dependency detected for regions: {regionName}.',
+        managerMapMissingDependency: 'Missing dependency "{depName}" for region "{regionName}".',
+        managerMapRegionCreated: 'Region "{regionName}" was created succesfully and contains {hexNum} hex(es).'
     },
 };
