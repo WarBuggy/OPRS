@@ -15,7 +15,7 @@
     <hook>../../../shared/script/baseMainSurface.js</hook>
     <hook>../../../shared/script/baseMiniMap.js</hook>
     <hook>../../../shared/script/region.js</hook>
-    <hook>../../../shared/data/regionList.js</hook>
+    <hook>../../../shared/data/regionDeploymentZone.js</hook>
     <hook>editorMap.js</hook>
     <hook>setting.js</hook>
     <!-- <hook>biomeList.js</hook>
