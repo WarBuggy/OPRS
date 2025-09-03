@@ -365,6 +365,26 @@ export class Hex {
         return { q, r, };
     }
 
+    getNeighborList(input) {
+        const { hexArray, } = input;
+        const neighborOffsets = [
+            [+1, 0], // right
+            [+1, -1], // top-right
+            [0, -1], // top-left
+            [-1, 0], // left
+            [-1, +1], // bottom-left
+            [0, +1], // bottom-right
+        ];
+        const neighborList = [];
+        for (const [dq, dr] of neighborOffsets) {
+            const nq = this.q + dq;
+            const nr = this.r + dr;
+            // Assume we have a function to get hex by q,r
+            const neighbor = hexArray.get({ q: nq, r: nr, });
+            if (neighbor) neighborList.push(neighbor);
+        }
+        return { neighborList, };
+    }
 
     // CONSIDER TO REMOVE
     // static getRowMinMaxQS(input) {
