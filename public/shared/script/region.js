@@ -13,7 +13,7 @@ export class Region {
                 hexHeight: hexParam.height,
                 hexArray: gridParam.hexArray,
             });
-            const keys = this.getRegionInfo({ cornerHexes, hexArray: gridParam.hexArray, }).keys;
+            const { keys } = this.getRegionInfo({ cornerHexes, hexArray: gridParam.hexArray, });
             for (const item of keys) {
                 this.keys.add(item);
             }

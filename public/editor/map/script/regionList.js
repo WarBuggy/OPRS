@@ -2,7 +2,7 @@ export default {
     modData: [
         {
             dataType: Shared.MOD_STRING.MOD_DATA_TYPE.REGION,
-            name: 'entireBiome',
+            name: Shared.MOD_STRING.PREMADE_REGION_NAME.ENTIRE_BIOME,
             payload: {
                 shapeList: [
                     {
@@ -67,20 +67,6 @@ export default {
                         y: 0.5,
                         width: 0.5,
                         height: 0.5,
-                    },
-                ],
-            },
-        },
-        {
-            dataType: Shared.MOD_STRING.MOD_DATA_TYPE.REGION,
-            name: 'entireBiome',
-            payload: {
-                shapeList: [
-                    {
-                        x: 0,
-                        y: 0,
-                        width: 1,
-                        height: 1,
                     },
                 ],
             },

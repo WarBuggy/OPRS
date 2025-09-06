@@ -2,7 +2,7 @@ export default {
     modData: [
         {
             dataType: Shared.MOD_STRING.MOD_DATA_TYPE.REGION,
-            name: 'deployLeft',
+            name: Shared.MOD_STRING.PREMADE_REGION_NAME.DEPLOY_LEFT,
             payload: {
                 shapeList: [
                     {
@@ -17,7 +17,7 @@ export default {
         },
         {
             dataType: Shared.MOD_STRING.MOD_DATA_TYPE.REGION,
-            name: 'deployRight',
+            name: Shared.MOD_STRING.PREMADE_REGION_NAME.DEPLOY_RIGHT,
             payload: {
                 shapeList: [
                     {

@@ -11,6 +11,8 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
      */
     constructor(input) {
         super(input);
+        this.hexTextureMap = new Map();
+        this.textureList = {};
         this.addKeyboardPanEvent();
         this.addMouseMoveEvent();
         this.addMouseWheelZoomEvent();
@@ -151,6 +153,20 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
             };
         }
 
+        for (const [_, aHex] of visibleHexes) {
+            aHex.drawTexture({
+                canvasCtx: this.ctx,
+                hexWidth: this.hexParam.width,
+                hexHeight: this.hexParam.height,
+                cameraOffsetX: this.cameraParam.offsetX,
+                cameraOffsetY: this.cameraParam.offsetY,
+                textureList: this.textureList,
+                hexTextureMap: this.hexTextureMap,
+            });
+        };
+
+
+
         // CONSIDER TO REMOVE
         // const end = performance.now();
         // const diff = end - start;
@@ -249,7 +265,6 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
         const parent = this;
         this.canvas.addEventListener('wheel', (e) => {
             e.preventDefault();
-
             // get before zoom data
             let oldMouseMapPosX = parent.userInputParam.mouseMapPos.x;
             let oldMouseMapPosY = parent.userInputParam.mouseMapPos.y;
@@ -505,5 +520,34 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
                 return;
             }
         });
+    }
+
+    async preloadBiomeTexture(input) {
+        const { biome, modTileData, } = input;
+
+        const defaultTileData = modTileData[biome.defaultTile];
+        defaultTileData.name = biome.defaultTile;
+        if (!this.textureList[biome.defaultTile]) {
+            this.textureList[biome.defaultTile] = [];
+        }
+        for (let i = 0; i < defaultTileData.textureList.length; i++) {
+            const defaultTileImg = new Image();
+            defaultTileImg.src = defaultTileData.textureList[i].location;
+            await defaultTileImg.decode();
+            this.textureList[biome.defaultTile][i] = defaultTileImg;
+        }
+        for (const tileName of biome.tileSet) {
+            const tileData = modTileData[tileName];
+            tileData.name = tileName;
+            if (!this.textureList[tileName]) {
+                this.textureList[tileName] = [];
+            }
+            for (let i = 0; i < tileData.textureList.length; i++) {
+                const img = new Image();
+                img.src = tileData.textureList[i].location;
+                await img.decode();
+                this.textureList[tileName][i] = img;
+            }
+        }
     }
 }

@@ -72,6 +72,12 @@ window.translatableTexts = {
         managerMapFailedToCreateRegion: 'Failed to create region {name}: {e}.',
         managerMapCircularDependency: 'Circular dependency detected for regions: {regionName}.',
         managerMapMissingDependency: 'Missing dependency "{depName}" for region "{regionName}".',
-        managerMapRegionCreated: 'Region "{regionName}" was created succesfully and contains {hexNum} hex(es).'
+        managerMapRegionCreated: 'Region "{regionName}" was created succesfully and contains {hexNum} hex(es).',
+        mapGeneratorUnknownTile: 'Tile data for "{tileName}" not found',
+        mapGeneratorUnknownRegion: 'No data found for region "{regionKey}" in biome "{biomeName}".',
+        mapGeneratorInvalidHex: 'Invalid hex with key "{key}" found in tile map ({tileType}).',
+        mapGeneratorInvalidDefaultTileName: 'Cannot find data of default tile "{defaultTileName}"',
+        mapGeneratorInvalidHexData: 'Hex ({q}, {r}, {key} is missing _regionListStr or _patchIndex.',
+        mapGeneratorNoPatchDefFound: 'No patch definition found for tile type "{tileTypeName}", region list "{regionListStr}" at index {index}.',
     },
 };

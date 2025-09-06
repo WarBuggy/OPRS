@@ -52,6 +52,11 @@ class Shared {
       REGION: 'region',
       BIOME: 'biome',
     },
+    PREMADE_REGION_NAME: {
+      ENTIRE_BIOME: 'entireBiome',
+      DEPLOY_LEFT: 'deployLeft',
+      DEPLOY_RIGHT: 'deployRight',
+    },
   };
 
   /**

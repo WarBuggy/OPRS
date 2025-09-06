@@ -84,7 +84,7 @@ export class Hex {
         this.flippedRx = null;
         this.flippedSx = null;
 
-        this.key = window.OPRSClasses.Hex.encode({ q: this.q, r: this.r, });
+        this.key = window.OPRSClasses.Hex.encode({ q: this.q, r: this.r, }).key;
     }
 
     /**
@@ -380,10 +380,22 @@ export class Hex {
             const nq = this.q + dq;
             const nr = this.r + dr;
             // Assume we have a function to get hex by q,r
-            const neighbor = hexArray.get({ q: nq, r: nr, });
+            const neighbor = hexArray.get({ q: nq, r: nr, }).hex;
             if (neighbor) neighborList.push(neighbor);
         }
         return { neighborList, };
+    }
+
+    drawTexture(input) {
+        const {
+            canvasCtx, hexTextureMap, textureList,
+            cameraOffsetX, cameraOffsetY, hexWidth, hexHeight,
+        } = input;
+        const hexTexture = hexTextureMap.get(this.key);
+        const img = textureList[hexTexture.tile.name][hexTexture.textureIndex];
+        const x = this.leftX - cameraOffsetX;
+        const y = this.topY - cameraOffsetY;
+        canvasCtx.drawImage(img, x, y, hexWidth, hexHeight);
     }
 
     // CONSIDER TO REMOVE

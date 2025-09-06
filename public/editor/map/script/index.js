@@ -9,4 +9,7 @@ window.addEventListener('load', async function () {
     });
     window.OPRSClasses.MainApp.modifyClassProperty();
     window.editorMap = new window.OPRSClasses.EditorMap({ savedModData });
+
+    await window.editorMap.managerMap.generateRandomMap({ seed: 2222244, });
+    window.editorMap.managerMap.requestAnimationFrame({});
 });
