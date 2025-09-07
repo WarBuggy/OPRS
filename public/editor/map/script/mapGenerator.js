@@ -356,12 +356,12 @@ export class MapGenerator {
         // Forced dimension takes priority
         if (forcedDimension === "width") {
             if (canGrowWidth) return { direction: "width" };
-            else if (sizeNotReached && canGrowHeight) return { direction: "height" };
+            else if (sizeNotReached || canGrowHeight) return { direction: "height" };
             else return { terminate: true };
         }
         if (forcedDimension === "height") {
             if (canGrowHeight) return { direction: "height" };
-            else if (sizeNotReached && canGrowWidth) return { direction: "width" };
+            else if (sizeNotReached || canGrowWidth) return { direction: "width" };
             else return { terminate: true };
         }
 
@@ -495,6 +495,7 @@ export class MapGenerator {
             tileSet,
             hexTextureMap,
         } = input;
+
         const candidates = [];
 
         // Collect candidate hexes only in the chosen growth direction
@@ -510,26 +511,39 @@ export class MapGenerator {
                     const newQMax = Math.max(row.qMax, hex.q);
                     newDimensionSize = newQMax - newQMin + 1;
                     if (newDimensionSize > recommendedDimension.width) continue; // too wide
-                } else { // height
+                } else {
                     const newRMin = Math.min(blobState.rMin, hex.r);
                     const newRMax = Math.max(blobState.rMax, hex.r);
                     newDimensionSize = newRMax - newRMin + 1;
                     if (newDimensionSize > recommendedDimension.height) continue; // too tall
                 }
 
-                // Candidate passes simulated dimension check
-                candidates.push({ hex, row });
+                candidates.push({ hex, row, newDimensionSize });
             }
         }
 
-        if (candidates.length === 0) {
-            return { terminate: true }; // no more growth possible
+        if (candidates.length === 0) return { terminate: true }; // no valid candidates
+
+        let chosenCandidate;
+
+        if (growthDirection === "height") {
+            // Prefer candidates that extend the blob vertically
+            const borderCandidates = candidates.filter(c =>
+                c.hex.r === blobState.rMin - 1 || c.hex.r === blobState.rMax + 1
+            );
+            chosenCandidate = borderCandidates.length > 0
+                ? borderCandidates[Math.floor(this.rng.next() * borderCandidates.length)]
+                : candidates[Math.floor(this.rng.next() * candidates.length)]; // fallback random
+        } else {
+            // Width: choose candidate with newDimensionSize closest to recommended width
+            const minDiff = Math.min(...candidates.map(c => Math.abs(c.newDimensionSize - recommendedDimension.width)));
+            const bestCandidates = candidates.filter(c => Math.abs(c.newDimensionSize - recommendedDimension.width) === minDiff);
+            chosenCandidate = bestCandidates[Math.floor(this.rng.next() * bestCandidates.length)];
         }
 
-        // Pick a random candidate
-        const idx = Math.floor(this.rng.next() * candidates.length);
-        const { hex, row } = candidates.splice(idx, 1)[0];
-        // Remove it from row queue
+        const { hex, row } = chosenCandidate;
+
+        // Remove it from the row queue
         if (growthDirection === "width") row.growWidth.delete(hex);
         else row.growHeight.delete(hex);
 
@@ -538,9 +552,9 @@ export class MapGenerator {
 
         // Validate placement
         if (!this.canPlaceOutsideRegion({ hex, region, allowOutsideRegion }).allowed) return { skip: true };
-        if (!this.canOverwrite({ hex, tileName, patchDef, patches, defaultTileName, tileSet, hexTextureMap, }).allowed) return { skip: true };
+        if (!this.canOverwrite({ hex, tileName, patchDef, patches, defaultTileName, tileSet, hexTextureMap }).allowed) return { skip: true };
 
-        return { hex, row }; // success
+        return { hex, row };
     }
 
     __growBlob(input) {
