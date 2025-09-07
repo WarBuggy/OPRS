@@ -93,4 +93,22 @@ export class ManagerMap {
     requestAnimationFrame(input) {
         requestAnimationFrame(this.parchment.loop);
     }
+
+    toggleRegionHighlight(input) {
+        const { regionName, color = 'red', deviation = 0, } = input;
+        const region = this.mapGenerator.regionList.get(regionName);
+        if (!region) {
+            return;
+        }
+        this.mapGenerator.toggleRegionHighlight({
+            region,
+            regionName,
+            hexTextureMap: this.parchment.hexTextureMap,
+        });
+        if (this.parchment.highlightRegionMap.has(regionName)) {
+            this.parchment.highlightRegionMap.delete(regionName);
+            return;
+        }
+        this.parchment.highlightRegionMap.set(regionName, { color, deviation, });
+    }
 }

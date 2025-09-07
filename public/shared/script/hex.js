@@ -398,6 +398,17 @@ export class Hex {
         canvasCtx.drawImage(img, x, y, hexWidth, hexHeight);
     }
 
+    createRegionHighlightPath(input) {
+        const { canvasCtx, cameraOffsetX, cameraOffsetY, deviation, } = input;
+        canvasCtx.moveTo(this.drawCenterX - cameraOffsetX, this.topY + deviation - cameraOffsetY);
+        canvasCtx.lineTo(this.drawRightX - deviation - cameraOffsetX, this.upperY - cameraOffsetY);
+        canvasCtx.lineTo(this.drawRightX - deviation - cameraOffsetX, this.lowerY - cameraOffsetY);
+        canvasCtx.lineTo(this.drawCenterX - cameraOffsetX, this.bottomY - deviation - cameraOffsetY);
+        canvasCtx.lineTo(this.drawLeftX + deviation - cameraOffsetX, this.lowerY - cameraOffsetY);
+        canvasCtx.lineTo(this.drawLeftX + deviation - cameraOffsetX, this.upperY - cameraOffsetY);
+        canvasCtx.lineTo(this.drawCenterX - cameraOffsetX, this.topY + deviation - cameraOffsetY);
+    }
+
     // CONSIDER TO REMOVE
     // static getRowMinMaxQS(input) {
     //     const rowConst = Math.floor((input.r - input.minR) / 2);

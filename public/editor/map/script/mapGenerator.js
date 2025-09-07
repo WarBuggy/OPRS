@@ -769,5 +769,24 @@ export class MapGenerator {
         currentValue.regionListStr = regionListStr;
         hexTextureMap.set(hex.key, currentValue);
     }
+
+    toggleRegionHighlight(input) {
+        const { hexTextureMap, regionName, region, } = input;
+        for (const key of region.keys) {
+            const hexTexture = hexTextureMap.get(key);
+            if (!hexTexture) {
+                continue;
+            }
+            if (!hexTexture.highlightRegionList) {
+                hexTexture.highlightRegionList = new Set();
+            }
+            const highlightRegionList = hexTexture.highlightRegionList;
+            if (highlightRegionList.has(regionName)) {
+                highlightRegionList.delete(regionName);
+                continue;
+            }
+            highlightRegionList.add(regionName);
+        }
+    }
 }
 

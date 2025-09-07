@@ -22,6 +22,9 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
         // Bind loop so manager can call it
         this.loop = this.loop.bind(this);
 
+        // For debug purpose
+        this.highlightRegionMap = new Map();
+
         // CONSIDER TO REMOVE
         this.addAnimationLoopKeyEvent();
     }
@@ -163,9 +166,28 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
                 textureList: this.textureList,
                 hexTextureMap: this.hexTextureMap,
             });
-        };
+        }
 
 
+        // Create highlight region hex border lines
+        for (const [regionName, data] of this.highlightRegionMap) {
+            const { color, deviation, } = data;
+            this.ctx.strokeStyle = color;
+            this.ctx.beginPath();
+            for (const [key, hex] of visibleHexes) {
+                const hexTexture = this.hexTextureMap.get(key);
+                if (!hexTexture || !hexTexture.highlightRegionList) continue;
+                if (hexTexture.highlightRegionList.has(regionName)) {
+                    hex.createRegionHighlightPath({
+                        canvasCtx: this.ctx,
+                        cameraOffsetX: this.cameraParam.offsetX,
+                        cameraOffsetY: this.cameraParam.offsetY,
+                        deviation,
+                    });
+                }
+            }
+            this.ctx.stroke();
+        }
 
         // CONSIDER TO REMOVE
         // const end = performance.now();
