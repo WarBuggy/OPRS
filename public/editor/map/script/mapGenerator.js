@@ -32,7 +32,6 @@ export class MapGenerator {
             hexTextureMap,
             gridParam,
         });
-        console.log('Done');
     }
 
     /**
@@ -758,7 +757,6 @@ export class MapGenerator {
                                 mapMinR: gridParam.minR,
                                 mapMaxR: gridParam.maxR,
                             });
-                            console.log(placedHexList);
                             // Track summary
                             if (!placedSummary[tileName]) placedSummary[tileName] = {};
                             if (!placedSummary[tileName][regionKey]) placedSummary[tileName][regionKey] = 0;
@@ -768,7 +766,6 @@ export class MapGenerator {
                 }
             }
         }
-        console.log(placedSummary);
         return { placedSummary };
     }
 
