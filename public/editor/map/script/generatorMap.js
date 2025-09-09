@@ -1,4 +1,4 @@
-export class MapGenerator {
+export class GeneratorMap {
     constructor(input) {
         const { biome, biomeName, mapParam, gridParam, hexParam, seed, hexTextureMap, } = input;
         this.modData = input.modData;
@@ -39,7 +39,7 @@ export class MapGenerator {
      * @param {Region} input.region - The container region
      * @param {Array} input.hexArray - Array of all hex instances
      * @param {Array} [input.mustBeNextTo] - Optional array of tile names to prefer adjacency
-     * @param {Object} [input.tileMap] - Optional mapping of tiles in the container region { tileType : Set of hexIds } 
+     * @param {Map} [input.tileMap] - Mapping of tiles in the container region { tileType : Set of hexIds } 
      * @returns {Hex} A hex instance inside the region
      */
     pickStartingHex(input) {
@@ -52,7 +52,7 @@ export class MapGenerator {
         if (mustBeNextTo.length > 0) {
             const hexesWithAdjacency = new Set();
             for (const tileType of mustBeNextTo) {
-                const tileHexSet = tileMap[tileType];
+                const tileHexSet = tileMap.get(tileType);
                 if (!tileHexSet || tileHexSet.size === 0) continue; // skip if no such tiles
                 const regionTileKeyList = [...tileHexSet].filter(k => region.keys.has(k));
                 for (const key of regionTileKeyList) {
@@ -180,9 +180,9 @@ export class MapGenerator {
                     mapParam, gridParam, hexParam, regionList
                 });
                 regionList.set(regionName, region);
-                console.log(`[ManagerMap] ${taggedString.managerMapRegionCreated(regionName, region.keys.size)}`);
+                console.log(`[GeneratorMap] ${taggedString.generatorMapRegionCreated(regionName, region.keys.size)}`);
             } catch (e) {
-                console.error(`[ManagerMap] ${taggedString.managerMapFailedToCreateRegion(regionName, e)}`);
+                console.error(`[GeneratorMap] ${taggedString.generatorMapFailedToCreateRegion(regionName, e)}`);
                 unresolvableRegionList.push(regionName);
             }
         }
@@ -199,7 +199,7 @@ export class MapGenerator {
         const visit = (regionName, regionData) => {
             if (tempMark.has(regionName)) {
                 // Circular dependency detected
-                console.warn(`[ManagerMap] ${taggedString.managerMapCircularDependency([...tempMark].join(', '))}`);
+                console.warn(`[GeneratorMap] ${taggedString.generatorMapCircularDependency([...tempMark].join(', '))}`);
                 for (const name of tempMark) {
                     unresolvable.add(name);
                 }
@@ -217,7 +217,8 @@ export class MapGenerator {
                         visit(depName, depRegion);
                     } else {
                         // Missing reference
-                        console.warn(`[ManagerMap] ${taggedString.managerMapMissingDependency(depName, regionName)}`);
+                        console.warn(`[GeneratorMap] ${taggedString.generatorMapMissingDependency(depName, regionName)}`);
+                        unresolvable.add(regionName);
                         tempMark.delete(regionName);
                         return;
                     }
@@ -334,8 +335,9 @@ export class MapGenerator {
         if (currentTileRules.overwritten.length > 0 && !currentTileRules.overwritten.includes(tileName)) {
             return { allowed: false, };
         }
+        const hexTexture = hexTextureMap.get(hex.key);
         const { overwrite = [], } = patchDef;
-        if (overwrite.length > 0 && !overwrite.includes(hex.tile.name)) {
+        if (overwrite.length > 0 && !overwrite.includes(hexTexture.tile.name)) {
             return { allowed: false, };
         }
 
@@ -375,7 +377,7 @@ export class MapGenerator {
         if (possibleDims.length === 1) return { direction: possibleDims[0] };
 
         // Both width and height possible → pick randomly
-        const direction = possibleDims[Math.floor(this.rng.next() * possibleDims.length)];
+        const direction = possibleDims[this.rng.nextInt(0, possibleDims.length - 1)];
         return { direction };
     }
 
@@ -408,10 +410,15 @@ export class MapGenerator {
 
         // Update tileMap
         const tileName = tileData.name;
-        if (!tileMap[tileName]) tileMap[tileName] = new Set();
-        tileMap[tileName].add(hex.key);
-        if (oldTileName !== tileName && tileMap[oldTileName]) {
-            tileMap[oldTileName].delete(hex.key);
+        let tileSet = tileMap.get(tileName);
+        if (!tileSet) {
+            tileSet = new Set();
+            tileMap.set(tileName, tileSet);
+        }
+        tileSet.add(hex.key);
+        const oldTileSet = tileMap.get(oldTileName);
+        if (oldTileName !== tileName && oldTileSet) {
+            oldTileSet.delete(hex.key);
         }
 
         placed.add(hex.key);
@@ -531,13 +538,13 @@ export class MapGenerator {
                 c.hex.r === blobState.rMin - 1 || c.hex.r === blobState.rMax + 1
             );
             chosenCandidate = borderCandidates.length > 0
-                ? borderCandidates[Math.floor(this.rng.next() * borderCandidates.length)]
-                : candidates[Math.floor(this.rng.next() * candidates.length)]; // fallback random
+                ? borderCandidates[this.rng.nextInt(0, borderCandidates.length - 1)]
+                : candidates[this.rng.nextInt(0, candidates.length - 1)]; // fallback random
         } else {
             // Width: choose candidate with newDimensionSize closest to recommended width
             const minDiff = Math.min(...candidates.map(c => Math.abs(c.newDimensionSize - recommendedDimension.width)));
             const bestCandidates = candidates.filter(c => Math.abs(c.newDimensionSize - recommendedDimension.width) === minDiff);
-            chosenCandidate = bestCandidates[Math.floor(this.rng.next() * bestCandidates.length)];
+            chosenCandidate = bestCandidates[this.rng.nextInt(0, bestCandidates.length - 1)];
         }
 
         const { hex, row } = chosenCandidate;
@@ -556,7 +563,7 @@ export class MapGenerator {
         return { hex, row };
     }
 
-    __growBlob(input) {
+    __growRandom(input) {
         const {
             startHex,
             recommendedDimension,
@@ -671,15 +678,15 @@ export class MapGenerator {
         if (!startHex) return { placedHexList, };
         // Step 3: Grow the patch based on shape
         switch (shape) {
-            case "circle":
-                // TODO: implement __growCircle
+            case "blob":
+                // TODO: implement __growBlob
                 break;
             case "line":
                 // TODO: implement __growLine
                 break;
-            case "blob":
+            case "random":
             default:
-                placedHexList = this.__growBlob({
+                placedHexList = this.__growRandom({
                     startHex,
                     recommendedDimension,
                     forcedDimension,
@@ -723,7 +730,7 @@ export class MapGenerator {
                 for (const regionKey of regionKeyList) {
                     const region = regionList.get(regionKey);
                     if (!region) {
-                        console.warn(`[MapGenerair] ${taggedString.mapGeneratorUnknownRegion(regionKey, biomeName)}`);
+                        console.warn(`[MapGenerator] ${taggedString.mapGeneratorUnknownRegion(regionKey, biomeName)}`);
                         continue;
                     }
                     for (let i = 0; i < patchDefList.length; i++) {
@@ -771,7 +778,7 @@ export class MapGenerator {
 
     setHexTexture(input) {
         const { hex, tileData, hexTextureMap, patchIndex, regionListStr, } = input;
-        const randomIndex = Math.floor(this.rng.next() * tileData.textureList.length);
+        const randomIndex = this.rng.nextInt(0, tileData.textureList.length - 1);
         let currentValue = hexTextureMap.get(hex.key);
         if (!currentValue) currentValue = {};
         currentValue.tile = tileData;

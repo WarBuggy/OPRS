@@ -25,7 +25,7 @@ export default {
                                 quantity: 4,
                                 quantityDeviation: 2,
                                 size: { type: 'region', value: 0.02, deviation: 0.1 },
-                                shape: "blob",
+                                shape: "random",
                                 allowOutsideRegion: 0.1,
                                 //overwrite: ['mud'],
                                 //overwritten: ['boulder'],
@@ -34,7 +34,7 @@ export default {
                             //     quantity: 1,
                             //     size: { type: 'map', value: 0.08 },
                             //     width: { type: 'map', value: 0.2, force: true },
-                            //     shape: "blob",
+                            //     shape: "random",
                             //     //overwrite: ['mud'],
                             //     //overwritten: ['boulder', 'sandbag'],
                             // },
@@ -44,7 +44,7 @@ export default {
                             //     size: { type: 'region', value: 0.05, deviation: 0.01, force: true },
                             //     width: { type: 'map', value: 0.1, deviation: 0.02 },
                             //     height: { type: 'region', value: 0.2, deviation: 0.05 },
-                            //     shape: "blob",
+                            //     shape: "random",
                             //     allowOutsideRegion: 0.1,
                             //     //overwrite: ['mud', 'dirt'],
                             //     //overwritten: ['boulder', 'sandbag'],
@@ -55,7 +55,7 @@ export default {
                                 quantity: 3,
                                 quantityDeviation: 1,
                                 size: { type: 'region', value: 0.01, deviation: 0.2 },
-                                shape: "blob",
+                                shape: "random",
                                 //overwrite: [],
                                 //overwritten: ['boulder'],
                             },
@@ -68,7 +68,7 @@ export default {
                                 size: { type: 'region', value: 0.3 },
                                 width: { type: 'region', value: 0.2 },
                                 height: { type: 'region', value: 1, force: true },
-                                shape: "blob",
+                                shape: "random",
                                 //overwrite: [],
                                 // overwritten: [],
                             },
@@ -303,10 +303,10 @@ Patch Property Definitions:
   - shape
       Type: string
       Description: Geometric shape of the patch.
-      Options: "blob" (default), "circle", "line".
+      Options: "random" (default), "blob", "line".
       Optional: Yes
-      Default: "blob"
-      Example: "circle"
+      Default: "random"
+      Example: "blob"
 
   - allowOutsideRegion
       Type: number (0–1)
@@ -348,13 +348,13 @@ patches: {
       {
         quantity: 5,
         size: { type: 'region', value: 0.02, deviation: 0.01 },
-        shape: "blob",
+        shape: "random",
       },
       {
         quantity: 1,
         size: { type: 'map', value: 0.08 },
         width: { type: 'map', value: 0.2, force: true },
-        shape: "blob",
+        shape: "random",
       },
       {
         quantity: 2,
@@ -362,7 +362,7 @@ patches: {
         size: { type: 'region', value: 0.05, deviation: 0.01, force: true },
         width: { type: 'map', value: 0.1, deviation: 0.02 },
         height: { type: 'region', value: 0.2, deviation: 0.05 },
-        shape: "blob",
+        shape: "random",
         allowOutsideRegion: 0.1,
       }
     ],
@@ -371,7 +371,7 @@ patches: {
       {
         quantity: 3,
         size: { type: 'region', value: 0.03 },
-        shape: "blob",
+        shape: "random",
       }
     ],
   },
@@ -383,12 +383,12 @@ patches: {
         quantity: 1,
         size: { type: 'region', value: 0.1 },
         height: { type: 'region', value: 1, force: true },
-        shape: "blob",
+        shape: "random",
       },
       {
         quantity: 2,
         size: { type: 'region', value: 0.5 },
-        shape: "blob",
+        shape: "random",
       }
     ]
   }

@@ -79,7 +79,7 @@ export class ManagerMap {
             modTileData: this.modData.tile,
         });
 
-        this.mapGenerator = new window.OPRSClasses.MapGenerator({
+        this.generatorMap = new window.OPRSClasses.GeneratorMap({
             modData: this.modData,
             mapParam: this.parchment.mapParam,
             hexParam: this.parchment.hexParam,
