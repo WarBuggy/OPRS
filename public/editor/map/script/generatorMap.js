@@ -121,7 +121,7 @@ export class GeneratorMap {
     convertValue(input) {
         const { def, mapDimensionCount, regionDimensionCount } = input;
         if (!def) return { value: null, };
-        const { type = "hex", value, deviation = 0 } = def;
+        const { type = "region", value, deviation = 0 } = def;
 
         let base;
         switch (type) {
@@ -557,10 +557,197 @@ export class GeneratorMap {
         if (placed.has(hex.key)) return { skip: true };
 
         // Validate placement
-        if (!this.canPlaceOutsideRegion({ hex, region, allowOutsideRegion }).allowed) return { skip: true };
-        if (!this.canOverwrite({ hex, tileName, patchDef, patches, defaultTileName, tileSet, hexTextureMap }).allowed) return { skip: true };
+        if (!this.canPlaceOutsideRegion({ hex, region, allowOutsideRegion, }).allowed) return { skip: true };
+        if (!this.canOverwrite({ hex, tileName, patchDef, patches, defaultTileName, tileSet, hexTextureMap, }).allowed) return { skip: true };
 
         return { hex, row };
+    }
+
+    getSpineDirection(input) {
+        const { forcedDimension, } = input;
+        // If a dimension is forced, the spine goes along that dimension
+        if (forcedDimension === 'width' || forcedDimension === 'height') {
+            return { spineDirection: forcedDimension };
+        }
+
+        // If no forced dimension, choose randomly between width and height
+        const spineDirection = this.rng.next() < 0.5 ? 'width' : 'height';
+        return { spineDirection };
+    }
+
+    calculateSpineLength(input) {
+        const { recommendedDimensions, forcedDimension, spineDirection } = input;
+        const { size, width, height } = recommendedDimensions;
+
+        let spineLength;
+
+        // If spineDirection has a finite recommended dimension, use it
+        if (spineDirection === 'width' && isFinite(width)) {
+            spineLength = width;
+        } else if (spineDirection === 'height' && isFinite(height)) {
+            spineLength = height;
+        } else {
+            // If both dimensions are infinite, choose spine length as sqrt of size
+            spineLength = Math.ceil(Math.sqrt(size));
+        }
+
+        // Ensure spineLength does not exceed recommendedSize
+        if (!forcedDimension && spineLength > size) spineLength = size;
+
+        return { spineLength };
+    }
+
+    calculateRibLengthList(input) {
+        const { spineLength, spineDirection, recommendedDimensions, } = input;
+        const { size, width, height } = recommendedDimensions;
+
+        if (spineLength === 1) {
+            const ribLength = Math.max(size - spineLength, 0);
+            return { ribLengthList: [ribLength] };
+        }
+
+        const leftoverHexes = size - spineLength;
+        if (leftoverHexes <= 0) return { ribLengthList: Array(spineLength).fill(0) };
+
+        // Max rib length at the middle of the spine (triangle height * 2)
+        const triangleHeight = (2 * leftoverHexes) / spineLength;
+
+        const ribLengthList = [];
+
+        // Place ribs starting from middle of spine
+        const mid = Math.floor(spineLength / 2);
+
+        for (let i = 0; i < spineLength; i++) {
+            const distFromMid = Math.abs(i - mid);
+            // Linear decrease toward spine ends
+            const maxLength = Math.max(triangleHeight - (triangleHeight * distFromMid) / mid, 1);
+            const ribLength = Math.ceil(maxLength);
+            ribLengthList.push(ribLength);
+        }
+
+        // Calculate current blob size
+        let currentSize = spineLength + ribLengthList.reduce((a, b) => a + b, 0);
+        // Determine max dimension for ribs
+        const maxRibLength = spineDirection === 'width' ? height : width;
+
+        // Adjust rib lengths to match exact size
+        while (currentSize !== size) {
+            const idx = this.rng.nextInt(0, ribLengthList.length - 1);
+
+            if (currentSize > size) {
+                // Decrease rib length but not below 0
+                if (ribLengthList[idx] > 0) {
+                    ribLengthList[idx]--;
+                    currentSize--;
+                }
+            } else {
+                // Increase rib length but not exceed max dimension
+                if (ribLengthList[idx] < maxRibLength) {
+                    ribLengthList[idx]++;
+                    currentSize++;
+                }
+            }
+        }
+
+        return { ribLengthList };
+    }
+
+    growVerticalSpine(input) {
+        const {
+            startHex,
+            spineLength,
+            hexArray,
+            tileName,
+            patchDef,
+            patches,
+            defaultTileName,
+            tileSet,
+            hexTextureMap,
+            region,
+            allowOutsideRegion,
+            softFailLimit = 3,
+        } = input;
+        // Define movement vectors for vertical growth
+        const directions = {
+            topLeft: { qMod: 0, rMod: 1, },
+            topRight: { qMod: 1, rMod: 1, },
+            bottomLeft: { qMod: -1, rMod: -1, },
+            bottomRight: { qMod: 0, rMod: -1, },
+        };
+        let spineHexList = [];
+        // Randomize initial zig-zag direction
+        const upDirection = 'up';
+        const downDirection = 'down';
+        const possible = {
+            [upDirection]: true,
+            [downDirection]: true,
+        };
+        const lastStep = {
+            [upDirection]: this.rng.next() < 0.5 ? directions.topLeft : directions.topRight,
+            [downDirection]: this.rng.next() < 0.5 ? directions.bottomLeft : directions.bottomRight,
+        };
+        const placedHexList = {
+            [upDirection]: [startHex],
+            [downDirection]: [startHex],
+        };
+
+        for (let i = 0; ; i++) {
+            let direction = null;
+            let directionOption = null;
+            if (i % 2 === 0 && possible[upDirection]) { // Grow up
+                direction = upDirection;
+                directionOption = lastStep[direction] === directions.topLeft
+                    ? [directions.topRight, directions.topLeft]
+                    : [directions.topLeft, directions.topRight];
+            } else if (i % 2 === 1 && possible[downDirection]) { // Grow down
+                direction = downDirection;
+                directionOption = lastStep[direction] === directions.bottomLeft
+                    ? [directions.bottomRight, directions.bottomLeft]
+                    : [directions.bottomLeft, directions.bottomRight];
+            }
+            if (direction == null) break; // Stop if both directions cannot continue
+            const lastHex = placedHexList[direction][placedHexList[direction].length - 1];
+
+            let placed = false;
+            for (const stepDirection of directionOption) {
+                const { qMod, rMod } = stepDirection;
+                const nextHexCoord = {
+                    q: lastHex.q + qMod,
+                    r: lastHex.r + rMod,
+                };
+                const { hex: nextHex } = hexArray.get({ q: nextHexCoord.q, r: nextHexCoord.r });
+                if (nextHex == null) {
+                    continue; // continue to check the the next direction option
+                }
+                if (!this.canOverwrite({ hex: nextHex, tileName, patchDef, patches, defaultTileName, tileSet, hexTextureMap, }).allowed) {
+                    continue; // continue to check the the next direction option
+                }
+
+                let softFailCount = 0;
+                while (softFailCount < softFailLimit) {
+                    if (this.canPlaceOutsideRegion({ hex: nextHex, region, allowOutsideRegion, }).allowed) {
+                        break; // break out of soft fail check while loop
+                    }
+                    softFailCount++;
+                }
+                if (softFailCount >= softFailLimit) {
+                    continue; // continue to check the the next direction option
+                }
+                lastStep[direction] = stepDirection;
+                placedHexList[direction].push(nextHex);
+                placed = true;
+                // build a new placed hex list
+                spineHexList = placedHexList[upDirection].slice(1).reverse().concat(placedHexList[downDirection]);
+                break; // no need to check for the next direction option
+            }
+            if (!placed) {
+                possible[direction] = false;
+            }
+            // Stop if both directions cannot continue
+            if (!possible[upDirection] && !possible[downDirection]) break;
+            if (spineHexList.length >= spineLength) break;
+        }
+        return { spineHexList, };
     }
 
     __growRandom(input) {

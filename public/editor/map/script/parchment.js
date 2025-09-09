@@ -75,7 +75,8 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
      * @param {DOMHighResTimeStamp} timestamp - The current time passed by requestAnimationFrame.
      */
     animationLoop(timestamp) {
-        const start = performance.now();
+        // RECORD DRAW TIME
+        // const start = performance.now();
 
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         // draw map boundary
@@ -189,7 +190,7 @@ export class Parchment extends OPRSClasses.BaseMainSurface {
             this.ctx.stroke();
         }
 
-        // CONSIDER TO REMOVE
+        // CALCULATE DRAW TIME
         // const end = performance.now();
         // const diff = end - start;
         // if (this.maxDrawTime == null) {
