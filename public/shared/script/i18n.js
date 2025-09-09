@@ -61,3 +61,15 @@ If the message requires no arguments, always include the parentheses:
 ```taggedString.classNameStringDescription()```
 Never reference the function without parentheses.
 */
+
+
+/*
+Remember this important point:
+Write all methods in such a way that input is always a single object named input. Destructure the needed properties from input at the start of the method. The method must always return an object containing all output values. Do not take multiple parameters or return a single value. Use the structure:
+
+methodName(input) {
+    const { a,b,c, } = input;
+    // method logic
+    return { x,y,z, };
+}
+*/
