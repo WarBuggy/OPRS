@@ -858,6 +858,14 @@ export class GeneratorMap {
                 },
             },
         };
+        this.updateHexData({
+            hex: startHex,
+            tileData,
+            tileMap,
+            hexTextureMap,
+            patchIndex,
+            regionListStr,
+        });
         const directionList = growthData[isHorizontal].directionList;
         const stepInstruction = growthData[isHorizontal].stepInstruction;
         const lastStep = growthData[isHorizontal].lastStep;
@@ -1006,7 +1014,6 @@ export class GeneratorMap {
             });
             currentSize = currentSize + spineRibList.length;
         }
-        console.log(currentSize, totalSize);
 
         // Since hard/soft limits can prevent the blob to reach recommended size,
         // loop through the ribs to grow until reaching recommended size,
@@ -1207,7 +1214,7 @@ export class GeneratorMap {
         allRibList.forEach((key, _) => {
             placedHexList.add(key);
         });
-        return { placedHexList, };
+        return { placedHexList: new Set(), };
     }
 
     placePatch(input) {
