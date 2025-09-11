@@ -10,6 +10,7 @@ window.addEventListener('load', async function () {
     window.OPRSClasses.MainApp.modifyClassProperty();
     window.editorMap = new window.OPRSClasses.EditorMap({ savedModData });
 
-    await window.editorMap.managerMap.generateRandomMap({ seed: 2222244, });
+    const seed = 1177463545;
+    await window.editorMap.managerMap.generateRandomMap({ seed, });
     window.editorMap.managerMap.requestAnimationFrame({});
 });

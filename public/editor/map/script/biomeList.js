@@ -22,22 +22,23 @@ export default {
                     'sand': {
                         'deployRight, deployLeft': [
                             {
-                                quantity: 4,
-                                quantityDeviation: 2,
-                                size: { type: 'region', value: 0.02, deviation: 0.1 },
-                                shape: "random",
+                                quantity: 1,
+                                quantityDeviation: 0,
+                                size: { type: 'hex', value: 25, deviation: 0.5, },
+                                width: { type: 'hex', value: 8, force: true, },
+                                shape: "blob",
                                 allowOutsideRegion: 0.1,
                                 //overwrite: ['mud'],
                                 //overwritten: ['boulder'],
                             },
-                            // {
-                            //     quantity: 1,
-                            //     size: { type: 'map', value: 0.08 },
-                            //     width: { type: 'map', value: 0.2, force: true },
-                            //     shape: "random",
-                            //     //overwrite: ['mud'],
-                            //     //overwritten: ['boulder', 'sandbag'],
-                            // },
+                            {
+                                quantity: 1,
+                                size: { type: 'hex', value: 33, deviation: 0.3, },
+                                height: { type: 'hex', value: 7, force: true },
+                                shape: "blob",
+                                //overwrite: ['mud'],
+                                //overwritten: ['boulder', 'sandbag'],
+                            },
                             // {
                             //     quantity: 2,
                             //     quantityDeviation: 1,
@@ -50,16 +51,16 @@ export default {
                             //     //overwritten: ['boulder', 'sandbag'],
                             // },
                         ],
-                        'obstacleZone': [
-                            {
-                                quantity: 3,
-                                quantityDeviation: 1,
-                                size: { type: 'region', value: 0.01, deviation: 0.2 },
-                                shape: "random",
-                                //overwrite: [],
-                                //overwritten: ['boulder'],
-                            },
-                        ],
+                        // 'obstacleZone': [
+                        //     {
+                        //         quantity: 1,
+                        //         quantityDeviation: 1,
+                        //         size: { type: 'region', value: 0.01, deviation: 0.2 },
+                        //         shape: "blob",
+                        //         //overwrite: [],
+                        //         //overwritten: ['boulder'],
+                        //     },
+                        // ],
                     },
                     'shallow water': {
                         'river': [
