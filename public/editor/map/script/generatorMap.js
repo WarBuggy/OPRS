@@ -1035,7 +1035,7 @@ export class GeneratorMap {
             }
             const direction = possibleDirection[this.rng.nextInt(0, possibleDirection.length - 1)];
             const { success } = this.tryPlaceBlobHex({
-                direction, lastStep, stepInstruction, offset, placedHexList,
+                direction, lastStep, stepInstruction, placedHexList,
                 hexArray, tileName, patchDef, patches, defaultTileName, tileSet,
                 hexTextureMap, region, allowOutsideRegion,
                 tileData, tileMap, patchIndex, regionListStr, softFailLimit,
@@ -1046,7 +1046,6 @@ export class GeneratorMap {
             }
             currentSize++;
         }
-        console.log(currentSize, totalSize);
         return { allRibList };
     }
 
