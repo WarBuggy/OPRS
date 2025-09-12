@@ -24,8 +24,8 @@ export default {
                             {
                                 quantity: 1,
                                 quantityDeviation: 0,
-                                size: { type: 'hex', value: 25, deviation: 0.5, },
-                                width: { type: 'hex', value: 8, force: true, },
+                                size: { type: 'hex', value: 25, deviation: 0, },
+                                width: { type: 'hex', value: 5, force: true, },
                                 shape: "blob",
                                 allowOutsideRegion: 0.1,
                                 //overwrite: ['mud'],
@@ -39,17 +39,17 @@ export default {
                                 //overwrite: ['mud'],
                                 //overwritten: ['boulder', 'sandbag'],
                             },
-                            // {
-                            //     quantity: 2,
-                            //     quantityDeviation: 1,
-                            //     size: { type: 'region', value: 0.05, deviation: 0.01, force: true },
-                            //     width: { type: 'map', value: 0.1, deviation: 0.02 },
-                            //     height: { type: 'region', value: 0.2, deviation: 0.05 },
-                            //     shape: "random",
-                            //     allowOutsideRegion: 0.1,
-                            //     //overwrite: ['mud', 'dirt'],
-                            //     //overwritten: ['boulder', 'sandbag'],
-                            // },
+                            {
+                                quantity: 1,
+                                quantityDeviation: 0,
+                                size: { type: 'hex', value: 12, deviation: 0, },
+                                height: { type: 'hex', value: 4, },
+                                shape: 'rectilinear',
+                                allowOutsideRegion: 0.1,
+                                // orientation: '\\',
+                                //overwrite: ['mud', 'dirt'],
+                                //overwritten: ['boulder', 'sandbag'],
+                            },
                         ],
                         // 'obstacleZone': [
                         //     {
@@ -230,6 +230,8 @@ patches: object
   - Structure:
       tileName (must match tileSet) => regionName(s) => array of patch definitions
   - regionName(s) can be a single string or a comma-separated string representing multiple regions.
+  - For patches with shape set to "rectilinear" or "rectangular", width is treated as thickness and height is treated as length. 
+      For other shapes, width and height define the general dimensions of the patch.
 
 Patch Property Definitions:
   - quantity
@@ -268,7 +270,10 @@ Patch Property Definitions:
             Example: true
 
   - width
-      Description: Desired width of the patch. Optional.
+      Description: 
+        Desired width of the patch. 
+        If the shape is "rectilinear" or "rectangle", width will be treated as thickness. 
+        Optional.
       Fields:
           - type: "region" | "map" | "hex"
               "region": width relative to the region.
@@ -285,7 +290,10 @@ Patch Property Definitions:
               Optional. Default: false. If multiple force detected, only the last entry is accepted.
 
   - height
-      Description: Desired height of the patch. Optional.
+      Description: 
+        Desired height of the patch. 
+        If the shape is "rectilinear" or "rectangle", height will be treated as length. 
+        Optional.
       Fields:
           - type: "region" | "map" | "hex"
               "region": height relative to the region.
@@ -304,7 +312,11 @@ Patch Property Definitions:
   - shape
       Type: string
       Description: Geometric shape of the patch.
-      Options: "random" (default), "blob", "line".
+      Options:
+        random – patch grows organically in a freeform shape
+        blob – roughly circular or amorphous patch
+        rectilinear - filled rectilinear patch (like a “solid line” or “filled rectangle”). This shape take orientation property into account.
+        rectangular – unfilled rectangle; hexes form only the outline (perimeter) of the shape; interior remains empty
       Optional: Yes
       Default: "random"
       Example: "blob"
@@ -336,11 +348,21 @@ Patch Property Definitions:
       Optional: Yes
       Default: []
       Example: ['boulder', 'sandbag']
+  - orientation
+      Type: string
+      Description: 
+        Only used if shape is 'rectilinear' or 'rectangular'.
+        Orientation of the patch's shape.
+      Options:
+        '|'  or 'vertical'   – line runs vertically
+        '-'  or 'horizontal' – line runs horizontally
+        '/'  or 'forward'    – diagonal from top-left to bottom-right 
+        '\\' or 'backward'   – diagonal from top-right to bottom-left
+      Optional: Yes
+      Default: none – if not provided, orientation will be chosen randomly
+      Example: '/'
 
-
-      
 Example Patches Object:
-
 patches: {
   // Patches for "sand" tile
   'sand': {

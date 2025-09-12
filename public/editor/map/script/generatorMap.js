@@ -9,6 +9,129 @@ export class GeneratorMap {
         BOTTOM_RIGHT: { qMod: 0, rMod: +1, },
     };
 
+    static GROWTH_DATA = {
+        VERTICAL: {
+            directionList: ['upDir', 'downDir'],
+            stepInstruction: {
+                upDir: {
+                    TOP_LEFT: ['TOP_RIGHT', 'TOP_LEFT',],
+                    TOP_RIGHT: ['TOP_LEFT', 'TOP_RIGHT',],
+                },
+                downDir: {
+                    BOTTOM_LEFT: ['BOTTOM_RIGHT', 'BOTTOM_LEFT',],
+                    BOTTOM_RIGHT: ['BOTTOM_LEFT', 'BOTTOM_RIGHT',],
+                },
+            },
+            lastStep: {
+                upDir: 'TOP_LEFT',
+                downDir: 'BOTTOM_LEFT',
+            },
+            possible: {
+                upDir: true,
+                downDir: true,
+            },
+        },
+        HORIZONTAL: {
+            directionList: ['leftDir', 'rightDir'],
+            stepInstruction: {
+                leftDir: {
+                    LEFT: ['LEFT',],
+                },
+                rightDir: {
+                    RIGHT: ['RIGHT',],
+                },
+            },
+            lastStep: {
+                leftDir: 'LEFT',
+                rightDir: 'RIGHT',
+            },
+            possible: {
+                leftDir: true,
+                rightDir: true,
+            },
+        },
+        HORIZONTAL_ZIG_ZAG: {
+            directionList: ['leftDir', 'rightDir',],
+            stepInstruction: {
+                leftDir: {
+                    TOP_LEFT: ['BOTTOM_LEFT', 'LEFT', 'TOP_LEFT',],
+                    LEFT: ['LEFT', 'TOP_LEFT', 'BOTTOM_LEFT',],
+                    BOTTOM_LEFT: ['TOP_LEFT', 'LEFT', 'BOTTOM_LEFT',],
+                },
+                rightDir: {
+                    TOP_RIGHT: ['BOTTOM_RIGHT', 'RIGHT', 'TOP_RIGHT',],
+                    RIGHT: ['RIGHT', 'TOP_RIGHT', 'BOTTOM_RIGHT',],
+                    BOTTOM_RIGHT: ['TOP_RIGHT', 'RIGHT', 'BOTTOM_RIGHT',],
+                },
+            },
+            lastStep: {
+                leftDir: 'LEFT',
+                rightDir: 'RIGHT',
+            },
+            possible: {
+                leftDir: true,
+                rightDir: true,
+            },
+        },
+        BACKWARD: {
+            directionList: ['upDir', 'downDir'],
+            stepInstruction: {
+                upDir: {
+                    TOP_LEFT: ['TOP_LEFT',],
+                },
+                downDir: {
+                    BOTTOM_RIGHT: ['BOTTOM_RIGHT',],
+                },
+            },
+            lastStep: {
+                upDir: 'TOP_LEFT',
+                downDir: 'BOTTOM_RIGHT',
+            },
+            possible: {
+                upDir: true,
+                downDir: true,
+            },
+        },
+        FORWARD: {
+            directionList: ['upDir', 'downDir'],
+            stepInstruction: {
+                upDir: {
+                    TOP_RIGHT: ['TOP_RIGHT',],
+                },
+                downDir: {
+                    BOTTOM_LEFT: ['BOTTOM_LEFT',],
+                },
+            },
+            lastStep: {
+                upDir: 'TOP_RIGHT',
+                downDir: 'BOTTOM_LEFT',
+            },
+            possible: {
+                upDir: true,
+                downDir: true,
+            },
+        },
+    };
+
+    static ORIENTATION_MAP = {
+        vertical: {
+            SYMBOL: '|',
+            PERPENDICULAR: 'horizontal',
+        },
+        horizontal: {
+            SYMBOL: '-',
+            PERPENDICULAR: 'vertical',
+        },
+        forward: {
+            SYMBOL: '/',
+            PERPENDICULAR: 'backward',
+        },
+        backward: {
+            SYMBOL: '\\',
+            PERPENDICULAR: 'forward',
+        },
+    };
+
     constructor(input) {
         const { biome, biomeName, mapParam, gridParam, hexParam, seed, hexTextureMap, } = input;
         this.modData = input.modData;
@@ -734,7 +857,7 @@ export class GeneratorMap {
         return { allowed, hex, };
     }
 
-    tryPlaceBlobHex({
+    tryPlaceHex({
         direction,
         lastStep,
         placedHexList,
@@ -788,6 +911,83 @@ export class GeneratorMap {
         return { success: false, };
     }
 
+    growLine(input) {
+        const {
+            startHex,
+            targetLength,
+            hexArray,
+            tileData,
+            tileName,
+            patchDef,
+            patches,
+            defaultTileName,
+            tileSet,
+            tileMap,
+            hexTextureMap,
+            region,
+            allowOutsideRegion,
+            patchIndex,
+            regionListStr,
+            growthData,
+            softFailLimit = 3,
+            forfeitFailedPlacement = false,
+        } = input;
+
+        this.updateHexData({
+            hex: startHex,
+            tileData,
+            tileMap,
+            hexTextureMap,
+            patchIndex,
+            regionListStr,
+        });
+        const directionList = growthData.directionList;
+        const stepInstruction = growthData.stepInstruction;
+        const possible = { ...growthData.possible };
+        const lastStep = { ...growthData.lastStep };
+        const placedHexList = {};
+        for (const dir of directionList) placedHexList[dir] = [startHex];
+
+        let currentLength = 1;
+        let forfeitCounter = 0; // track hexes that were skipped
+        let directionIndex = this.rng.nextInt(0, directionList.length - 1);
+
+        while (directionList.some(d => possible[d]) && currentLength < targetLength) {
+            directionIndex = 1 - directionIndex; // alternate directions
+            const direction = directionList[directionIndex];
+            if (!possible[direction]) continue;
+
+            const { success } = this.tryPlaceHex({
+                direction, lastStep, stepInstruction, placedHexList,
+                hexArray, tileName, patchDef, patches, defaultTileName,
+                tileSet, hexTextureMap, region, allowOutsideRegion,
+                tileData, tileMap, patchIndex, regionListStr,
+                softFailLimit,
+            });
+
+            if (!success) {
+                possible[direction] = false;
+                if (forfeitFailedPlacement) {
+                    forfeitCounter++; // increment forfeited hex counter
+                }
+                continue;
+            }
+            currentLength = (Object.values(placedHexList)
+                .reduce((sum, list) => sum + list.length - 1, 0)) + 1 + forfeitCounter;
+        }
+
+        const combinedHexList = placedHexList[directionList[0]].slice(1).reverse()
+            .concat(placedHexList[directionList[1]]);
+        const lineData = {
+            startHex,
+            combinedHexList,
+            placedHexList,
+            lastStep,
+            possible,
+        };
+        return { lineData, };
+    }
+
     growSpine(input) {
         const {
             startHex,
@@ -808,93 +1008,21 @@ export class GeneratorMap {
             isHorizontal = true,
             softFailLimit = 3,
         } = input;
-        const growthData = {
-            // Horizontal spine growth
-            [true]: { // true = horizontal
-                directionList: ['leftDir', 'rightDir',],
+        const growthData = isHorizontal
+            ? GeneratorMap.GROWTH_DATA.HORIZONTAL_ZIG_ZAG
+            : GeneratorMap.GROWTH_DATA.VERTICAL;
 
-                stepInstruction: {
-                    leftDir: {
-                        TOP_LEFT: ['BOTTOM_LEFT', 'LEFT', 'TOP_LEFT',],
-                        LEFT: ['LEFT', 'TOP_LEFT', 'BOTTOM_LEFT',],
-                        BOTTOM_LEFT: ['TOP_LEFT', 'LEFT', 'BOTTOM_LEFT',]
-                    },
-                    rightDir: {
-                        TOP_RIGHT: ['BOTTOM_RIGHT', 'RIGHT', 'TOP_RIGHT',],
-                        RIGHT: ['RIGHT', 'TOP_RIGHT', 'BOTTOM_RIGHT',],
-                        BOTTOM_RIGHT: ['TOP_RIGHT', 'right', 'BOTTOM_RIGHT',]
-                    },
-                },
-                lastStep: {
-                    leftDir: 'LEFT',
-                    rightDir: 'RIGHT',
-                },
-                possible: {
-                    leftDir: true,
-                    rightDir: true,
-                },
-            },
-
-            // Vertical spine growth
-            [false]: { // false = vertical
-                directionList: ['upDir', 'downDir',],
-                stepInstruction: {
-                    upDir: {
-                        TOP_LEFT: ['TOP_RIGHT', 'TOP_LEFT'],
-                        TOP_RIGHT: ['TOP_LEFT', 'TOP_RIGHT'],
-                    },
-                    downDir: {
-                        BOTTOM_LEFT: ['BOTTOM_RIGHT', 'BOTTOM_LEFT'],
-                        BOTTOM_RIGHT: ['BOTTOM_LEFT', 'BOTTOM_RIGHT'],
-                    },
-                },
-                lastStep: {
-                    upDir: 'TOP_LEFT',
-                    downDir: 'BOTTOM_LEFT',
-                },
-                possible: {
-                    upDir: true,
-                    downDir: true,
-                },
-            },
-        };
-        this.updateHexData({
-            hex: startHex,
-            tileData,
-            tileMap,
-            hexTextureMap,
-            patchIndex,
-            regionListStr,
+        const { lineData, } = this.growLine({
+            startHex,
+            targetLength: spineLength,
+            growthData,
+            hexArray, tileData, tileName, patchDef, patches,
+            defaultTileName, tileSet, tileMap, hexTextureMap,
+            region, allowOutsideRegion, patchIndex, regionListStr,
+            softFailLimit,
         });
-        const directionList = growthData[isHorizontal].directionList;
-        const stepInstruction = growthData[isHorizontal].stepInstruction;
-        const lastStep = growthData[isHorizontal].lastStep;
-        const possible = growthData[isHorizontal].possible;
 
-        const placedHexList = {};
-        for (const dir of directionList) placedHexList[dir] = [startHex];
-
-        let currentLength = 1;
-        let directionIndex = this.rng.nextInt(0, directionList.length - 1);
-        while (directionList.some(d => possible[d]) && currentLength < spineLength) {
-            directionIndex = 1 - directionIndex; // alternate directions
-            const direction = directionList[directionIndex];
-            if (!possible[direction]) continue;
-            const { success } = this.tryPlaceBlobHex({
-                direction, lastStep, stepInstruction, placedHexList,
-                hexArray, tileName, patchDef, patches, defaultTileName, tileSet,
-                hexTextureMap, region, allowOutsideRegion,
-                tileData, tileMap, patchIndex, regionListStr, softFailLimit,
-            });
-            if (!success) {
-                possible[direction] = false;
-                continue;
-            }
-            currentLength = Object.values(placedHexList).reduce((sum, list) => sum + list.length - 1, 0);
-        }
-        // Combine lists (avoid double startHex)
-        const spineHexList = placedHexList[directionList[0]].slice(1).reverse().concat(placedHexList[directionList[1]]);
-        return { spineHexList };
+        return { spineHexList: lineData.combinedHexList, };
     }
 
     growRib(input) {
@@ -916,136 +1044,65 @@ export class GeneratorMap {
             isHorizontal = true,
             softFailLimit = 3,
         } = input;
-        const growthData = {
-            [true]: { // true is for horizontal growth
-                directionList: ['leftDir', 'rightDir',],
-                // Horizontal ribs grow straight in q-axis only.
-                stepInstruction: {
-                    leftDir: {
-                        LEFT: ['LEFT',],
-                    },
-                    rightDir: {
-                        RIGHT: ['RIGHT',],
-                    },
-                },
-                lastStep: {
-                    leftDir: 'LEFT',
-                    rightDir: 'RIGHT',
-                },
-                possible: {
-                    leftDir: true,
-                    rightDir: true,
-                },
-            },
-            [false]: { // false is for vertical growth
-                directionList: ['upDir', 'downDir',],
-                // Vertical growth must zigzag because hexes do not stack perfectly vertically.
-                // Each step alternates between left and right to simulate "straight" vertical ribs.
-                stepInstruction: {
-                    upDir: {
-                        TOP_LEFT: ['TOP_RIGHT',],
-                        TOP_RIGHT: ['TOP_LEFT',],
-                    },
-                    downDir: {
-                        BOTTOM_LEFT: ['BOTTOM_RIGHT',],
-                        BOTTOM_RIGHT: ['BOTTOM_LEFT',],
-                    },
-                },
-                // Always start vertical ribs biased to the "left" side,
-                // so that the first zigzag alternates correctly when stepping.
-                lastStep: {
-                    upDir: 'TOP_LEFT',
-                    downDir: 'BOTTOM_LEFT',
-                },
-                possible: {
-                    upDir: true,
-                    downDir: true,
-                },
-            },
-        };
-        const directionList = growthData[isHorizontal].directionList;
-        const stepInstruction = growthData[isHorizontal].stepInstruction;
+
+        const growthData = isHorizontal
+            ? GeneratorMap.GROWTH_DATA.HORIZONTAL
+            : GeneratorMap.GROWTH_DATA.VERTICAL;
 
         const allRibList = new Map();
         let totalSize = 0;
         let currentSize = 0;
+
+        // First pass: grow each rib
         for (const rib of ribList) {
-            const { spineHex, length: ribLength, } = rib;
-            const spineRibLength = ribLength + 1;
-            totalSize = totalSize + spineRibLength;
-
-            // new copy per rib
-            const possible = { ...growthData[isHorizontal].possible };
-            const lastStep = { ...growthData[isHorizontal].lastStep };
-            const placedHexList = {};
-            // Each direction tracks its own sequence of placed hexes.
-            // They all begin anchored at the spineHex, which acts as the rib root.
-            for (const dir of growthData[isHorizontal].directionList) {
-                placedHexList[dir] = [rib.spineHex];
-            }
-
-            let currentRibLength = 0;
-            let directionIndex = this.rng.nextInt(0, directionList.length - 1);
-            // Stop if both directions are blocked OR if we already reached the target rib length.
-            while (directionList.some(d => possible[d]) && currentRibLength < ribLength) {
-                directionIndex = 1 - directionIndex;
-                const direction = directionList[directionIndex];
-                if (!possible[direction]) continue; // skip this direction if not possible
-                const { success } = this.tryPlaceBlobHex({
-                    direction, lastStep, stepInstruction, placedHexList,
-                    hexArray, tileName, patchDef, patches, defaultTileName, tileSet,
-                    hexTextureMap, region, allowOutsideRegion,
-                    tileData, tileMap, patchIndex, regionListStr, softFailLimit,
-                });
-                if (!success) {
-                    possible[direction] = false;
-                    continue;
-                }
-                // remove start hex from both placeHexList(s)
-                currentRibLength = Object.values(placedHexList)
-                    .reduce((sum, list) => sum + list.length - 1, 0);
-            }
-            const spineRibList = placedHexList[directionList[0]].slice(1).reverse().concat(placedHexList[directionList[1]]);
-            allRibList.set(spineHex.key, {
-                possible,
-                spineHex,
-                lastStep,
-                placedHexList,
+            const { lineData, } = this.growLine({
+                startHex: rib.spineHex,
+                targetLength: rib.length,
+                growthData,
+                hexArray, tileData, tileName, patchDef, patches,
+                defaultTileName, tileSet, tileMap, hexTextureMap,
+                region, allowOutsideRegion, patchIndex, regionListStr,
+                softFailLimit,
             });
-            currentSize = currentSize + spineRibList.length;
+
+            allRibList.set(rib.spineHex.key, lineData);
+
+            totalSize += rib.ribLength + 1; // account for spine hex
+            currentSize += lineData.combinedHexList.length;
         }
 
-        // Since hard/soft limits can prevent the blob to reach recommended size,
-        // loop through the ribs to grow until reaching recommended size,
-        // but stop if every rib has been marked unexpandable.
-        const availableRibKeys = new Set(allRibList.keys());
-        while (currentSize < totalSize && availableRibKeys.size > 0) {
-            const keys = Array.from(allRibList.keys());
-            // Pick a random key
-            const randomKey = keys[this.rng.nextInt(0, keys.length - 1)];
-            // Get the corresponding value
-            const randomRibData = allRibList.get(randomKey);
-            const { possible, lastStep, placedHexList, } = randomRibData;
+        // Backfilling loop to reach total target size
+        const availableRibKeyList = new Set(allRibList.keys());
 
-            const possibleDirection = Object.keys(possible).filter(dir => possible[dir]);
-            if (possibleDirection.length < 1) {
-                // Rib cannot grow further, remove from available set
-                availableRibKeys.delete(randomKey);
-                continue; // continue to check another random rib
+        while (currentSize < totalSize && availableRibKeyList.size > 0) {
+            const keys = Array.from(availableRibKeyList);
+            const randomKey = keys[this.rng.nextInt(0, keys.length - 1)];
+            const ribData = allRibList.get(randomKey);
+            const { possible, lastStep, placedHexList } = ribData;
+
+            const directions = Object.keys(possible).filter(dir => possible[dir]);
+            if (directions.length === 0) {
+                availableRibKeyList.delete(randomKey);
+                continue;
             }
-            const direction = possibleDirection[this.rng.nextInt(0, possibleDirection.length - 1)];
-            const { success } = this.tryPlaceBlobHex({
-                direction, lastStep, stepInstruction, placedHexList,
-                hexArray, tileName, patchDef, patches, defaultTileName, tileSet,
-                hexTextureMap, region, allowOutsideRegion,
-                tileData, tileMap, patchIndex, regionListStr, softFailLimit,
+
+            const direction = directions[this.rng.nextInt(0, directions.length - 1)];
+            const { success } = this.tryPlaceHex({
+                direction, lastStep, stepInstruction: growthData.stepInstruction,
+                placedHexList, hexArray, tileName, patchDef, patches,
+                defaultTileName, tileSet, hexTextureMap, region,
+                allowOutsideRegion, tileData, tileMap, patchIndex, regionListStr,
+                softFailLimit,
             });
+
             if (!success) {
                 possible[direction] = false;
                 continue;
             }
+
             currentSize++;
         }
+
         return { allRibList };
     }
 
@@ -1213,7 +1270,236 @@ export class GeneratorMap {
         allRibList.forEach((key, _) => {
             placedHexList.add(key);
         });
-        return { placedHexList: new Set(), };
+        return { placedHexList, };
+    }
+
+    getOrientation(input) {
+        const { orientation } = input;
+        const orientationEntries = Object.entries(GeneratorMap.ORIENTATION_MAP);
+
+        if (!orientation) {
+            // Pick random if missing
+            const keys = Object.keys(GeneratorMap.ORIENTATION_MAP);
+            const randomOrientation = keys[this.rng.nextInt(0, keys.length - 1)];
+            return { valid: true, orientation: randomOrientation };
+        }
+
+        // Find the canonical word form
+        let consolidated = null;
+        for (const [word, data] of orientationEntries) {
+            if (orientation === word || orientation === data.SYMBOL) {
+                consolidated = word;
+                break;
+            }
+        }
+
+        if (!consolidated) {
+            const allowedValues = orientationEntries
+                .map(([word, data]) => `"${word}", "${data.SYMBOL}"`)
+                .join(', ');
+            console.error(taggedString.generatorMapInvalidOrientation(orientation, allowedValues));
+            return { valid: false };
+        }
+
+        return { valid: true, orientation: consolidated, };
+    }
+
+    calculateRectDimension(input) {
+        const { recommendedDimension, forcedDimension } = input;
+        let { size, width, height } = recommendedDimension;
+        let length, thickness;
+
+        // Case 1: both finite
+        if (width !== Infinity && height !== Infinity) {
+            length = height;
+            thickness = size.force ? size / height : width;
+        }
+        // Case 2: one finite, one infinite
+        else if (width !== Infinity && height === Infinity) {
+            thickness = width;
+            length = size / width;
+        }
+        else if (width === Infinity && height !== Infinity) {
+            length = height;
+            thickness = size / height;
+        }
+        // Case 3: both infinite
+        else {
+            if (!forcedDimension) {
+                length = thickness = Math.sqrt(size);
+            } else if (forcedDimension === 'width') {
+                thickness = size;
+                length = 1;
+            } else if (forcedDimension === 'height') {
+                length = size;
+                thickness = 1;
+            } else {
+                length = thickness = Math.sqrt(size);
+            }
+        }
+
+        // Round at the very end
+        length = Math.ceil(length);
+        thickness = Math.floor(thickness);
+
+        // Enforce minimum values
+        length = Math.max(length, 1);
+        thickness = Math.max(thickness, 1);
+
+        const newSize = length * thickness;
+        return { size: newSize, length, thickness, };
+    }
+
+    growLength(input) {
+        const {
+            startHex,
+            length,
+            hexArray,
+            tileData,
+            tileName,
+            patchDef,
+            patches,
+            defaultTileName,
+            tileSet,
+            tileMap,
+            hexTextureMap,
+            region,
+            allowOutsideRegion,
+            patchIndex,
+            regionListStr,
+            orientation,
+            softFailLimit = 3,
+        } = input;
+
+        const growthDataMap = {
+            horizontal: GeneratorMap.GROWTH_DATA.HORIZONTAL,
+            vertical: GeneratorMap.GROWTH_DATA.VERTICAL,
+            forward: GeneratorMap.GROWTH_DATA.FORWARD,
+            backward: GeneratorMap.GROWTH_DATA.BACKWARD,
+        };
+
+        const { lineData, } = this.growLine({
+            startHex, targetLength: length,
+            growthData: growthDataMap[orientation],
+            hexArray, tileData, tileName, patchDef, patches,
+            defaultTileName, tileSet, tileMap, hexTextureMap,
+            region, allowOutsideRegion, patchIndex, regionListStr,
+            softFailLimit,
+        });
+
+        return { lengthHexList: lineData.combinedHexList, };
+    }
+
+    growThickness(input) {
+        const {
+            lengthHexList,
+            thickness,
+            hexArray,
+            tileData,
+            tileName,
+            patchDef,
+            patches,
+            defaultTileName,
+            tileSet,
+            tileMap,
+            hexTextureMap,
+            region,
+            allowOutsideRegion,
+            patchIndex,
+            regionListStr,
+            orientation,
+            softFailLimit = 3,
+        } = input;
+
+        // Map orientation to growth data
+        const growthDataMap = {
+            horizontal: GeneratorMap.GROWTH_DATA.HORIZONTAL,
+            vertical: GeneratorMap.GROWTH_DATA.VERTICAL,
+            forward: GeneratorMap.GROWTH_DATA.FORWARD,
+            backward: GeneratorMap.GROWTH_DATA.BACKWARD,
+        };
+        const allThicknessList = new Map();
+        for (const hex of lengthHexList) {
+            const { lineData, } = this.growLine({
+                startHex: hex, targetLength: thickness,
+                growthData: growthDataMap[orientation],
+                hexArray, tileData, tileName, patchDef, patches,
+                defaultTileName, tileSet, tileMap, hexTextureMap,
+                region, allowOutsideRegion, patchIndex, regionListStr,
+                softFailLimit, forfeitFailedPlacement: true,
+            });
+            allThicknessList.set(hex.key, lineData);
+        }
+
+        return { allThicknessList };
+    }
+
+    __growRectilinear(input) {
+        const {
+            startHex,
+            recommendedDimension,
+            forcedDimension,
+            patchDef,
+            hexArray,
+            tileData,
+            tileMap,
+            hexTextureMap,
+            region,
+            defaultTileName,
+            patches,
+            tileSet,
+            patchIndex,
+            regionListStr,
+        } = input;
+
+        // Determine the spine
+        const { orientation, } = this.getOrientation({ orientation: patchDef.orientation, });
+        const { length, thickness, } =
+            this.calculateRectDimension({ recommendedDimension, forcedDimension, });
+        // Grow the vertical spine
+        const { lengthHexList } = this.growLength({
+            startHex,
+            length,
+            hexArray,
+            tileData,
+            tileName: tileData.name,
+            patchDef,
+            patches,
+            defaultTileName,
+            tileSet,
+            tileMap,
+            hexTextureMap,
+            region,
+            allowOutsideRegion: patchDef.allowOutsideRegion,
+            patchIndex,
+            regionListStr,
+            orientation,
+        });
+        const thicknessOrientation = GeneratorMap.ORIENTATION_MAP[orientation].PERPENDICULAR;
+        const { allThicknessList, } = this.growThickness({
+            lengthHexList,
+            thickness,
+            hexArray,
+            tileData,
+            tileName: tileData.name,
+            patchDef,
+            patches,
+            defaultTileName,
+            tileSet,
+            tileMap,
+            hexTextureMap,
+            region,
+            allowOutsideRegion: patchDef.allowOutsideRegion,
+            patchIndex,
+            regionListStr,
+            orientation: thicknessOrientation,
+            forfeitFailedPlacement: true,
+        });
+        const placedHexList = new Set();
+        allThicknessList.forEach((key, _) => {
+            placedHexList.add(key);
+        });
+        return { placedHexList, };
     }
 
     placePatch(input) {
@@ -1242,7 +1528,7 @@ export class GeneratorMap {
         if (!startHex) return { placedHexList, };
         // Step 3: Grow the patch based on shape
         switch (shape) {
-            case "blob":
+            case 'blob':
                 placedHexList = this.__growBlob({
                     startHex,
                     recommendedDimension,
@@ -1260,10 +1546,25 @@ export class GeneratorMap {
                     regionListStr,
                 });
                 break;
-            case "line":
-                // TODO: implement __growLine
+            case 'rectilinear':
+                placedHexList = this.__growRectilinear({
+                    startHex,
+                    recommendedDimension,
+                    forcedDimension,
+                    patchDef,
+                    hexArray,
+                    tileData,
+                    tileMap,
+                    hexTextureMap,
+                    region,
+                    defaultTileName,
+                    patches,
+                    tileSet,
+                    patchIndex,
+                    regionListStr,
+                });
                 break;
-            case "random":
+            case 'random':
             default:
                 placedHexList = this.__growRandom({
                     startHex,
