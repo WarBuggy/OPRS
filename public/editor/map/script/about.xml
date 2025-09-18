@@ -1,0 +1,37 @@
+<mod>
+  <name>Base</name>
+  <version>1.0.0</version>
+  <author>Buggy</author>
+  <hooks>
+    <hook>../css/index.css</hook>
+    <hook>../../../shared/css/modDataTree.css</hook>
+    <hook>../../../shared/script/seededRandom.js</hook>
+    <hook>../../../shared/script/overlay.js</hook>
+    <hook>../../../shared/script/modDataTree.js</hook>
+    <hook>../../../shared/script/dataLoader.js</hook>
+    <hook>../../../shared/script/mainApp.js</hook>
+    <hook>../../../shared/script/tile.js</hook>
+    <hook>../../../shared/script/eventEmitter.js</hook>
+    <!-- <hook>../../../shared/script/baseMainSurface.js</hook> -->
+    <!-- <hook>../../../shared/script/baseMiniMap.js</hook> -->
+    <!-- <hook>../../../shared/script/region.js</hook> -->
+    <!-- <hook>../../../shared/script/templateMap.js</hook> -->
+    <!-- <hook>../../../shared/data/regionDeploymentZone.js</hook> -->
+    <!-- <hook>../../../shared/data/regionList.js</hook> -->
+    <!-- <hook>../../../shared/data/tileTextureList.js</hook> -->
+    <!-- <hook>../../../shared/data/featureList.js</hook> -->
+    <!-- <hook>../../../shared/data/templateMapList.js</hook> -->
+    <!-- <hook>setting.js</hook> -->
+    <!-- <hook>parchment.js</hook> -->
+    <!-- <hook>generatorMap.js</hook> -->
+    <!-- <hook>managerMap.js</hook> -->
+    <!-- <hook>minimapParchment.js</hook> -->
+    <!-- <hook>editorMap.js</hook> -->
+    <hook></hook>
+    <hook>zzModTestPlayer.js</hook>
+    <hook>zzModTestFire.js</hook>
+    <hook>zzModTestJump.js</hook>
+    <hook>zzModTestPlayer2.js</hook>
+    <hook>zzzModTestModifyClassProperty.js</hook>
+  </hooks>
+</mod>

@@ -1,0 +1,29 @@
+{
+  "name": "oprs_server",
+  "version": "0.0.1",
+  "description": "Server for One Page Rule Simulator",
+  "homepage": "https://github.com/WarBuggy/OPRS#readme",
+  "bugs": {
+    "url": "https://github.com/WarBuggy/OPRS/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WarBuggy/OPRS.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "fs": "^0.0.1-security",
+    "open": "^10.2.0",
+    "path": "^0.12.7",
+    "xml2js": "^0.6.2"
+  }
+}
