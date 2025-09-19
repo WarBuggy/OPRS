@@ -17,7 +17,7 @@ export class Overlay {
             id: input.id,
             parent: input.parent,
             class: 'base-common-outer-overlay',
-        });
+        }).component;
         this.visible = false;
         this.emitter = input.emitter;
 

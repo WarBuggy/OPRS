@@ -40,8 +40,9 @@ class ScriptLoader {
     }
 
     async loadAScriptMod(input) {
+        const { modPath, modName, modFile, savedModData, } = input;
         try {
-            const modModule = await import(input.modPath);
+            const modModule = await import(modPath);
             const parent = this;
             // Check if default export is a function — method-hook mod
             if (typeof modModule.default === 'function') {
@@ -52,23 +53,28 @@ class ScriptLoader {
                             case Shared.MOD_STRING.REGISTRATION_MODE.AFTER:
                             case Shared.MOD_STRING.REGISTRATION_MODE.REPLACE:
                                 try {
-                                    parent.registerMethodMod({ modName: input.modName, hookInfo: regObj, });
-                                    console.log(`[ScriptLoader] ${taggedString.methodHookLoaded(input.modName, input.modFile, regObj.className, regObj.methodName, regObj.mode)}`);
+                                    parent.registerMethodMod({ modName, hookInfo: regObj, });
+                                    console.log(`[ScriptLoader] ${taggedString.scriptLoaderMethodHookLoaded(
+                                        modName, modFile, regObj.className, regObj.methodName, regObj.mode)}`);
                                 } catch (e) {
-                                    console.error(`[ScriptLoader] ${taggedString.methodHookFailed(input.modName, input.modFile, e)}`);
+                                    console.error(`[ScriptLoader] ${taggedString.scriptLoaderMethodHookFailed(
+                                        modName, modFile, e)}`);
                                 }
                                 break;
 
                             case Shared.MOD_STRING.REGISTRATION_MODE.NEW_METHOD:
                                 try {
                                     parent.registerNewMethodMod(regObj);
-                                    console.log(`[ScriptLoader] ${taggedString.newMethodLoaded(input.modName, input.modFile, regObj.className, regObj.methodName)}`);
+                                    console.log(`[ScriptLoader] ${taggedString.scriptLoaderNewMethodLoaded(
+                                        modName, modFile, regObj.className, regObj.methodName)}`);
                                 } catch (e) {
-                                    console.error(`[ScriptLoader] ${taggedString.newMethodFailed(input.modName, input.modFile, e)}`);
+                                    console.error(`[ScriptLoader] ${taggedString.scriptLoaderNewMethodFailed(
+                                        modName, modFile, e)}`);
                                 }
                                 break;
                             default:
-                                console.warn(`[ScriptLoader] ${taggedString.unknownMethodMod(input.modFile, input.modName, regObj.mode)}`);
+                                console.warn(`[ScriptLoader] ${taggedString.scriptLoaderUnknownMethodMod(
+                                    modFile, modName, regObj.mode)}`);
                         }
                     },
                 });
@@ -82,28 +88,28 @@ class ScriptLoader {
                 .map(([name]) => name);
 
             if (exportedClassNames.length === 0) {
-                const { validModData } = this.checkModDataStructure({ modName: input.modName, modFile: input.modFile, modModule, });
-                input.savedModData.push(...validModData);
+                const { validModData } = this.checkModDataStructure({ modName, modFile, modModule, });
+                savedModData.push(...validModData);
             }
             // Register each exported class
             for (const className of exportedClassNames) {
                 const cls = modModule[className];
                 if (ScriptLoader.OPRSClasses[className]) {
-                    console.warn(`[ScriptLoader] ${taggedString.newClassExists(input.modName, className)}`);
+                    console.warn(`[ScriptLoader] ${taggedString.scriptLoaderNewClassExists(modName, className)}`);
                 }
                 ScriptLoader.OPRSClasses[className] = cls;
-                console.log(`[ScriptLoader] ${taggedString.newClassLoaded(input.modName, className)}`);
+                console.log(`[ScriptLoader] ${taggedString.scriptLoaderNewClassLoaded(modName, className)}`);
             }
         } catch (e) {
-            console.error(`[ScriptLoader] ${taggedString.unexpectedScriptLoadFailed(input.modFile, input.modName, e)}`);
+            console.error(`[ScriptLoader] ${taggedString.scriptLoaderUnexpectedScriptLoadFailed(modFile, modName, e)}`);
         }
     }
 
     checkModDataStructure(input) {
-        const { modName, modFile, modModule } = input;
+        const { modName, modFile, modModule, } = input;
         if (!modModule || typeof modModule !== "object" ||
             !modModule.default || !Array.isArray(modModule.default.modData)) {
-            console.error(`[ScriptLoader] ${taggedString.invalidModDataStructure(modName, modFile)}`);
+            console.error(`[ScriptLoader] ${taggedString.scriptLoaderInvalidModDataStructure(modName, modFile)}`);
             return { validModData: [], };
         }
 
@@ -113,34 +119,29 @@ class ScriptLoader {
                 const item = modModule.default.modData[i];
                 // Check required properties
                 if (!item || typeof item !== "object") {
-                    throw new Error(`${taggedString.invalidModDataItemNotObject(i)}`);
+                    throw new Error(`${taggedString.scriptLoaderInvalidModDataItemNotObject(i)}`);
                 }
                 // If all checks passed, include in validData
                 validModData.push({ modName, item, });
             }
             catch (e) {
-                console.error(`[ScriptLoader] ${taggedString.badModDataStructure(modName, modFile, e)}`);
+                console.error(`[ScriptLoader] ${taggedString.scriptLoaderBadModDataStructure(modName, modFile, e)}`);
             }
         }
         return { validModData, };
     }
 
     registerMethodMod(input) {
-        const {
-            className,
-            methodName,
-            mode,
-            handler
-        } = input.hookInfo;
-        const modName = input.modName;
+        const { hookInfo, modName, } = input;
+        const { className, methodName, mode, handler, } = hookInfo;
 
         if (!className || !methodName || !mode || typeof handler !== "function") {
-            throw new Error(taggedString.methodHookInvalidInfo());
+            throw new Error(taggedString.scriptLoaderMethodHookInvalidInfo());
         }
 
         const targetClass = ScriptLoader.OPRSClasses[className];
         if (!targetClass) {
-            throw new Error(taggedString.methodHookNoClass(className));
+            throw new Error(taggedString.scriptLoaderMethodHookNoClass(className));
         }
 
         // Detect static or instance method
@@ -148,7 +149,7 @@ class ScriptLoader {
         const targetObject = isStatic ? targetClass : targetClass.prototype;
 
         if (!(methodName in targetObject)) {
-            throw new Error(taggedString.methodHookNoMethod(methodName, className, isStatic));
+            throw new Error(taggedString.scriptLoaderMethodHookNoMethod(methodName, className, isStatic));
         }
 
         // Initialize hook storage for this method if not exists
@@ -170,7 +171,8 @@ class ScriptLoader {
                 return handler.apply(this, args);
             } catch (e) {
                 // Swallow error
-                console.error(taggedString.methodHookErrorCode(modName, mode, className, methodName, e));
+                console.error(`[ScriptLoader] ${taggedString.scriptLoaderMethodHookErrorCode(
+                    modName, mode, className, methodName, e)}`);
             }
         };
 
@@ -183,7 +185,7 @@ class ScriptLoader {
             // Replace hook: discard previous replace hook
             hookData.replaceHook = { modName, handler: safeHandler };
         } else {
-            throw new Error(taggedString.methodHookUnknownMode(mode));
+            throw new Error(taggedString.scriptLoaderMethodHookUnknownMode(mode));
         }
 
         // Rebuild the method with hooks in a separate helper
@@ -194,40 +196,45 @@ class ScriptLoader {
      * Internal helper to rebuild the method with registered hooks.
      */
     _rebuildHookedMethod(input) {
-        input.targetObject[input.methodName] = function hookedMethod(...args) {
+        const { targetObject, methodName, hookData, className, } = input;
+        targetObject[methodName] = function hookedMethod(...args) {
             const parent = this;
 
             // Run BEFORE hooks
-            for (const { modName, handler } of input.hookData.beforeHooks) {
+            for (const { modName, handler } of hookData.beforeHooks) {
                 try {
                     handler.call(parent, ...args);
                 } catch (e) {
-                    console.error(taggedString.methodHookBeforeError(input.hookData.beforeHooks.modName, input.className, input.methodName, e));
+                    console.error(`[ScriptLoader] ${taggedString.scriptLoaderMethodHookBeforeError(
+                        hookData.beforeHooks.modName, className, methodName, e)}`);
                 }
             }
 
             // Call REPLACE or ORIGINAL
             let result;
-            if (input.hookData.replaceHook) {
+            if (hookData.replaceHook) {
                 try {
-                    result = input.hookData.replaceHook.handler.call(parent, ...args);
+                    result = hookData.replaceHook.handler.call(parent, ...args);
                 } catch (e) {
-                    console.error(taggedString.methodHookReplaceError(input.hookData.replaceHook.modName, input.className, input.methodName, e));
+                    console.error(`[ScriptLoader] ${taggedString.scriptLoaderMethodHookReplaceError(
+                        hookData.replaceHook.modName, className, methodName, e)}`);
                 }
             } else {
                 try {
-                    result = input.hookData.originalFunc.apply(parent, args);
+                    result = hookData.originalFunc.apply(parent, args);
                 } catch (e) {
-                    console.error(taggedString.methodHookReplaceErrorOriginal(input.className, input.methodName, e));
+                    console.error(`[ScriptLoader] ${taggedString.scriptLoaderMethodHookReplaceErrorOriginal(
+                        className, methodName, e)}`);
                 }
             }
 
             // Run AFTER hooks
-            for (const { modName, handler } of input.hookData.afterHooks) {
+            for (const { modName, handler } of hookData.afterHooks) {
                 try {
                     handler.call(parent, ...args, result);
                 } catch (e) {
-                    console.error(taggedString.methodHookAfterError(modName, input.className, input.methodName, e));
+                    console.error(`[ScriptLoader] ${taggedString.scriptLoaderMethodHookAfterError(
+                        modName, className, methodName, e)}`);
                 }
             }
 
@@ -240,12 +247,12 @@ class ScriptLoader {
 
         // Validate required inputs
         if (!className || !methodName || typeof handler !== "function") {
-            throw new Error(`[ScriptLoader] ${taggedString.newMethodInvalidInput()}`);
+            throw new Error(taggedString.scriptLoaderNewMethodInvalidInput());
         }
         // Find the target class
         const targetClass = ScriptLoader.OPRSClasses[className];
         if (!targetClass) {
-            throw new Error(`[ScriptLoader] ${taggedString.newMethodInvalidClassName(className)}`);
+            throw new Error(taggedString.scriptLoaderNewMethodInvalidClassName(className));
         }
 
         // Decide where to attach the method: static or instance
@@ -253,15 +260,17 @@ class ScriptLoader {
 
         // Prevent overwriting existing methods
         if (Object.prototype.hasOwnProperty.call(targetObject, methodName)) {
-            throw new Error(`[ScriptLoader] ${taggedString.newMethodMethodExists(methodName, isStatic ? "static" : "instance", className)}`);
+            throw new Error(taggedString.scriptLoaderNewMethodMethodExists(
+                methodName, isStatic ? "static" : "instance", className));
         }
 
         try {
             // Add the new method
             targetObject[methodName] = handler;
-            console.log(`[ScriptLoader] ${taggedString.newMethodAdded(isStatic ? "static" : "instance", methodName, className)}`);
+            console.log(`[ScriptLoader] ${taggedString.scriptLoaderNewMethodAdded(
+                isStatic ? "static" : "instance", methodName, className)}`);
         } catch (e) {
-            throw new Error(`[ScriptLoader] ${taggedString.newMethodError(methodName, className, e)}`);
+            throw new Error(taggedString.scriptLoaderNewMethodError(methodName, className, e));
         }
     }
 
@@ -271,7 +280,7 @@ class ScriptLoader {
             const modName = modList[i].modName.toLowerCase().trim();
             if (Shared.MOD_STRING.RESERVED_MOD_NAME_LIST.includes(modName)) {
                 modList.splice(i, 1);
-                console.warn(`[ScriptLoader] ${taggedString.reservedModNameFound(modName)}`);
+                console.warn(`[ScriptLoader] ${taggedString.scriptLoaderReservedModNameFound(modName)}`);
             }
         }
     }
@@ -299,7 +308,8 @@ class ScriptLoader {
      *   @property {string[]} hooks - Array of hook identifiers extracted from XML.
      */
     static async parseModAboutXML(input) {
-        const filePath = `${input.modDirLocation}${input.dirName}/${Shared.MOD_STRING.ABOUT_XML.FILE_NAME}`;
+        const { modDirLocation, dirName, } = input;
+        const filePath = `${modDirLocation}${dirName}/${Shared.MOD_STRING.ABOUT_XML.FILE_NAME}`;
         const response = await fetch(filePath);
         const text = await response.text();
 
@@ -334,8 +344,9 @@ class ScriptLoader {
      *     @property {string} dirName - The directory name of the mod.
      */
     static async parseModSettingXML(input) {
+        const { modDirLocation, } = input;
         // Fetch the XML file
-        const filePath = `${input.modDirLocation}${Shared.MOD_STRING.SETTING_XML.FILE_NAME}`;
+        const filePath = `${modDirLocation}${Shared.MOD_STRING.SETTING_XML.FILE_NAME}`;
         const response = await fetch(filePath);
         const xmlText = await response.text();
 
@@ -357,7 +368,7 @@ class ScriptLoader {
             const dirName = entry.querySelector(Shared.MOD_STRING.SETTING_XML.DIR_NAME)?.textContent.trim() || "";
 
             if (!modName || !dirName) {
-                console.error(`[ScriptLoader] ${window.taggedString.invalidModSettingListEntry(index)}`);
+                console.error(`[ScriptLoader] ${window.taggedString.scriptLoaderInvalidModSettingListEntry(index)}`);
                 return; // Skip this entry
             }
 
@@ -369,14 +380,15 @@ class ScriptLoader {
     }
 
     static importCSSLink(input) {
+        const { modPath, modName, } = input;
         try {
-            const link = document.createElement("link");
-            link.rel = "stylesheet";
-            link.href = input.modPath;
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = modPath;
             document.head.appendChild(link);
-            console.log(`[ScriptLoader] ${taggedString.scriptLoaderImportedCss(input.modPath, input.modName)}`);
+            console.log(`[ScriptLoader] ${taggedString.scriptLoaderImportedCss(modPath, modName)}`);
         } catch (e) {
-            console.error(`[ScriptLoader] ${taggedString.scriptLoaderImportedCssFailed(input.modPath, input.modName, e)}`);
+            console.error(`[ScriptLoader] ${taggedString.scriptLoaderImportedCssFailed(modPath, modName, e)}`);
         }
     }
 
@@ -516,7 +528,8 @@ class ScriptLoader {
      * @param {*} defaultValue - Default value, can also be a function for per-instance computation
      * @returns {class} - The wrapped class; caller must reassign the reference
      */
-    static addConstructorProperty(ClassRef, propName, defaultValue) {
+    static addConstructorProperty(input) {
+        const { ClassRef, propName, defaultValue, } = input;
         // Initialize registry of added properties on the class
         if (!ClassRef.__constructorDefaults) {
             ClassRef.__constructorDefaults = {};

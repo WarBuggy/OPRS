@@ -1,7 +1,7 @@
 export default function ({ register }) {
     // Test before hook
     register({
-        className: "MainApp",
+        className: "AppMain",
         methodName: "modifyClassProperty",
         mode: Shared.MOD_STRING.REGISTRATION_MODE.AFTER,
         handler(input) {
@@ -14,7 +14,7 @@ export default function ({ register }) {
         },
     });
     register({
-        className: "MainApp",
+        className: "AppMain",
         methodName: "modifyClassProperty",
         mode: Shared.MOD_STRING.REGISTRATION_MODE.AFTER,
         handler(input) {

@@ -52,6 +52,6 @@ canvas.miniMap {
     background-color: black;
 }
 
-div.parchment {
+canvas.mapEditor {
     background-color: black;
 }

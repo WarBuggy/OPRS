@@ -9,24 +9,25 @@
     <hook>../../../shared/script/overlay.js</hook>
     <hook>../../../shared/script/modDataTree.js</hook>
     <hook>../../../shared/script/dataLoader.js</hook>
-    <hook>../../../shared/script/mainApp.js</hook>
+    <hook>../../../shared/script/appMain.js</hook>
     <hook>../../../shared/script/tile.js</hook>
     <hook>../../../shared/script/eventEmitter.js</hook>
-    <!-- <hook>../../../shared/script/baseMainSurface.js</hook> -->
+    <hook>../../../shared/script/mapMain.js</hook>
     <!-- <hook>../../../shared/script/baseMiniMap.js</hook> -->
     <!-- <hook>../../../shared/script/region.js</hook> -->
     <!-- <hook>../../../shared/script/templateMap.js</hook> -->
+    <hook>../../../shared/data/zoomLevelList.js</hook>
     <!-- <hook>../../../shared/data/regionDeploymentZone.js</hook> -->
     <!-- <hook>../../../shared/data/regionList.js</hook> -->
     <!-- <hook>../../../shared/data/tileTextureList.js</hook> -->
     <!-- <hook>../../../shared/data/featureList.js</hook> -->
     <!-- <hook>../../../shared/data/templateMapList.js</hook> -->
     <!-- <hook>setting.js</hook> -->
-    <!-- <hook>parchment.js</hook> -->
+    <hook>mapEditorMap.js</hook>
     <!-- <hook>generatorMap.js</hook> -->
-    <!-- <hook>managerMap.js</hook> -->
+    <hook>managerMap.js</hook>
     <!-- <hook>minimapParchment.js</hook> -->
-    <!-- <hook>editorMap.js</hook> -->
+    <hook>editorMap.js</hook>
     <hook></hook>
     <hook>zzModTestPlayer.js</hook>
     <hook>zzModTestFire.js</hook>

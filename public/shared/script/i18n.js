@@ -6,13 +6,13 @@ window.addEventListener('DOMContentLoaded', () => {
         let currentMessages;
 
         function initLanguage() {
-            const langCode = localStorage.getItem(Shared.STORAGE_KEYS.LANGUAGE);
+            const langCode = localStorage.getItem(Shared.STORAGE_KEY_LIST.LANGUAGE);
             if (langCode && window.translatableTexts[langCode]) {
                 currentLanguage = langCode;
             } else {
                 console.warn(`No translation found for ${langCode}. Fall back to en-English.`);
                 currentLanguage = DEFAULT_LANGUAGE;
-                localStorage.setItem(Shared.STORAGE_KEYS.LANGUAGE, DEFAULT_LANGUAGE);
+                localStorage.setItem(Shared.STORAGE_KEY_LIST.LANGUAGE, DEFAULT_LANGUAGE);
             }
             currentMessages = window.translatableTexts[currentLanguage] || {};
         };
@@ -38,10 +38,10 @@ window.addEventListener('DOMContentLoaded', () => {
 //window.setLanguage = setLanguage;
 //window.getCurrentLanguage = () => currentLanguage;
 // function getCurrentLanguage() {
-//     let lang = localStorage.getItem(Shared.STORAGE_KEYS.LANGUAGE);
+//     let lang = localStorage.getItem(Shared.STORAGE_KEY_LIST.LANGUAGE);
 //     if (!lang) {
 //         lang = 'en';
-//         localStorage.setItem(Shared.STORAGE_KEYS.LANGUAGE, lang);
+//         localStorage.setItem(Shared.STORAGE_KEY_LIST.LANGUAGE, lang);
 //     }
 //     return lang;
 // };

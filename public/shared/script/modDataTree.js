@@ -52,6 +52,7 @@ export class ModDataTree {
     ];
 
     constructor(input) {
+        const { overlay, modData, modHistory, } = input;
         this.divOuter = Shared.createHTMLComponent({ class: 'base-mod-data-tree-outer', }).component;
         const { component: divInner, } =
             Shared.createHTMLComponent({ class: 'base-mod-data-tree-inner', parent: this.divOuter, });
@@ -85,12 +86,12 @@ export class ModDataTree {
 
         // Closing logic
         closeBtn.addEventListener('click', () => {
-            input.overlay.hide();
+            overlay.hide();
         });
 
         // Render the modHistory tree
-        if (input.modHistory) {
-            this.renderTree({ modHistory: input.modHistory, divParent: divInner, modData: input.modData, });
+        if (modHistory) {
+            this.renderTree({ modHistory, divParent: divInner, modData, });
         }
     }
 
@@ -118,7 +119,7 @@ export class ModDataTree {
     renderTree(input) {
         const { divParent, modHistory, modData } = input;
         for (const rootKey of Object.keys(modHistory)) {
-            const { code: nodeEl, } = this.renderNode({
+            const { node: nodeEl, } = this.renderNode({
                 key: rootKey,
                 node: modHistory[rootKey],
                 pathSoFar: rootKey,
@@ -134,7 +135,7 @@ export class ModDataTree {
         const { summary, hasChildren, modifiers, } = this.createSummary({ details, pathSoFar, node, modData, });
         this.attachSummaryEvents({ summary, details, modifiers, });
         this.createMarkerAndLabel({ summary, key, hasChildren, });
-        this.renderChildren({ details, node, pathSoFar, modData, depth });
+        this.renderChildren({ details, node, pathSoFar, modData, depth, });
         return { node: details, };
     }
 
@@ -251,14 +252,14 @@ export class ModDataTree {
         for (const childKey of Object.keys(node.children)) {
             const { component: li, } = Shared.createHTMLComponent({ tag: 'li', parent: ul });
             const childPath = `${pathSoFar}.${childKey}`;
-            const { node, } = this.renderNode({
+            const { node: childNode, } = this.renderNode({
                 key: childKey,
                 node: node.children[childKey],
                 pathSoFar: childPath,
                 modData,
                 depth: depth + 1,
             });
-            li.appendChild(node);
+            li.appendChild(childNode);
         }
     }
 
@@ -312,7 +313,9 @@ export class ModDataTree {
             parent: input.parent,
         });
 
-        const { component: rowAll, } = Shared.createHTMLComponent({ class: 'base-mod-data-tree-criteria-item-all', parent: div });
+        const { component: rowAll, } = Shared.createHTMLComponent({
+            class: 'base-mod-data-tree-criteria-item-all', parent: searchCriteria,
+        });
         const cbAllId = ModDataTree.CRITERIA_LABEL.ALL.key;
         this.cbSearchCriteria[cbAllId] = Shared.createHTMLComponent({
             tag: 'input',
@@ -329,7 +332,7 @@ export class ModDataTree {
         ModDataTree.CRITERIA_SINGLE.forEach(item => {
             const { key, labelText, } = item;
             const { component: className, } = `base-mod-data-tree-criteria-item-${key.toLowerCase()}`;
-            const { component: rowGrid, } = Shared.createHTMLComponent({ class: className, parent: div });
+            const { component: rowGrid, } = Shared.createHTMLComponent({ class: className, parent: searchCriteria, });
             const id = `cbSearch${key}`;
             const { component: checkbox, } = Shared.createHTMLComponent({ tag: 'input', type: 'checkbox', id, parent: rowGrid });
             this.cbSearchCriteria[key] = checkbox;

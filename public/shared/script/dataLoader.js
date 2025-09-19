@@ -7,7 +7,6 @@ export class DataLoader {
         try {
             DataLoader.validateModItem({ item });
             const pathArray = [dataType, ...name.split(".")];
-
             // Get existing node in modData
             const existing = pathArray.reduce((obj, key) => obj?.[key], modData);
 
@@ -26,7 +25,6 @@ export class DataLoader {
                 // Replace otherwise
                 newValue = payload;
             }
-
             DataLoader.setNested({ modData, pathArray, value: newValue });
 
             // Insert into modHistory and recursively add payload properties

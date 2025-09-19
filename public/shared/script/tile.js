@@ -1,32 +1,27 @@
 export class Tile {
-
     constructor(input) {
-        const { col, row, side, halfSide, } = input;
+        const { col, row, } = input;
         this.col = col;
         this.row = row;
-        this.x = this.col * side;
-        this.y = this.row * side;
-        this.centerX = this.x + halfSide;
-        this.centerY = this.y + halfSide;
         this.flipped = false;
     }
 
     createPath(input) {
-        const { ctx, side, cameraOffsetX, cameraOffsetY, } = input;
+        const { canvasCtx, side, cameraOffsetX, cameraOffsetY, } = input;
         const x = this.x - cameraOffsetX;
         const y = this.y - cameraOffsetY;
-        ctx.moveTo(x, y);
-        ctx.lineTo(x + side, y);
-        ctx.lineTo(x + side, y + side);
-        ctx.lineTo(x, y + side);
-        ctx.lineTo(x, y);
+        canvasCtx.moveTo(x, y);
+        canvasCtx.lineTo(x + side, y);
+        canvasCtx.lineTo(x + side, y + side);
+        canvasCtx.lineTo(x, y + side);
+        canvasCtx.lineTo(x, y);
     }
 
     drawCoord(input) {
-        const { ctx, cameraOffsetX, cameraOffsetY, } = input;
+        const { canvasCtx, cameraOffsetX, cameraOffsetY, } = input;
         const centerX = this.centerX - cameraOffsetX;
         const centery = this.centerY - cameraOffsetY;
-        ctx.fillText(`${this.col}, ${this.row}`, centerX, centery);
+        canvasCtx.fillText(`${this.col}, ${this.row}`, centerX, centery);
     }
 
     static pixelToTileCoord(input) {
@@ -43,7 +38,17 @@ export class Tile {
         return { tile: tileArray[col][row], };
     }
 
-
+    calculateCoord(input) {
+        const { side, halfSide, mapWidth, } = input;
+        this.x = this.col * side;
+        this.y = this.row * side;
+        this.centerX = this.x + halfSide;
+        this.centerY = this.y + halfSide;
+        if (this.flipped) {
+            this.x = mapWidth - this.x;
+            this.centerX = mapWidth - this.centerX;
+        }
+    }
 
 
     /**

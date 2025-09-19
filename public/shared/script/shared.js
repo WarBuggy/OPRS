@@ -1,7 +1,7 @@
 class Shared {
-  static STORAGE_KEYS = {
+  static STORAGE_KEY_LIST = {
     LANGUAGE: 'language',
-    ZOOM_LEVEL_MAP_EDITOR_PARCHMENT: 'mapEditorZoomLevel',
+    ZOOM_LEVEL_MAP_EDITOR_MAP: 'zoomLevelMapEditorMap',
   };
 
   static EMITTER_SIGNAL = {
@@ -78,6 +78,7 @@ class Shared {
       DIR_NAME: 'dirName',
     },
     MOD_DATA_TYPE: {
+      ZOOM_DATA: 'zoomData',
       REGION: 'region',
       TEMPLATE_MAP: 'templateMap',
       TILE: 'tile',

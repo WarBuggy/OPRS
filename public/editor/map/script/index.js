@@ -7,11 +7,11 @@ window.addEventListener('load', async function () {
         modList,
         modDirLocation: Shared.MOD_STRING.MOD_DIR_LOCATION.EDITOR_MAP,
     });
-    window.OPRSClasses.MainApp.modifyClassProperty();
-    //window.editorMap = new window.OPRSClasses.EditorMap({ savedModData });
+    window.OPRSClasses.AppMain.modifyClassProperty();
+    window.editorMap = new window.OPRSClasses.EditorMap({ savedModData, });
 
     let seed = null;
     //seed = 609478887;
     //await window.editorMap.managerMap.generateRandomMap({ seed, });
-    //window.editorMap.managerMap.requestAnimationFrame({});
+    window.editorMap.managerMap.requestAnimationFrame({});
 });

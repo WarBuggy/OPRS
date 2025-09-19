@@ -1,4 +1,4 @@
-export class MainApp {
+export class AppMain {
     constructor(input) {
         this.emitter = new window.OPRSClasses.EventEmitter();
         // allow mods to import data, or modify other mods' data if needed.
@@ -10,7 +10,6 @@ export class MainApp {
             modData: this.modData,
             modHistory: this.modHistory,
         });
-
         this.overlay = new window.OPRSClasses.Overlay({ emitter: this.emitter, });
         this.createPageHTMLComponent();
 
@@ -22,6 +21,12 @@ export class MainApp {
         for (let i = 0; i < savedModData.length; i++) {
             const { modName, item } = savedModData[i];
             window.OPRSClasses.DataLoader.processModItem({ modName, item, modData, modHistory, });
+        }
+        // add each entry's name to its own payload
+        for (const entries of Object.values(modData)) {
+            for (const [name, data] of Object.entries(entries)) {
+                data.name = name;
+            }
         }
     }
 
