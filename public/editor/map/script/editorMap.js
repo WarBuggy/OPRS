@@ -4,10 +4,10 @@ export class EditorMap extends window.OPRSClasses.AppMain {
 
         this.managerMap = new window.OPRSClasses.ManagerMap({
             emitter: this.emitter,
-            mapEditor: {
+            mapMain: {
                 canvasId: 'canvasMapEditor',
             },
-            miniMap: {
+            mapMini: {
                 canvasId: 'canvasMiniMap',
             },
             modData: this.modData,
@@ -16,10 +16,6 @@ export class EditorMap extends window.OPRSClasses.AppMain {
         window.addEventListener('resize', () => {
             this.setup();
         });
-    }
-
-    setup() {
-        //this.managerMap.setup();
     }
 
     createPageHTMLComponent(input) {

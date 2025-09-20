@@ -1,13 +1,13 @@
 class Shared {
   static STORAGE_KEY_LIST = {
     LANGUAGE: 'language',
-    ZOOM_LEVEL_MAP_EDITOR_MAP: 'zoomLevelMapEditorMap',
+    ZOOM_LEVEL_MAP_EDITOR_MAP: 'zoomLevelMapMainEditorMap',
   };
 
   static EMITTER_SIGNAL = {
-    PARCHMENT_PANNED: 'parchment_panned',
-    PARCHMENT_ZOOMED: 'parchment_zoomed',
-    MINI_MAP_CLICKED: 'miniMap_clicked',
+    MAP_MAIN_PANNED: 'parchment_panned',
+    MAP_MAIN_ZOOMED: 'parchment_zoomed',
+    MAP_MINI_CLICKED: 'miniMap_clicked',
     OVERLAY_VISIBLE: 'overlay_visible',
     OVERLAY_CLOSED: 'overlay_closed',
   };

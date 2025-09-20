@@ -33,7 +33,9 @@ export class Overlay {
         this.divOuter.innerHTML = '';
         this.visible = false;
         document.removeEventListener('keydown', this._escListener);
-        this.emitter.emit(Shared.EMITTER_SIGNAL.OVERLAY_CLOSED);
+        this.emitter.emit({
+            event: Shared.EMITTER_SIGNAL.OVERLAY_CLOSED,
+        });
     }
 
     show(input) {
@@ -43,6 +45,8 @@ export class Overlay {
         this.divOuter.style.display = 'grid';
         this.visible = true;
         document.addEventListener('keydown', this._escListener);
-        this.emitter.emit(Shared.EMITTER_SIGNAL.OVERLAY_VISIBLE);
+        this.emitter.emit({
+            event: Shared.EMITTER_SIGNAL.OVERLAY_VISIBLE,
+        });
     }
 }

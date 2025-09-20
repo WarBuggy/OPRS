@@ -3,83 +3,69 @@ export class ManagerMap {
         this.emitter = input.emitter;
         this.modData = input.modData;
 
-        this.mapEditorMap = new window.OPRSClasses.MapEditorMap({
-            canvasId: input.mapEditor.canvasId,
+        this.mapMain = new OPRSClasses.MapMainEditorMap({
+            canvasId: input.mapMain.canvasId,
             emitter: this.emitter,
             modData: this.modData,
         });
 
-        // this.miniMap = new window.OPRSClasses.MiniMapParchment({
-        //     canvasId: input.miniMap.canvasId,
-        //     zoomCachedData: this.parchment.zoomCachedData,
-        //     cameraWidth: this.parchment.canvas.width,
-        //     cameraHeight: this.parchment.canvas.height,
-        //     cameraOffsetX: this.parchment.cameraParam.offsetX,
-        //     cameraOffsetY: this.parchment.cameraParam.offsetY,
-        //     zoomLevel: this.parchment.cameraParam.zoomLevel,
-        //     emitter: this.emitter,
-        // });
+        this.mapMini = new OPRSClasses.MapMiniEditorMap({
+            canvasId: input.mapMini.canvasId,
+            cameraWidth: this.mapMain.canvas.width,
+            cameraHeight: this.mapMain.canvas.height,
+            cameraOffsetX: this.mapMain.cameraParam.offsetX,
+            cameraOffsetY: this.mapMain.cameraParam.offsetY,
+            mapParam: this.mapMain.mapParam,
+            emitter: this.emitter,
+        });
 
         const parent = this;
         this.emitter.on({
-            event: Shared.EMITTER_SIGNAL.PARCHMENT_PANNED,
+            event: Shared.EMITTER_SIGNAL.MAP_MAIN_PANNED,
             handler: function () {
-                parent.handleParchmentPanned({ parent, });
+                parent.handleMapMainPanned({ parent, });
             },
         });
         this.emitter.on({
-            event: Shared.EMITTER_SIGNAL.PARCHMENT_ZOOMED,
+            event: Shared.EMITTER_SIGNAL.MAP_MAIN_ZOOMED,
             handler: function () {
-                parent.handleParchmentZoomed({ parent, });
+                parent.handleMapMainZoomed({ parent, });
             },
         });
         this.emitter.on({
-            event: Shared.EMITTER_SIGNAL.MINI_MAP_CLICKED,
+            event: Shared.EMITTER_SIGNAL.MAP_MINI_CLICKED,
             handler: function () {
-                parent.handleMiniMapClicked({ parent, });
+                parent.handleMapMiniClicked({ parent, });
             },
         });
     }
 
-    setup(input) {
-        this.mapEditorMap.setup();
-        // this.miniMap.setup({
-        //     zoomCachedData: this.parchment.zoomCachedData,
-        //     cameraWidth: this.parchment.canvas.width,
-        //     cameraHeight: this.parchment.canvas.height,
-        //     cameraOffsetX: this.parchment.cameraParam.offsetX,
-        //     cameraOffsetY: this.parchment.cameraParam.offsetY,
-        //     zoomLevel: this.parchment.cameraParam.zoomLevel,
-        // });
-        // this.miniMap.draw({
-        //     canvasWidth: this.miniMap.canvas.width,
-        //     canvasHeight: this.miniMap.canvas.height,
-        //     scaledMapParam: this.miniMap.scaledMapParam,
-        //     scaledCameraParam: this.miniMap.scaledCameraParam,
-        //     ctx: this.miniMap.ctx,
-        // });
-    }
-
-    handleParchmentPanned(input) {
-        input.parent.miniMap.onCameraPanned({
-            cameraOffsetX: input.parent.parchment.cameraParam.offsetX,
-            cameraOffsetY: input.parent.parchment.cameraParam.offsetY,
+    handleMapMainPanned(input) {
+        input.parent.mapMini.onMapMainPanned({
+            cameraOffsetX: input.parent.mapMain.cameraParam.offsetX,
+            cameraOffsetY: input.parent.mapMain.cameraParam.offsetY,
         });
     }
 
-    handleParchmentZoomed(input) {
-        input.parent.miniMap.onCameraZoomed({
-            zoomLevel: input.parent.parchment.cameraParam.zoomLevel,
-            cameraOffsetX: input.parent.parchment.cameraParam.offsetX,
-            cameraOffsetY: input.parent.parchment.cameraParam.offsetY,
+    handleMapMainZoomed(input) {
+        input.parent.mapMini.onMapMainZoomed({
+            cameraOffsetX: input.parent.mapMain.cameraParam.offsetX,
+            cameraOffsetY: input.parent.mapMain.cameraParam.offsetY,
+            cameraWidth: input.parent.mapMain.canvas.width,
+            cameraHeight: input.parent.mapMain.canvas.height,
+            mapParam: input.parent.mapMain.mapParam,
         });
     }
 
-    handleMiniMapClicked(input) {
-        input.parent.parchment.onMiniMapClicked({
-            miniMapScaledClickOffsetX: input.parent.miniMap.userInputParam.scaledClickOffsetX,
-            miniMapScaledClickOffsetY: input.parent.miniMap.userInputParam.scaledClickOffsetY,
+    handleMapMiniClicked(input) {
+        input.parent.mapMain.onMapMiniClicked({
+            mapMiniScaledClickOffsetX: input.parent.mapMini.userInputParam.scaledClickOffsetX,
+            mapMiniScaledClickOffsetY: input.parent.mapMini.userInputParam.scaledClickOffsetY,
         });
+    }
+
+    requestAnimationFrame(input) {
+        requestAnimationFrame(this.mapMain.loop);
     }
 
     async generateRandomMap(input) {
@@ -91,24 +77,21 @@ export class ManagerMap {
             templateMapName, templateMapData,
             featureData: this.modData.feature,
         });
-        await this.mapEditorMap.preloadMapTexture({
+        await this.mapMainEditorMap.preloadMapTexture({
             templateMap,
             modTileData: this.modData.tile,
         });
 
         this.generatorMap = new window.OPRSClasses.GeneratorMap({
             modData: this.modData,
-            mapParam: this.mapEditorMap.mapParam,
-            hexParam: this.mapEditorMap.hexParam,
-            gridParam: this.mapEditorMap.gridParam,
+            mapParam: this.mapMainEditorMap.mapParam,
+            hexParam: this.mapMainEditorMap.hexParam,
+            gridParam: this.mapMainEditorMap.gridParam,
             hexWidthPerInch: window.OPRSClasses.Parchment.userMapInput.hexWidthPerInch,
             templateMap,
-            hexTextureMap: this.mapEditorMap.hexTextureMap,
+            hexTextureMap: this.mapMainEditorMap.hexTextureMap,
             seed,
         });
-    }
-    requestAnimationFrame(input) {
-        requestAnimationFrame(this.mapEditorMap.loop);
     }
 
     toggleRegionHighlight(input) {
@@ -120,12 +103,12 @@ export class ManagerMap {
         this.mapGenerator.toggleRegionHighlight({
             region,
             regionName,
-            hexTextureMap: this.mapEditorMap.hexTextureMap,
+            hexTextureMap: this.mapMainEditorMap.hexTextureMap,
         });
-        if (this.mapEditorMap.highlightRegionMap.has(regionName)) {
-            this.mapEditorMap.highlightRegionMap.delete(regionName);
+        if (this.mapMainEditorMap.highlightRegionMap.has(regionName)) {
+            this.mapMainEditorMap.highlightRegionMap.delete(regionName);
             return;
         }
-        this.mapEditorMap.highlightRegionMap.set(regionName, { color, deviation, });
+        this.mapMainEditorMap.highlightRegionMap.set(regionName, { color, deviation, });
     }
 }

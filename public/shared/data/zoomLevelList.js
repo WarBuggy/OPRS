@@ -6,17 +6,17 @@ export default {
             payload: {
                 landscape: {
                     levelList: [
-                        [0.5, 32],
-                        [1, 48],
-                        [2, 64],
+                        [1, 16],
+                        [2, 48],
+                        [3, 64],
                     ],
-                    default: 2,
+                    default: 1,
                 },
                 portrait: {
                     levelList: [
-                        [0.5, 16],
-                        [1, 32],
-                        [2, 48],
+                        [1, 16],
+                        [2, 32],
+                        [3, 48],
                     ],
                     default: 1,
                 },

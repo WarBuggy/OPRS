@@ -7,8 +7,8 @@ window.addEventListener('load', async function () {
         modList,
         modDirLocation: Shared.MOD_STRING.MOD_DIR_LOCATION.EDITOR_MAP,
     });
-    window.OPRSClasses.AppMain.modifyClassProperty();
-    window.editorMap = new window.OPRSClasses.EditorMap({ savedModData, });
+    OPRSClasses.AppMain.modifyClassProperty();
+    window.editorMap = new OPRSClasses.EditorMap({ savedModData, });
 
     let seed = null;
     //seed = 609478887;

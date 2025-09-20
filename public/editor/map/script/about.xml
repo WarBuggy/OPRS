@@ -13,7 +13,7 @@
     <hook>../../../shared/script/tile.js</hook>
     <hook>../../../shared/script/eventEmitter.js</hook>
     <hook>../../../shared/script/mapMain.js</hook>
-    <!-- <hook>../../../shared/script/baseMiniMap.js</hook> -->
+    <hook>../../../shared/script/mapMini.js</hook>
     <!-- <hook>../../../shared/script/region.js</hook> -->
     <!-- <hook>../../../shared/script/templateMap.js</hook> -->
     <hook>../../../shared/data/zoomLevelList.js</hook>
@@ -23,10 +23,10 @@
     <!-- <hook>../../../shared/data/featureList.js</hook> -->
     <!-- <hook>../../../shared/data/templateMapList.js</hook> -->
     <!-- <hook>setting.js</hook> -->
-    <hook>mapEditorMap.js</hook>
+    <hook>mapMainEditorMap.js</hook>
     <!-- <hook>generatorMap.js</hook> -->
     <hook>managerMap.js</hook>
-    <!-- <hook>minimapParchment.js</hook> -->
+    <hook>mapMiniEditorMap.js</hook>
     <hook>editorMap.js</hook>
     <hook></hook>
     <hook>zzModTestPlayer.js</hook>

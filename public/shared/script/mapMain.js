@@ -29,7 +29,6 @@ export class MapMain {
                 logCoord: false,
             },
         };
-        this.flipped = false;
 
         this.canvas = document.getElementById(canvasId);
         if (!this.canvas) throw new Error(`[MapMain] ${taggedString.mapMainCanvasNotFound(canvasId)}`);
@@ -38,8 +37,7 @@ export class MapMain {
         this._lastFrameTime = null;
         this.emitter = emitter;
         this.processUserMapInput(input);
-        const { zoomData, } = this.declareZoomSettings(input);
-        input.zoomData = zoomData;
+        this.defineZoomSettings(input);
         this.setup(input);
     }
 
@@ -113,6 +111,8 @@ export class MapMain {
             heightInInch: mapHeightInInch,
             maxCol: mapWidthInInch * tilePerInch,
             maxRow: mapHeightInInch * tilePerInch,
+            flipped: false,
+            tilePerInch: tilePerInch,
         };
         this.tileArray = [];
         for (let col = 0; col < this.mapParam.maxCol; col++) {
@@ -131,15 +131,28 @@ export class MapMain {
             mapWidth, mapHeight,
             canvasWidth, canvasHeight, tileSize, zoomLevel,
         } = input;
-        const minOffsetX = -padHorizontal;
-        const minOffsetY = -padVertical;
 
-        const maxOffsetX = mapWidth + padHorizontal - canvasWidth;
-        const maxOffsetY = mapHeight + padVertical - canvasHeight;
+        let minOffsetX, maxOffsetX, minOffsetY, maxOffsetY;
+        if (mapWidth + 2 * padHorizontal <= canvasWidth) {
+            // Map smaller than canvas → lock position (centered)
+            minOffsetX = maxOffsetX = (mapWidth - canvasWidth) / 2;
+        } else {
+            // Map larger than canvas → allow movement with padding
+            minOffsetX = -padHorizontal;
+            maxOffsetX = mapWidth + padHorizontal - canvasWidth;
+        }
+
+        if (mapHeight + 2 * padVertical <= canvasHeight) {
+            minOffsetY = maxOffsetY = (mapHeight - canvasHeight) / 2;
+        } else {
+            minOffsetY = -padVertical;
+            maxOffsetY = mapHeight + padVertical - canvasHeight;
+        }
 
         // Center camera
         let offsetX = Math.round((mapWidth - canvasWidth) / 2);
         let offsetY = Math.round((mapHeight - canvasHeight) / 2);
+
         // Clamp to bounds
         offsetX = Shared.clamp({ max: maxOffsetX, min: minOffsetX, value: offsetX, }).clampedValue;
         offsetY = Shared.clamp({ max: maxOffsetY, min: minOffsetY, value: offsetY, }).clampedValue;
@@ -184,20 +197,22 @@ export class MapMain {
             mapHeight: this.mapParam.height,
             canvasWidth, canvasHeight, tileSize, zoomLevel,
         });
-
     }
 
     getVisbileTileData(input) {
-        const currentCol = Math.floor(this.cameraParam.offsetX / this.mapParam.side);
-        const currentRow = Math.floor(this.cameraParam.offsetY / this.mapParam.side);
-        const rightMostCol = Math.min(currentCol + this.mapParam.tilePerCanvasWidth,
-            this.mapParam.maxCol);
-        const bottomMostRow = Math.min(currentRow + this.mapParam.tilePerCanvasHeight,
-            this.mapParam.maxRow);
+        const { cameraParam, mapParam, tileArray, } = input;
+        const { offsetX, offsetY, } = cameraParam;
+        const {
+            side, tilePerCanvasWidth, tilePerCanvasHeight, maxCol, maxRow,
+        } = mapParam;
+        const currentCol = Math.floor(Math.max(offsetX, 0) / side);
+        const currentRow = Math.floor(Math.max(offsetY, 0) / side);
+        const rightMostCol = Math.min(currentCol + tilePerCanvasWidth, maxCol);
+        const bottomMostRow = Math.min(currentRow + tilePerCanvasHeight, maxRow);
         const visibleTileList = [];
         for (let col = currentCol; col < rightMostCol; col++) {
             for (let row = currentRow; row < bottomMostRow; row++) {
-                visibleTileList.push(this.tileArray[col][row]);
+                visibleTileList.push(tileArray[col][row]);
             }
         }
         return { visibleTileList, currentCol, currentRow, };
@@ -220,173 +235,45 @@ export class MapMain {
         if (!input.valueY) {
             input.valueY = cameraParam.offsetY;
         }
-        cameraParam.offsetX = Shared.clamp({
+        ({ clampedValue: cameraParam.offsetX, } = Shared.clamp({
             max: cameraParam.maxOffsetX, min: cameraParam.minOffsetX, value: input.valueX,
-        });
-        cameraParam.offsetY = Shared.clamp({
+        }));
+        ({ clampedValue: cameraParam.offsetY } = Shared.clamp({
             max: cameraParam.maxOffsetY, min: cameraParam.minOffsetY, value: input.valueY,
-        });
+        }));
     }
 
-
-
-    /**
-     * Updates the mouse position relative to the map (world coordinates) based on current camera offset,
-     * and determines which hex tile the mouse is currently over.
-     * Calculates the map-relative mouse coordinates by adding camera offset to canvas mouse position.
-     * Uses `Hex.getHexFromCoord` to find which hex the mouse is currently over.
-     * Updates `userInputParam.currentMouseOverHex` with the found hex or null if none.
-     * Outputs debug info about the hex under the mouse or if the mouse is out of bounds.
-     *
-     * @param {Object} input.userInputParam - User interaction state, including mouse positions.
-     * @param {Object} input.userInputParam.mousePos - Current mouse pixel position relative to the canvas ({ x, y }).
-     * @param {Object} input.userInputParam.mouseMapPos - Mouse position adjusted for camera offset ({ x, y }), updated by this function.
-     * @param {Object} input.userInputParam.currentMouseOverHex - The hex currently under the mouse; updated by this function.
-     * @param {Object} input.cameraParam - Camera parameters, including current offsets.
-     * @param {Object} input.hexParam - Hex size parameters (side length, half width).
-     * @param {Object} input.gridParam - Grid data, including the list of hex tiles.
-     * @param {boolean} input.flipped - Is this map flipped (mirror image)?
-     */
     updateMouseMapPosition(input) {
-        input.userInputParam.mouseMapPos.x = input.userInputParam.mousePos.x + input.cameraParam.offsetX;
-        input.userInputParam.mouseMapPos.y = input.userInputParam.mousePos.y + input.cameraParam.offsetY;
-        if (input.flipped) {
-            input.userInputParam.mouseMapPos.x = input.mapWidth - input.userInputParam.mouseMapPos.x;
+        const { userInputParam, cameraParam, mapParam, tileArray, logCoord, } = input;
+        const { mouseMapPos, mousePos, } = userInputParam;
+        const { offsetX, offsetY, } = cameraParam;
+        const { side, flipped, mapWidth, } = mapParam;
+        mouseMapPos.x = mousePos.x + offsetX;
+        mouseMapPos.y = mousePos.y + offsetY;
+        if (flipped) {
+            mouseMapPos.x = mapWidth - mouseMapPos.x;
         }
-        const currentMouseOverHex = window.OPRSClasses.Hex.getHexFromCoord({
-            pointX: input.userInputParam.mouseMapPos.x,
-            pointY: input.userInputParam.mouseMapPos.y,
-            side: input.hexParam.side,
-            hexHalfWidth: input.hexParam.halfWidth,
-            hexArray: input.gridParam.hexArray,
-        }).hex;
-        input.userInputParam.currentMouseOverHex = currentMouseOverHex;
-        // CONSIDER TO REMOVE
-        // console.debug(parent.userInputParam.mouseMapPos);
-        // console.debug(Parchment.mapParam.padHorizontal, Parchment.mapParam.padVertical);
-        // if (parent.userInputParam.currentMouseOverHex) {
-        //     console.debug(`offset X: ${parent.userInputParam.mouseMapPos.x}, offset Y: ${parent.userInputParam.mouseMapPos.y}, (${parent.userInputParam.currentMouseOverHex.q}, ${parent.userInputParam.currentMouseOverHex.r}, ${parent.userInputParam.currentMouseOverHex.s}), centerX: ${parent.userInputParam.currentMouseOverHex.centerX}, centerY: ${parent.userInputParam.currentMouseOverHex.centerY}`);
-        // } else {
-        //     console.debug(`No found in hex list`);
-        // }
-        if (input.logHexCoord) {
-            if (currentMouseOverHex) {
-                console.debug(currentMouseOverHex.q, currentMouseOverHex.r, currentMouseOverHex.s);
+        const { tile, } = OPRSClasses.Tile.getTileFromCoord({
+            mapX: mouseMapPos.x,
+            mapY: mouseMapPos.y,
+            side, tileArray,
+        });
+        userInputParam.currentMouseOverTile = tile;
+
+        if (logCoord) {
+            if (tile) {
+                console.debug(tile.col, tile.row);
             } else {
                 console.debug('Out of bound');
             }
         }
     }
 
-    /**
-     * Determines and returns all hex tiles visible within the current camera viewport,
-     * including a safety padding area around the edges to avoid clipping.
-     * Finds the starting hex based on the camera offset adjusted for small safety padding.
-     * Expands visibility bounds by a fixed safeguard distance around the viewport edges.
-     * Iteratively traverses hex rows and columns within these expanded bounds.
-     * Collects and returns all traversed hexes as a flat object.
-     *
-     * @param {number} input.cameraOffsetX - Current horizontal camera offset in pixels.
-     * @param {number} input.cameraOffsetY - Current vertical camera offset in pixels.
-     * @param {number} input.hexHalfWidth - Half the width of a hex tile in pixels.
-     * @param {number} input.hexSide - Outer radius (center to corner) of a hex tile.
-     * @param {HexArray} input.hexArray - Array that stores all the hexes in the grid.
-     * @param {number} input.estimateHexPerWidth - Estimated number of hexes visible horizontally.
-     * @param {number} input.estimateHexPerHeight - Estimated number of hexes visible vertically.
-     * @param {boolean} input.flipped - Is this map flipped (mirror image)?
-     *
-     * @returns {Object<string, Hex>} - An Map containing all hex tiles visible within the viewport plus padding,
-     *   keyed by hexes' keys.
-     *
-     * Throws:
-     *   An error if it cannot find a valid starting hex at the camera position.
-     */
-    getVisibleHexes(input) {
-        const safeguardHexDistance = 3;
-        const horizontalSafetyPad = input.hexHalfWidth * 0.05;
-        const verticalSafetyPad = input.hexSide * 0.05;
-        let startX = Math.max(input.cameraOffsetX, input.hexHalfWidth) + horizontalSafetyPad;
-        const startY = Math.max(input.cameraOffsetY, input.hexSide) + verticalSafetyPad;
-        if (input.flipped) {
-            startX = Math.min(input.mapWidth - input.cameraOffsetX, input.mapWidth - input.hexHalfWidth) - horizontalSafetyPad;
-        }
-        const startHex = window.OPRSClasses.Hex.getHexFromCoord({
-            pointX: startX, pointY: startY, hexArray: input.hexArray,
-            side: input.hexSide, hexHalfWidth: input.hexHalfWidth,
-        }).hex;
-        if (!startHex) {
-            throw new Error(`[MapMain] ${taggedString.failedToGetStartHex(input.cameraOffsetX, input.cameraOffsetY)}`);
-        }
-        const safeguardHexData = window.OPRSClasses.Hex.getHexDataDistanceOfHex({
-            distance: safeguardHexDistance,
-            direction: Shared.HEX_DIRECTION.TOP_LEFT,
-            hexArray: input.hexArray,
-            q: startHex.q, r: startHex.r, s: startHex.s,
-            flipped: input.flipped,
-        });
-        const safeGuardHex = input.hexArray.get({ q: safeguardHexData.q, r: safeguardHexData.r, }).hex;
-        const safeGuardHorizontalDistance = input.estimateHexPerWidth + (safeguardHexDistance * 2);
-        const safeGuardVerticalDistance = input.estimateHexPerHeight + (safeguardHexDistance * 2);
-        const visibleHexes = new Map();
-        let currentQ = safeGuardHex.q;
-        let currentR = safeGuardHex.r;
-        let currentS = safeGuardHex.s;
-        for (let r = 0; r < safeGuardVerticalDistance; r++) {
-            let direction = Shared.HEX_DIRECTION.BOTTOM_RIGHT;
-            if (r % 2 == 1) {
-                direction = Shared.HEX_DIRECTION.BOTTOM_LEFT;
-            }
-            const transverseLeftData = window.OPRSClasses.Hex.getHexDataDistanceOfHex({
-                q: currentQ, r: currentR, s: currentS,
-                distance: safeGuardHorizontalDistance,
-                direction: Shared.HEX_DIRECTION.RIGHT,
-                hexArray: input.hexArray,
-                flipped: input.flipped,
-            });
-            // copy transversed hexes to visible hex map
-            transverseLeftData.transversedHexes.forEach((value, key) => visibleHexes.set(key, value));
-            const transverseBottomRightData = window.OPRSClasses.Hex.getHexDataDistanceOfHex({
-                q: currentQ, r: currentR, s: currentS,
-                distance: 1,
-                direction,
-                hexArray: input.hexArray,
-                flipped: input.flipped,
-            });
-            if (transverseBottomRightData.q == currentQ &&
-                transverseBottomRightData.r == currentR &&
-                transverseBottomRightData.s == currentS) {
-                break;
-            }
-            currentQ = transverseBottomRightData.q;
-            currentR = transverseBottomRightData.r;
-            currentS = transverseBottomRightData.s;
-        }
-        return { visibleHexes, };
-    }
-
-    // For debug purpose
-    flipMap(input) {
-        this.flipped = !this.flipped;
-        if (!input) {
-            input = {
-                hexArray: this.gridParam.hexArray,
-            };
-        }
-        if (!input.hexArray) {
-            input.hexArray = this.gridParam.hexArray;
-        }
-        for (const hex of input.hexArray.toArray()) {
-            hex.flip({ flipped: this.flipped, });
-        }
-    }
-
-    declareZoomSettings(input) {
-        throw new Error(`[MapMain] ${taggedString.generalImplementInSubClass('declareZoomSettings')}`);
+    defineZoomSettings(input) {
+        throw new Error(`[MapMain] ${taggedString.generalImplementInSubClass('defineZoomSettings')}`);
     };
 
     setup(input) {
         throw new Error(`[MapMain] ${taggedString.generalImplementInSubClass('setup')}`);
     }
-
-
 }

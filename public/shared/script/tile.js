@@ -26,15 +26,18 @@ export class Tile {
 
     static pixelToTileCoord(input) {
         const { mapX, mapY, side, } = input;
-        // invert the scaling
         const col = Math.floor(mapX / side);
         const row = Math.floor(mapY / side);
         return { col, row, };
     }
 
     static getTileFromCoord(input) {
-        const { mapX, mapY, side, tileArray } = input;
-        const { col, row, } = window.OPRSClasses.Tile.pixelToTileCoord({ mapX, mapY, side, });
+        const { mapX, mapY, side, tileArray, } = input;
+        const { col, row, } = OPRSClasses.Tile.pixelToTileCoord({ mapX, mapY, side, });
+        const colArray = tileArray[col];
+        if (!colArray) {
+            return { tile: null, };
+        }
         return { tile: tileArray[col][row], };
     }
 
