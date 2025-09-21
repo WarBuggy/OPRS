@@ -68,6 +68,19 @@ window.translatableTexts = {
 
         mapMiniCanvasNotFound: 'Cannot find canvas with id "{canvasId}".',
 
+        editorMapBtnTitleCreateRegion: 'Create a new region',
+        editorMapBtnTitleFoldAllRegion: 'Collapse all regions',
+        editorMapBtnTitleUnFoldAllRegion: 'Expand all regions',
+
+        editorMapRegionNameLabel: 'Name',
+        editorMapRegionNamePlaceholder: 'Enter region name...',
+        editorMapRegionDefListLabel: 'RegionDefs',
+        editorMapIncludeRegionListLabel: 'Include Regions',
+        editorMapExcludeRegionListLabel: 'Exclude Regions',
+        editorMapBtnAddRegionDef: 'Add a new RegionDef',
+        editorMapBtnSaveRegionCreateNew: 'Save region',
+        editorMapBtnResetRegionCreateNew: 'Reset',
+
 
         invalidHexDirection: `Failed to transver hex grid due to invalid direction '{direction}'.`,
         hexTransverseInvalidStart: `Failed to transver hex grid due to invalid starting coord ({q}, {r}, {s}).`,

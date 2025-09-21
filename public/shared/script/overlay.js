@@ -16,7 +16,7 @@ export class Overlay {
             tag: 'div',
             id: input.id,
             parent: input.parent,
-            class: 'base-common-outer-overlay',
+            class: 'base_common_overlay_outer',
         }).component;
         this.visible = false;
         this.emitter = input.emitter;
