@@ -5,6 +5,7 @@
   <hooks>
     <hook>../css/index.css</hook>
     <hook>../../../shared/css/modDataTree.css</hook>
+    <hook>../../../shared/css/colorPicker.css</hook>
     <hook>../../../shared/script/seededRandom.js</hook>
     <hook>../../../shared/script/overlay.js</hook>
     <hook>../../../shared/script/modDataTree.js</hook>
@@ -14,6 +15,7 @@
     <hook>../../../shared/script/eventEmitter.js</hook>
     <hook>../../../shared/script/mapMain.js</hook>
     <hook>../../../shared/script/mapMini.js</hook>
+    <hook>../../../shared/script/colorPickerCustom.js</hook>
     <!-- <hook>../../../shared/script/region.js</hook> -->
     <!-- <hook>../../../shared/script/templateMap.js</hook> -->
     <hook>../../../shared/data/zoomLevelList.js</hook>

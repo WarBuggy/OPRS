@@ -10,6 +10,7 @@ export class EditorMap extends window.OPRSClasses.AppMain {
             modData: this.modData,
         });
 
+        this.lastPaletteIndexRegionCreateNew = -1;
         window.addEventListener('resize', () => { });
     }
 
@@ -89,6 +90,11 @@ export class EditorMap extends window.OPRSClasses.AppMain {
         btnCreateRegion.title = taggedString.editorMapBtnTitleCreateRegion();
         btnCreateRegion.onclick = () => {
             this.showWorkingDiv({ divToShowId: 'divRegionCreateNew' });
+            this.regionCreateNewUI.colorPicker.setSelectedColor(
+                { lastPaletteIndex: this.lastPaletteIndexRegionCreateNew, }
+            );
+            const btnColor = document.getElementById('btnColorPickerRegionCreateNew');
+            btnColor.style.backgroundColor = this.regionCreateNewUI.colorPicker.selectedColor;
         };
 
         // Fold All Button
@@ -110,91 +116,159 @@ export class EditorMap extends window.OPRSClasses.AppMain {
         btnUnfoldAll.title = taggedString.editorMapBtnTitleUnFoldAllRegion();
     }
 
-    createDivRegionCreateNew(input) {
-        const { parent } = input;
+    createRegionUIBase(input) {
+        const {
+            parent, lastPaletteIndex, onChange,
+            divContainerId, btnColorId,
+        } = input;
 
-        const { component: divRegionCreateNew } = Shared.createHTMLComponent({
-            id: 'divRegionCreateNew',
-            class: 'base_editor-map_region-create-new',
+        const { component: divRegionUI } = Shared.createHTMLComponent({
+            id: divContainerId,
+            class: 'base_editor-map_region-ui-base',
             parent,
         });
 
-        // ---- Row 1: Name + Save/Reset ----
-        const { component: divNameRow } = Shared.createHTMLComponent({
-            class: 'base_editor-map_region-create-new__row1',
-            parent: divRegionCreateNew,
+        // Name Row
+        const { component: divRow1 } = Shared.createHTMLComponent({
+            class: 'base_editor-map_region-ui-base__row-1',
+            parent: divRegionUI,
         });
 
-        // Name label
         const { component: lblName } = Shared.createHTMLComponent({
             tag: 'label',
             class: 'base_common_label_standard',
-            parent: divNameRow,
+            parent: divRow1,
         });
         lblName.textContent = taggedString.editorMapRegionNameLabel();
 
-        // Name input
         const { component: txtName } = Shared.createHTMLComponent({
             tag: 'input',
             class: 'base_common_input_standard',
-            parent: divNameRow,
+            parent: divRow1,
         });
         txtName.type = 'text';
         txtName.placeholder = taggedString.editorMapRegionNamePlaceholder();
 
-        // Save button
-        const { component: btnSave } = Shared.createHTMLComponent({
+        // Color button
+        const { component: btnColor } = Shared.createHTMLComponent({
+            id: btnColorId,
+            tag: 'button',
+            class: 'base_common_button_standard color-picker',
+            parent: divRow1,
+        });
+        btnColor.title = taggedString.editorMapBtnTitleColorRegionCreateNew();
+
+        const { component: divColorPickerContainer } = Shared.createHTMLComponent({
+            class: 'base_common_color-picker-container',
+            parent: divRegionUI,
+        });
+        divColorPickerContainer.style.gridRow = '2/3';
+
+        // On color button click, toggle the color picker visibility
+        btnColor.onclick = () => {
+            divColorPickerContainer.classList.toggle('active');
+        };
+
+        // Instantiate the custom color picker inside this container
+        const colorPicker = new OPRSClasses.ColorPickerCustom({
+            parent: divColorPickerContainer,
+            lastPaletteIndex,
+            onChange,
+        });
+        btnColor.style.backgroundColor = colorPicker.selectedColor;
+
+        // Area list 
+        const { component: divAreaList } = Shared.createHTMLComponent({
+            class: 'base_editor-map_area-list',
+            parent: divRegionUI,
+        });
+        divAreaList.style.gridRow = '3/4';
+
+        const { component: labelArea, } = Shared.createHTMLComponent({
+            tag: 'label',
+            class: 'base_common_label_standard',
+            parent: divAreaList,
+        });
+        labelArea.textContent = taggedString.editorMapAreaListLabel();
+
+        // Include list 
+        const { component: divIncludeList } = Shared.createHTMLComponent({
+            class: 'base_editor-map_include-list',
+            parent: divRegionUI,
+        });
+        divIncludeList.style.gridRow = '4/5';
+        const { component: labelIncludeList, } = Shared.createHTMLComponent({
+            tag: 'label',
+            class: 'base_common_label_standard',
+            parent: divIncludeList,
+        });
+        labelIncludeList.textContent = taggedString.editorMapIncludeRegionListLabel();
+
+        // Exclude list 
+        const { component: divExcludeList } = Shared.createHTMLComponent({
+            class: 'base_editor-map_exclude-list',
+            parent: divRegionUI,
+        });
+        divExcludeList.style.gridRow = '5/6';
+        const { component: labelExcludeList, } = Shared.createHTMLComponent({
+            tag: 'label',
+            class: 'base_common_label_standard',
+            parent: divExcludeList,
+        });
+        labelExcludeList.textContent = taggedString.editorMapExcludeRegionListLabel();
+
+        return {
+            divRegionUI, divRow1, txtName, colorPicker,
+            divAreaList, divIncludeList, divExcludeList
+        };
+    }
+
+    addRegionCreateNewElement(input) {
+        const { parentDiv, onAdd, onReset } = input;
+
+        const { component: btnAdd } = Shared.createHTMLComponent({
             tag: 'button',
             class: 'base_common_button_standard',
-            parent: divNameRow,
+            parent: parentDiv,
         });
-        btnSave.textContent = taggedString.editorMapBtnSaveRegionCreateNew();
+        btnAdd.textContent = taggedString.editorMapBtnAddRegionCreateNew();
+        btnAdd.title = taggedString.editorMapBtnTitleAddRegionCreateNew();
+        btnAdd.onclick = onAdd;
 
-        // Reset button
         const { component: btnReset } = Shared.createHTMLComponent({
             tag: 'button',
             class: 'base_common_button_standard',
-            parent: divNameRow,
+            parent: parentDiv,
         });
         btnReset.textContent = taggedString.editorMapBtnResetRegionCreateNew();
+        btnReset.onclick = onReset;
 
-        // RegionDefs Section
-        const { component: divRegionDefList } = Shared.createHTMLComponent({
-            parent: divRegionCreateNew,
+        return { btnAdd, btnReset };
+    }
+
+    createDivRegionCreateNew(input) {
+        const { parent } = input;
+
+        const baseUI = this.createRegionUIBase({
+            parent,
+            divContainerId: 'divRegionCreateNew',
+            btnColorId: 'btnColorPickerRegionCreateNew',
+            lastPaletteIndex: this.lastPaletteIndexRegionCreateNew,
+            onChange: ({ selectedColor, paletteIndex, }) => {
+                const btnColor = document.getElementById('btnColorPickerRegionCreateNew');
+                btnColor.style.backgroundColor = selectedColor;
+                if (paletteIndex >= 0) {
+                    this.lastPaletteIndexRegionCreateNew = paletteIndex;
+                }
+            }
         });
 
-        const { component: lblRegionDefList } = Shared.createHTMLComponent({
-            tag: 'div',
-            class: 'base_common_label_standard',
-            parent: divRegionDefList,
+        const { btnAdd, btnReset } = this.addRegionCreateNewElement({
+            parentDiv: baseUI.divRow1,
+            //onAdd: () => this.handleAddRegion(baseUI),
+            //onReset: () => this.handleResetRegion(baseUI),
         });
-        lblRegionDefList.textContent = taggedString.editorMapRegionDefListLabel();
-
-        // Include Regions Section
-        const { component: divIncludeRegionList } = Shared.createHTMLComponent({
-            class: 'base_editor-map_region-create-new__section include-region-section',
-            parent: divRegionCreateNew,
-        });
-
-        const { component: lblIncludeRegionList } = Shared.createHTMLComponent({
-            tag: 'div',
-            class: 'base_common_label_standard',
-            parent: divIncludeRegionList,
-        });
-        lblIncludeRegionList.textContent = taggedString.editorMapIncludeRegionListLabel();
-
-        // Exclude Regions Section
-        const { component: divExcludeRegionList } = Shared.createHTMLComponent({
-            class: 'base_editor-map_region-create-new__section exclude-region-section',
-            parent: divRegionCreateNew,
-        });
-
-        const { component: lblExcludeRegionList } = Shared.createHTMLComponent({
-            tag: 'div',
-            class: 'base_common_label_standard',
-            parent: divExcludeRegionList,
-        });
-        lblExcludeRegionList.textContent = taggedString.editorMapExcludeRegionListLabel();
+        this.regionCreateNewUI = { ...baseUI, btnAdd, btnReset };
     }
 
     showWorkingDiv(input) {

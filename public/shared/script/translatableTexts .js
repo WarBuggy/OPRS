@@ -74,13 +74,15 @@ window.translatableTexts = {
 
         editorMapRegionNameLabel: 'Name',
         editorMapRegionNamePlaceholder: 'Enter region name...',
-        editorMapRegionDefListLabel: 'RegionDefs',
+        editorMapAreaListLabel: 'Areas',
         editorMapIncludeRegionListLabel: 'Include Regions',
         editorMapExcludeRegionListLabel: 'Exclude Regions',
         editorMapBtnAddRegionDef: 'Add a new RegionDef',
-        editorMapBtnSaveRegionCreateNew: 'Save region',
+        editorMapBtnTitleColorRegionCreateNew: "Pick region's highlight color",
+        editorMapBtnTitleColorPickerRegionCreateNew: 'Manually pick a color',
         editorMapBtnResetRegionCreateNew: 'Reset',
-
+        editorMapBtnAddRegionCreateNew: 'Add',
+        editorMapBtnTitleAddRegionCreateNew: 'Add the currently defined region to the region list',
 
         invalidHexDirection: `Failed to transver hex grid due to invalid direction '{direction}'.`,
         hexTransverseInvalidStart: `Failed to transver hex grid due to invalid starting coord ({q}, {r}, {s}).`,
